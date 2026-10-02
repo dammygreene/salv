@@ -9,3 +9,8 @@ node_modules/
 
 # Scratch images pulled in during research/design exploration, not app assets.
 image-search/
+
+# $SALV deployment secret keys (never commit a private key). The public
+# deployment manifest (deployments/devnet-salv-manifest.json) IS meant
+# to be committed -- only *-keypair.json files are secrets.
+deployments/*-keypair.json

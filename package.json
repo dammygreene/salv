@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "economic-simulations": "tsx scripts/economic-simulations.ts"
+    "economic-simulations": "tsx scripts/economic-simulations.ts",
+    "salv-test-distributions": "NODE_OPTIONS=--conditions=react-server tsx scripts/salv/test-distributions.ts",
+    "salv-deploy-devnet": "NODE_OPTIONS=--conditions=react-server tsx scripts/salv/deploy-devnet-mint.ts",
+    "salv-claim": "NODE_OPTIONS=--conditions=react-server tsx scripts/salv/claim-salv.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
