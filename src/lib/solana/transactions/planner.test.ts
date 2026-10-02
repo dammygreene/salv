@@ -32,7 +32,7 @@ describe("buildSalvageTransactionPlan", () => {
     ).toThrow(PlanningError);
   });
 
-  it("builds a plan with one CLOSE_TOKEN_ACCOUNT action per eligible asset", () => {
+  it("builds a plan with one CLOSE_EMPTY_TOKEN_ACCOUNT action per eligible asset", () => {
     const plan = buildSalvageTransactionPlan({
       wallet: WALLET,
       network: "mainnet-beta",
@@ -40,7 +40,7 @@ describe("buildSalvageTransactionPlan", () => {
       estimatedFeeLamports: 5000,
     });
     expect(plan.actions).toHaveLength(1);
-    expect(plan.actions[0].type).toBe("CLOSE_TOKEN_ACCOUNT");
+    expect(plan.actions[0].type).toBe("CLOSE_EMPTY_TOKEN_ACCOUNT");
     expect(plan.actions[0].tokenAccount).toBe("TokenAccountAddress1111111111111111111111");
     expect(plan.totalExpectedRecoveryLamports).toBe(2_039_280);
   });

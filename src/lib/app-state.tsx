@@ -4,6 +4,7 @@ import { useWallet, Wallet } from "@solana/wallet-adapter-react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { scanSteps } from "./data";
 import { getConnection } from "./solana/connection";
+import { SOLANA_NETWORK } from "./solana/constants";
 import { isValidSolanaAddress } from "./solana/base58";
 import { ExecutionError } from "./solana/executor/sendAndConfirm";
 import { runSalvagePlan } from "./solana/executor/runSalvage";
@@ -249,7 +250,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * The real end-to-end salvage flow for CLOSE_TOKEN_ACCOUNT actions:
+   * The real end-to-end salvage flow for CLOSE_EMPTY_TOKEN_ACCOUNT actions:
    * build a deterministic plan -> re-verify on chain -> wallet signs ->
    * send -> confirm -> ask the backend to independently verify the
    * resulting signature. A ProofEvent is only ever created from a
@@ -271,7 +272,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     try {
       const plan = buildSalvageTransactionPlan({
         wallet: walletAddress,
-        network: "mainnet-beta",
+        network: SOLANA_NETWORK,
         assets: chosen,
         estimatedFeeLamports: 5000,
       });
@@ -294,7 +295,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       const recoveredLamports = verified.reduce((sum, event) => sum + (event.actualRecoveryLamports ?? 0), 0);
       const recoveredSol = recoveredLamports / 1_000_000_000;
-      const reward = verified.length * 6 + 4;
+      // Real points, as computed and awarded by the backend's
+      // deterministic calculateSalvagePoints() — never invented here.
+      const reward = verified.reduce((sum, e) => sum + (e.points ?? 0), 0);
 
       const verifiedAssetIds = new Set(
         plan.actions.filter((action) => verified.some((e) => e.tokenAccount === action.tokenAccount)).map((a) => a.assetId)

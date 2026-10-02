@@ -1,38 +1,83 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { useAppState } from "@/lib/app-state";
+import { fetchRewardsSummary, RewardsSummary } from "@/lib/solana/executor/verify";
 
 export default function RewardsPage() {
-  const { rewardScore, proofEvents } = useAppState();
-  const networkScore = 184920;
-  const share = networkScore ? ((rewardScore / (networkScore + rewardScore)) * 100).toFixed(4) : "0.0000";
+  const { proofEvents, walletAddress } = useAppState();
+  const [summary, setSummary] = useState<RewardsSummary | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!walletAddress) return;
+    let cancelled = false;
+    fetchRewardsSummary(walletAddress)
+      .then((data) => {
+        if (!cancelled) {
+          setSummary(data);
+          setLoadError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Could not load rewards.");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Re-fetch whenever a new verified event lands so the dashboard
+    // reflects the backend's authoritative ledger, not a local guess.
+  }, [walletAddress, proofEvents.length]);
+
+  // Only show stats for the currently connected wallet — if it
+  // disconnects, don't keep displaying a stale wallet's numbers.
+  const effectiveSummary = walletAddress ? summary : null;
+  const epoch = effectiveSummary?.currentEpoch ?? null;
 
   return (
     <main className="rewards-page">
       <PageHeader
         title="Rewards need proof."
-        support="Every $SALV credit traces back to an independently verified onchain event. Projections are estimates until the epoch closes."
+        support="Every point traces back to an independently verified onchain event. EST. $SALV is a simulation for testing hypothetical reward-pool economics — there is no live $SALV token yet."
       />
 
-      <div className="rewards-grid">
-        <div className="reward-card">
-          <span>Current epoch</span>
-          <strong>07 <small>/ 12</small></strong>
+      {!walletAddress ? (
+        <div className="empty-state">
+          <h2>Connect a wallet to see your rewards.</h2>
+          <p>Points and epoch standing are tracked per wallet by the backend.</p>
         </div>
-        <div className="reward-card">
-          <span>Your salvage score</span>
-          <strong>{rewardScore.toLocaleString()}</strong>
+      ) : (
+        <div className="rewards-grid">
+          <div className="reward-card">
+            <span>Points</span>
+            <strong>{(effectiveSummary?.points ?? 0).toLocaleString()}</strong>
+          </div>
+          <div className="reward-card">
+            <span>Assets salvaged</span>
+            <strong>{(effectiveSummary?.assetsSalvaged ?? 0).toLocaleString()}</strong>
+          </div>
+          <div className="reward-card">
+            <span>SOL recovered</span>
+            <strong>{(effectiveSummary?.actualRecovery ?? 0).toFixed(4)}</strong>
+          </div>
+          <div className="reward-card">
+            <span>Current epoch</span>
+            <strong>
+              {epoch ? `#${epoch.number}` : "—"} <small>{epoch ? epoch.status.toLowerCase() : "none active"}</small>
+            </strong>
+          </div>
+          <div className="reward-card">
+            <span>Est. $SALV</span>
+            <strong>
+              {epoch ? effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}{" "}
+              <small>simulation</small>
+            </strong>
+          </div>
         </div>
-        <div className="reward-card">
-          <span>Network score</span>
-          <strong>{networkScore.toLocaleString()}</strong>
-        </div>
-        <div className="reward-card">
-          <span>Estimated share</span>
-          <strong>{share}% <small>estimate</small></strong>
-        </div>
-      </div>
+      )}
+
+      {loadError && <p className="wallet-form-error">{loadError}</p>}
 
       <div className="section-intro section-intro-tight">
         <h2>Your verified events.</h2>
@@ -64,7 +109,7 @@ export default function RewardsPage() {
               <p className="proof-receipt-assets">{event.assets.join(", ")}</p>
               <div className="proof-confirm">
                 <strong>Recovered {event.recovered}</strong>
-                <b>+{event.reward} $SALV</b>
+                <b>+{event.reward} pts</b>
               </div>
               <div className="proof-fields">
                 <span>

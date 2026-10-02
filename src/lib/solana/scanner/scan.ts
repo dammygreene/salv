@@ -1,4 +1,5 @@
 import { Asset, AssetStatus, ScanState } from "@/lib/types";
+import { AssetClassification, dispositionToAssetStatus, getRegistryEntry } from "@/lib/salvage/registry";
 import { isValidSolanaAddress } from "../base58";
 import { formatRecency, lamportsToSol, mapWithConcurrency, shortenAddress } from "../format";
 import { classifyTokenEligibility, evaluateCloseAccountEligibility } from "../validation/eligibility";
@@ -29,6 +30,19 @@ const STATUS_SORT_ORDER: Record<AssetStatus, number> = {
   KEEP: 3,
 };
 
+/** Display-only action labels per classification, read straight off the
+ * SALVAGE REGISTRY so the UI can never drift from what the backend
+ * actually considers enabled. Disabled actions (burn paths) show a
+ * label that makes clear nothing executes yet. */
+function actionLabel(classification: AssetClassification): string {
+  const entry = getRegistryEntry(classification);
+  if (!entry.action) {
+    return entry.disposition === "WATCH" ? "ADD TO WATCH" : entry.disposition;
+  }
+  if (!entry.enabled) return `${entry.action.replace(/_/g, " ")} (not yet enabled)`;
+  return entry.action.replace(/_/g, " ");
+}
+
 interface TaggedTokenAccountEntry extends TokenAccountEntry {
   programId: string;
 }
@@ -53,67 +67,73 @@ function classifyAccount(
   });
 
   if (closeEligibility.eligible) {
+    const classification: AssetClassification = "EMPTY_TOKEN_ACCOUNT";
+    const registryEntry = getRegistryEntry(classification);
     return {
       id: entry.pubkey,
       name: listed ? `Empty ${listed.symbol} account` : "Empty token account",
       ticker: listed?.symbol ?? mint.slice(0, 4),
       kind: "ACCOUNT",
       address: shortAddr,
-      status: "SALVAGEABLE",
+      status: dispositionToAssetStatus(registryEntry.disposition),
       age,
       value: `${lamportsToSol(lamports).toFixed(4)} SOL`,
       valueKnown: true,
       reason: closeEligibility.reason,
-      action: "CLOSE ACCOUNT",
+      action: actionLabel(classification),
       tokenAccount: entry.pubkey,
       programId: entry.programId,
       mint,
       lamports,
+      classification,
     };
   }
 
-  if (tokenAmount.decimals === 0 && tokenAmount.uiAmount === 1) {
+  const classification = classifyTokenEligibility({
+    mint,
+    decimals: tokenAmount.decimals,
+    uiAmount: tokenAmount.uiAmount,
+    isVerifiedInTokenList: Boolean(listed),
+  });
+  const registryEntry = getRegistryEntry(classification);
+
+  if (classification === "POTENTIALLY_REDEEMABLE_NFT") {
     return {
       id: entry.pubkey,
       name: listed?.name ?? `NFT ${shortenAddress(mint, 4, 4)}`,
       ticker: "NFT",
       kind: "NFT",
       address: shortAddr,
-      status: "WATCH",
+      status: dispositionToAssetStatus(registryEntry.disposition),
       age,
       value: "UNKNOWN",
       valueKnown: false,
-      reason: "NFT detected. Recovery path not verified yet.",
-      action: "ADD TO WATCH",
+      reason: "NFT detected. No burn/redemption signal exists yet, so it stays watch-only.",
+      action: actionLabel(classification),
       tokenAccount: entry.pubkey,
       programId: entry.programId,
       mint,
+      classification,
     };
   }
 
-  const eligibility = classifyTokenEligibility({
-    mint,
-    decimals: tokenAmount.decimals,
-    uiAmount: tokenAmount.uiAmount,
-    isVerifiedInTokenList: Boolean(listed),
-  });
-
-  if (eligibility === "KEEP" && listed) {
+  if (classification === "ACTIVE_TOKEN" && listed) {
     return {
       id: entry.pubkey,
       name: listed.name,
       ticker: listed.symbol,
       kind: "TOKEN",
       address: shortAddr,
-      status: "KEEP",
+      status: dispositionToAssetStatus(registryEntry.disposition),
       age,
       value: `${tokenAmount.uiAmountString} ${listed.symbol}`,
       valueKnown: true,
       reason: "Active, verified balance. No salvage action suggested.",
-      action: "KEEP",
+      action: actionLabel(classification),
       tokenAccount: entry.pubkey,
       programId: entry.programId,
       mint,
+      classification,
     };
   }
 
@@ -123,15 +143,16 @@ function classifyAccount(
     ticker: mint.slice(0, 4).toUpperCase(),
     kind: "TOKEN",
     address: shortAddr,
-    status: "REVIEW",
+    status: dispositionToAssetStatus(registryEntry.disposition),
     age,
     value: "UNKNOWN",
     valueKnown: false,
-    reason: "Unverified token, not in the known token registry. Review before treating it as spam or value.",
-    action: "REVIEW",
+    reason: "Unverified token, not in the known token registry. A missing price never makes this spam on its own.",
+    action: actionLabel("UNKNOWN_TOKEN"),
     tokenAccount: entry.pubkey,
     programId: entry.programId,
     mint,
+    classification: "UNKNOWN_TOKEN",
   };
 }
 
@@ -144,12 +165,15 @@ export interface ScanResult {
 
 /**
  * Reads real, public, read-only chain data for a wallet: every SPL /
- * Token-2022 token account it owns, classified into the same
- * salvageable / watch / review / keep buckets the UI already expects.
- * No signature is ever requested and nothing is written on-chain. This
- * only determines what is POTENTIALLY actionable; the executor
- * independently re-verifies everything against fresh on-chain state
- * before it will build a real transaction (see recovery/closeAccount.ts).
+ * Token-2022 token account it owns, classified against the SALVAGE
+ * REGISTRY (src/lib/salvage/registry.ts) into the same salvageable /
+ * watch / review / keep buckets the UI already expects. No signature is
+ * ever requested and nothing is written on-chain. This only determines
+ * what is POTENTIALLY actionable; the executor independently re-verifies
+ * everything against fresh on-chain state before it will build a real
+ * transaction (see recovery/closeAccount.ts), and the backend
+ * independently re-derives classification/points from chain truth, never
+ * from this scan result.
  */
 export async function scanWallet(
   address: string,

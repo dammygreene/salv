@@ -1,4 +1,6 @@
-export type SalvageActionType = "CLOSE_TOKEN_ACCOUNT";
+import { SalvageActionType } from "@/lib/salvage/registry";
+
+export type { SalvageActionType };
 
 export interface SalvageAction {
   type: SalvageActionType;

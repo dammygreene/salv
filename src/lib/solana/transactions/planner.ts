@@ -1,4 +1,5 @@
 import { Asset } from "@/lib/types";
+import { isActionEnabled } from "@/lib/salvage/registry";
 import { SalvageAction, SalvageTransactionPlan } from "./types";
 
 export class PlanningError extends Error {}
@@ -20,7 +21,7 @@ export interface BuildPlanParams {
  * a caller can never end up signing a different plan than the one it
  * reviewed.
  *
- * Only CLOSE_TOKEN_ACCOUNT actions are supported right now (empty token
+ * Only CLOSE_EMPTY_TOKEN_ACCOUNT actions are supported right now (empty token
  * account rent recovery). Nothing else automatically enters a plan: NFTs
  * stay WATCH/REVIEW-only and no token is ever burned automatically.
  */
@@ -38,9 +39,12 @@ export function buildSalvageTransactionPlan(params: BuildPlanParams): SalvageTra
     if (!asset.tokenAccount || !asset.programId) {
       throw new PlanningError(`Asset ${asset.id} is missing on-chain identifiers required to build a transaction.`);
     }
+    if (!isActionEnabled("CLOSE_EMPTY_TOKEN_ACCOUNT")) {
+      throw new PlanningError("CLOSE_EMPTY_TOKEN_ACCOUNT is not enabled in the salvage registry.");
+    }
 
     return {
-      type: "CLOSE_TOKEN_ACCOUNT",
+      type: "CLOSE_EMPTY_TOKEN_ACCOUNT",
       assetId: asset.id,
       tokenAccount: asset.tokenAccount,
       programId: asset.programId,

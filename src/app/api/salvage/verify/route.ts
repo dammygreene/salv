@@ -2,11 +2,17 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import { isValidSolanaAddress } from "@/lib/solana/base58";
-import { buildIdempotencyKey } from "@/lib/solana/idempotency";
+import { SalvageActionType } from "@/lib/salvage/registry";
+import { getDb } from "@/lib/server/db/client";
 import { fetchParsedTransactionFromChain } from "@/lib/server/rpc";
-import { findEventByIdempotencyKey, recordEventIfAbsent } from "@/lib/server/salvageEventStore";
-import { verifySalvageTransaction } from "@/lib/server/verifySalvageTransaction";
-import { SalvageEvent } from "@/lib/types";
+import { verifyAndRecordSalvage } from "@/lib/server/verifyAndRecordSalvage";
+
+// BURN_VERIFIED_TOKEN / BURN_VERIFIED_NFT exist in the registry's type
+// system (so repositories/points/etc. are ready for them) but have no
+// real chain-verification logic yet (see verifySalvageTransaction.ts) and
+// are not `enabled` in the registry. Only accept what can actually be
+// verified and awarded today.
+const SUPPORTED_ACTIONS = new Set<SalvageActionType>(["CLOSE_EMPTY_TOKEN_ACCOUNT"]);
 
 interface RawAction {
   type?: string;
@@ -14,18 +20,6 @@ interface RawAction {
   mint?: string | null;
   programId?: string | null;
   expectedRecoveryLamports?: number;
-}
-
-/** Deterministic, short id derived from the signature, so repeated
- * verification requests for the same signature keep producing the same
- * base id (actual uniqueness per-action comes from the idempotency key,
- * not from this id). */
-function signatureHash(signature: string): string {
-  let hash = 0;
-  for (let i = 0; i < signature.length; i++) {
-    hash = (hash * 31 + signature.charCodeAt(i)) >>> 0;
-  }
-  return hash.toString(16).toUpperCase().padStart(8, "0").slice(0, 8);
 }
 
 export async function POST(req: NextRequest) {
@@ -52,75 +46,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No actions submitted." }, { status: 400 });
   }
 
-  const closeActions = actions.filter(
+  const validActions = actions.filter(
     (a): a is Required<Pick<RawAction, "type" | "tokenAccount">> & RawAction =>
-      a.type === "CLOSE_TOKEN_ACCOUNT" &&
+      typeof a.type === "string" &&
+      SUPPORTED_ACTIONS.has(a.type as SalvageActionType) &&
       typeof a.tokenAccount === "string" &&
       isValidSolanaAddress(a.tokenAccount) &&
       typeof a.expectedRecoveryLamports === "number"
   );
-  if (closeActions.length !== actions.length) {
+  if (validActions.length !== actions.length) {
     return NextResponse.json({ error: "One or more actions are malformed or unsupported." }, { status: 400 });
   }
 
-  const idempotencyKeys = closeActions.map((a) => buildIdempotencyKey(signature, a.type!, a.tokenAccount!));
-
-  // Idempotency fast path: if every action in this request already has a
-  // stored event, return those untouched. Never re-verify or duplicate.
-  const existing = await Promise.all(idempotencyKeys.map((key) => findEventByIdempotencyKey(key)));
-  if (existing.every((event): event is SalvageEvent => event !== null)) {
-    return NextResponse.json({ events: existing }, { status: 200 });
-  }
-
-  const outcome = await verifySalvageTransaction(
+  const db = await getDb();
+  const events = await verifyAndRecordSalvage(
+    db,
     {
       wallet,
       signature,
-      actions: closeActions.map((a) => ({
-        type: "CLOSE_TOKEN_ACCOUNT",
+      actions: validActions.map((a) => ({
+        type: a.type as SalvageActionType,
         tokenAccount: a.tokenAccount!,
+        mint: a.mint ?? null,
+        programId: a.programId ?? null,
         expectedRecoveryLamports: a.expectedRecoveryLamports!,
       })),
     },
     fetchParsedTransactionFromChain
   );
-
-  const baseId = signatureHash(signature);
-  const nowIso = new Date().toISOString();
-
-  const events: SalvageEvent[] = [];
-  for (let i = 0; i < closeActions.length; i++) {
-    // Skip anything already recorded individually (e.g. a partial resubmit).
-    if (existing[i]) {
-      events.push(existing[i]!);
-      continue;
-    }
-
-    const action = closeActions[i];
-    const result = outcome.results[i];
-    const verified = Boolean(result?.verified);
-
-    const event: SalvageEvent = {
-      eventId: `SALV-${baseId}-${i}`,
-      idempotencyKey: idempotencyKeys[i],
-      wallet,
-      signature,
-      slot: outcome.slot ?? -1,
-      action: "CLOSE_TOKEN_ACCOUNT",
-      chain: "solana",
-      timestamp: nowIso,
-      tokenAccount: action.tokenAccount!,
-      mint: action.mint ?? null,
-      programId: action.programId ?? null,
-      expectedRecoveryLamports: action.expectedRecoveryLamports!,
-      actualRecoveryLamports: result?.actualRecoveryLamports ?? null,
-      status: verified ? "VERIFIED" : "FAILED",
-      reason: result?.reason ?? outcome.reason,
-    };
-
-    const { event: stored } = await recordEventIfAbsent(event);
-    events.push(stored);
-  }
 
   return NextResponse.json({ events }, { status: 200 });
 }

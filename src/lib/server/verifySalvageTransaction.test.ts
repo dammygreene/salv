@@ -53,7 +53,7 @@ function makeFakeTx(opts: FakeTxOptions = {}): ParsedTransactionWithMeta {
 const baseRequest = {
   wallet: WALLET,
   signature: VALID_SIGNATURE,
-  actions: [{ type: "CLOSE_TOKEN_ACCOUNT" as const, tokenAccount: TOKEN_ACCOUNT, expectedRecoveryLamports: 2_039_280 }],
+  actions: [{ type: "CLOSE_EMPTY_TOKEN_ACCOUNT" as const, tokenAccount: TOKEN_ACCOUNT, expectedRecoveryLamports: 2_039_280 }],
 };
 
 describe("verifySalvageTransaction", () => {

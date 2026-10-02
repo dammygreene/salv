@@ -82,7 +82,7 @@ describe("evaluateCloseAccountEligibility", () => {
 });
 
 describe("classifyTokenEligibility", () => {
-  it("never returns SAFE_TO_BURN (no strong-evidence signal is wired up yet)", () => {
+  it("never classifies anything as KNOWN_SPAM_TOKEN or KNOWN_SPAM_NFT (no spam signal exists yet)", () => {
     const cases = [
       { mint: "A", decimals: 6, uiAmount: 100, isVerifiedInTokenList: true },
       { mint: "B", decimals: 6, uiAmount: 100, isVerifiedInTokenList: false },
@@ -90,30 +90,31 @@ describe("classifyTokenEligibility", () => {
       { mint: "D", decimals: 0, uiAmount: 1, isVerifiedInTokenList: false },
     ];
     for (const input of cases) {
-      expect(classifyTokenEligibility(input)).not.toBe("SAFE_TO_BURN");
+      const result = classifyTokenEligibility(input);
+      expect(result).not.toBe("KNOWN_SPAM_TOKEN");
+      expect(result).not.toBe("KNOWN_SPAM_NFT");
     }
   });
 
-  it("classifies a verified, listed token as KEEP", () => {
+  it("classifies a verified, listed token as ACTIVE_TOKEN", () => {
     expect(
       classifyTokenEligibility({ mint: "listed-mint", decimals: 6, uiAmount: 50, isVerifiedInTokenList: true })
-    ).toBe("KEEP");
+    ).toBe("ACTIVE_TOKEN");
   });
 
-  it("classifies an unverified token as REVIEW, never auto-burnable, even though its price is unknown", () => {
+  it("classifies an unverified token as UNKNOWN_TOKEN (review), never spam, even though its price is unknown", () => {
     const result = classifyTokenEligibility({
       mint: "unknown-mint",
       decimals: 6,
       uiAmount: 50,
       isVerifiedInTokenList: false,
     });
-    expect(result).toBe("REVIEW");
-    expect(result).not.toBe("SAFE_TO_BURN");
+    expect(result).toBe("UNKNOWN_TOKEN");
   });
 
-  it("classifies an NFT-shaped balance (decimals=0, amount=1) as UNKNOWN, not a fungible bucket", () => {
+  it("classifies an NFT-shaped balance (decimals=0, amount=1) as POTENTIALLY_REDEEMABLE_NFT, never spam", () => {
     expect(
       classifyTokenEligibility({ mint: "nft-mint", decimals: 0, uiAmount: 1, isVerifiedInTokenList: false })
-    ).toBe("UNKNOWN");
+    ).toBe("POTENTIALLY_REDEEMABLE_NFT");
   });
 });

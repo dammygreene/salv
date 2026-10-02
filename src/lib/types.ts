@@ -31,6 +31,10 @@ export type Asset = {
   mint?: string;
   /** Exact lamports held by the account, for ACCOUNT-kind assets. */
   lamports?: number;
+  /** SALVAGE REGISTRY classification this asset currently carries. See
+   * src/lib/salvage/registry.ts for the full classification -> action
+   * -> disposition mapping. */
+  classification?: import("./salvage/registry").AssetClassification;
 };
 
 export type WatchItem = {
@@ -64,21 +68,19 @@ export type HistoryEvent = {
   timestamp: string;
 };
 
-/** Token classification used to gate automatic burn eligibility. Nothing
- * currently reaches SAFE_TO_BURN automatically; see validation/eligibility. */
-export type TokenEligibility = "SAFE_TO_BURN" | "REVIEW" | "KEEP" | "UNKNOWN";
-
-export type SalvageActionType = "CLOSE_TOKEN_ACCOUNT";
-
 export type SalvageEventStatus = "PENDING" | "VERIFIED" | "FAILED" | "REVERSED";
 
+/** One row returned by the backend for a single verified-or-not salvage
+ * action. Mirrors a `salvage_actions` database row (see
+ * src/lib/server/repositories). Only the backend can ever produce one
+ * with status VERIFIED and a non-zero `points` value. */
 export type SalvageEvent = {
   eventId: string;
   idempotencyKey: string;
   wallet: string;
   signature: string;
   slot: number;
-  action: SalvageActionType;
+  action: import("./salvage/registry").SalvageActionType;
   chain: "solana";
   timestamp: string;
   tokenAccount: string;
@@ -88,5 +90,9 @@ export type SalvageEvent = {
   actualRecoveryLamports: number | null;
   status: SalvageEventStatus;
   reason?: string;
+  /** Points actually credited to the wallet's ledger for this action.
+   * Always 0 unless status is VERIFIED and the action passed every
+   * anti-farming check. */
+  points: number;
 };
 

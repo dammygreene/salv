@@ -2,6 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { useAppState } from "@/lib/app-state";
+import { SOLANA_NETWORK } from "@/lib/solana/constants";
+import { SALVAGE_REGISTRY } from "@/lib/salvage/registry";
+
+const NETWORK_LABEL: Record<string, string> = {
+  "mainnet-beta": "Solana mainnet-beta",
+  devnet: "Solana Devnet",
+  testnet: "Solana Testnet",
+};
 
 const STATUS_LABEL: Record<string, string> = {
   BUILDING: "Preparing transaction…",
@@ -14,7 +22,11 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
   const { assets, selected, confirmSalvage, canSign, salvageStatus, salvageError } = useAppState();
   const [submitting, setSubmitting] = useState(false);
   const chosen = useMemo(() => assets.filter((asset) => selected.includes(asset.id)), [assets, selected]);
-  const reward = chosen.length * 6 + 4;
+  // Pre-verification estimate only: base points per the registry, times
+  // the number of accounts. The real total (base + any recovery bonus
+  // tier) is only known once the backend verifies the transaction.
+  const closeBasePoints = SALVAGE_REGISTRY.EMPTY_TOKEN_ACCOUNT.basePoints ?? 0;
+  const reward = chosen.length * closeBasePoints;
   const recoveredSol = useMemo(
     () =>
       chosen.reduce((total, asset) => {
@@ -56,7 +68,7 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
           </div>
           <div className="review-row">
             <span>Network</span>
-            <strong>Solana mainnet-beta</strong>
+            <strong>{NETWORK_LABEL[SOLANA_NETWORK] ?? SOLANA_NETWORK}</strong>
           </div>
           <div className="review-row">
             <span>Action</span>

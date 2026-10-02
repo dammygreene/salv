@@ -23,7 +23,7 @@ export async function submitForVerification(result: RunSalvageResult): Promise<V
       wallet: result.wallet,
       signature: result.signature,
       actions: result.actions.map((action) => ({
-        type: "CLOSE_TOKEN_ACCOUNT",
+        type: "CLOSE_EMPTY_TOKEN_ACCOUNT",
         tokenAccount: action.tokenAccount,
         mint: action.mint,
         programId: action.programId,
@@ -40,11 +40,44 @@ export async function submitForVerification(result: RunSalvageResult): Promise<V
   return (await response.json()) as VerifyResponse;
 }
 
-export async function fetchSalvageHistory(wallet: string): Promise<SalvageEvent[]> {
-  const response = await fetch(`/api/salvage/events?wallet=${encodeURIComponent(wallet)}`);
+export interface PaginatedVerifyResponse extends VerifyResponse {
+  pagination: { limit: number; offset: number; total: number; hasMore: boolean };
+}
+
+/** Verified-only, paginated salvage history for one wallet. */
+export async function fetchSalvageHistory(
+  wallet: string,
+  options: { limit?: number; offset?: number } = {}
+): Promise<PaginatedVerifyResponse> {
+  const params = new URLSearchParams();
+  if (options.limit) params.set("limit", String(options.limit));
+  if (options.offset) params.set("offset", String(options.offset));
+  const query = params.toString();
+  const response = await fetch(`/api/salvage/events/${encodeURIComponent(wallet)}${query ? `?${query}` : ""}`);
   if (!response.ok) {
     throw new VerificationError(`Could not load salvage history (${response.status}).`);
   }
-  const body = (await response.json()) as VerifyResponse;
-  return body.events;
+  return (await response.json()) as PaginatedVerifyResponse;
+}
+
+export interface RewardsSummary {
+  wallet: string;
+  points: number;
+  verifiedEvents: number;
+  assetsSalvaged: number;
+  actualRecovery: number;
+  actualRecoveryLamports: number;
+  currentEpoch: { number: number; startsAt: string; endsAt: string; status: string } | null;
+  epochPoints: number;
+  estimatedReward: number;
+}
+
+/** This wallet's lifetime verified stats + current-epoch standing.
+ * `estimatedReward` is always a simulation — see lib/salvage/simulation.ts. */
+export async function fetchRewardsSummary(wallet: string): Promise<RewardsSummary> {
+  const response = await fetch(`/api/rewards/${encodeURIComponent(wallet)}`);
+  if (!response.ok) {
+    throw new VerificationError(`Could not load rewards summary (${response.status}).`);
+  }
+  return (await response.json()) as RewardsSummary;
 }

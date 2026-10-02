@@ -1,7 +1,15 @@
 import type { ParsedTransactionWithMeta } from "@solana/web3.js";
+import { SalvageActionType } from "@/lib/salvage/registry";
 
 export interface ClaimedCloseAction {
-  type: "CLOSE_TOKEN_ACCOUNT";
+  /** Only CLOSE_EMPTY_TOKEN_ACCOUNT is actually checked against chain
+   * data today (this function looks for a real closeAccount
+   * instruction). The wider type is kept here so new action types can be
+   * added to the registry without a signature change; anything other
+   * than CLOSE_EMPTY_TOKEN_ACCOUNT will simply never find a matching
+   * instruction and fail verification until real burn-verification logic
+   * is added alongside its registry entry being enabled. */
+  type: SalvageActionType;
   tokenAccount: string;
   expectedRecoveryLamports: number;
 }

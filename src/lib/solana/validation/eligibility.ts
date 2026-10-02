@@ -1,4 +1,4 @@
-import { TokenEligibility } from "@/lib/types";
+import { AssetClassification } from "@/lib/salvage/registry";
 import { TOKEN_2022_PROGRAM_ID_STR, TOKEN_PROGRAM_ID_STR } from "../constants";
 
 const KNOWN_TOKEN_PROGRAMS = new Set([TOKEN_PROGRAM_ID_STR, TOKEN_2022_PROGRAM_ID_STR]);
@@ -18,8 +18,9 @@ export interface EligibilityResult {
 
 /**
  * Decides whether a token account can enter the automatic "close empty
- * account" salvage path. This is the ONLY gate the frontend is allowed to
- * use to call something salvageable; the executor re-runs an equivalent
+ * account" salvage path (classification: EMPTY_TOKEN_ACCOUNT in the
+ * SALVAGE REGISTRY). This is the ONLY gate the frontend is allowed to use
+ * to call something salvageable; the executor re-runs an equivalent
  * check against fresh on-chain state immediately before building a
  * transaction (see recovery/closeAccount.ts), so a stale or spoofed scan
  * result can never reach a real instruction.
@@ -48,21 +49,23 @@ export interface TokenEligibilityInput {
 }
 
 /**
- * Classifies a non-empty token balance into SAFE_TO_BURN / REVIEW / KEEP /
- * UNKNOWN. This is deliberately conservative: nothing currently returns
- * SAFE_TO_BURN, because none of the strong-evidence signals the spec
- * requires (known spam registry, collection activity, redemption paths,
+ * Classifies a token balance into the SALVAGE REGISTRY's asset
+ * classification vocabulary. This is deliberately conservative: nothing
+ * returned here can ever be KNOWN_SPAM_TOKEN or KNOWN_SPAM_NFT, because
+ * none of the strong-evidence signals a real spam/burn registry would
+ * need (a maintained spam list, collection activity, redemption paths,
  * on-chain metadata inspection) are wired up yet. A token simply lacking
  * a known price or symbol must never be enough to make it burnable, so
- * the worst case for an unresolved token is REVIEW, never a burn
- * suggestion. Automatic burning stays unreachable from the UI until a
- * real SAFE_TO_BURN signal exists.
+ * the worst case for an unresolved fungible token is UNKNOWN_TOKEN
+ * (-> REVIEW), and every NFT-shaped balance is POTENTIALLY_REDEEMABLE_NFT
+ * (-> WATCH). Automatic burning stays unreachable until a real spam
+ * signal exists (see salvage/registry.ts's `enabled` flags).
  */
-export function classifyTokenEligibility(input: TokenEligibilityInput): TokenEligibility {
+export function classifyTokenEligibility(input: TokenEligibilityInput): AssetClassification {
   const isNftLike = input.decimals === 0 && input.uiAmount === 1;
-  if (isNftLike) return "UNKNOWN"; // handled separately as an NFT, see scanner/scan.ts
+  if (isNftLike) return "POTENTIALLY_REDEEMABLE_NFT";
 
-  if (input.isVerifiedInTokenList) return "KEEP";
+  if (input.isVerifiedInTokenList) return "ACTIVE_TOKEN";
 
-  return "REVIEW";
+  return "UNKNOWN_TOKEN";
 }
