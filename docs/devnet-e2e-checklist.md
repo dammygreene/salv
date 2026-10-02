@@ -1,13 +1,38 @@
-# Devnet manual end-to-end checklist (NOT YET EXECUTED)
+# Devnet manual end-to-end checklist
 
-**Status: written, not run.** Nobody has executed this checklist with a
-real wallet yet, in this sandbox or anywhere else. Nothing in this
-document should be read as "the Devnet flow works" — it is only a
-reproducible procedure for a human (or a future session with a real
-browser + a funded Devnet wallet) to actually verify it. This sandbox has
-no Phantom/Solflare extension and no browser UI to click through, so this
-step is explicitly deferred to the developer running the app locally or
-on a deployed preview.
+**Part A status: OPEN / UNTESTED.** Nobody has executed this checklist
+with a real wallet yet, in this sandbox or anywhere else. Nothing in this
+document, the README, any other doc, or the UI should be read as "the
+Devnet flow works" — it is only a reproducible procedure for a human (or
+a future session with a real browser + a funded Devnet wallet) to
+actually verify it. This sandbox has no Phantom/Solflare extension, no
+browser UI to click through, and no outbound network access to any
+Solana RPC endpoint, so this step is explicitly deferred to a developer
+running the app locally or on a deployed preview that has real network
+access. No mock/simulated substitute for this checklist has been or
+should be added anywhere in the codebase — Parts B–G do not depend on
+Part A being run, and Part A's absence does not block them, but the
+Phase 4 Definition of Done ("a real Devnet transaction has completed
+successfully") is **not yet met** until this checklist is actually
+executed and the results below are filled in.
+
+## TODO: record real results here once this checklist has been run
+
+Replace every `<unfilled>` below with the actual value observed during a
+real run. Do not fill these in with assumed, estimated, or synthetic
+values — only values copied from a real transaction.
+
+- Date run: `<unfilled>`
+- Run by: `<unfilled>`
+- Wallet address used: `<unfilled>`
+- Transaction signature: `<unfilled>`
+- Confirmed slot: `<unfilled>`
+- Recovered lamports (actual, from the on-chain `closeAccount` result):
+  `<unfilled>`
+- Salvage event ID (from `GET /api/salvage/events/<wallet>`):
+  `<unfilled>`
+- Points awarded (from `GET /api/rewards/<wallet>`): `<unfilled>`
+- Replay check (step 6.4) result: `<unfilled>`
 
 ## Why this can't be done from this sandbox
 
