@@ -1,14 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { useAppState } from "@/lib/app-state";
 import { fetchRewardsSummary, RewardsSummary } from "@/lib/solana/executor/verify";
+import { claimSalv, fetchSalvClaimView, SalvClaimView } from "@/lib/solana/executor/salvClaims";
+
+/** Phase 5 Section 17: a $SALV claim's state is always one of these four
+ * — never a bare "simulated" label that could be confused with a real
+ * balance. NOT LIVE: no $SALV deployment reachable at all. DEVNET: $SALV
+ * is deployed (on Devnet, never silently mainnet) but this wallet has
+ * nothing claimable right now. CLAIMABLE / CLAIMED come straight from
+ * the backend's immutable snapshot + claim ledger. */
+type SalvBadgeStatus = "NOT LIVE" | "DEVNET" | "CLAIMABLE" | "CLAIMED";
+
+function deriveSalvBadgeStatus(claimView: SalvClaimView | null): SalvBadgeStatus {
+  if (!claimView || !claimView.configured) return "NOT LIVE";
+  if (claimView.status === "CLAIMABLE") return "CLAIMABLE";
+  if (claimView.status === "CLAIMED") return "CLAIMED";
+  return "DEVNET"; // deployed and reachable, but NO_SNAPSHOT or FAILED for this wallet/epoch
+}
+
+const SALV_BADGE_CLASS: Record<SalvBadgeStatus, string> = {
+  "NOT LIVE": "status-keep",
+  DEVNET: "status-review",
+  CLAIMABLE: "status-salvageable",
+  CLAIMED: "status-watch",
+};
 
 export default function RewardsPage() {
   const { proofEvents, walletAddress } = useAppState();
   const [summary, setSummary] = useState<RewardsSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [salvClaim, setSalvClaim] = useState<SalvClaimView | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimNotice, setClaimNotice] = useState<string | null>(null);
+
+  const refreshSalvClaim = useCallback((wallet: string) => {
+    fetchSalvClaimView(wallet)
+      .then((view) => setSalvClaim(view))
+      .catch(() => setSalvClaim(null)); // $SALV status is supplementary; never block the rest of the page on it
+  }, []);
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -23,17 +56,38 @@ export default function RewardsPage() {
       .catch((err) => {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : "Could not load rewards.");
       });
+    refreshSalvClaim(walletAddress);
     return () => {
       cancelled = true;
     };
     // Re-fetch whenever a new verified event lands so the dashboard
     // reflects the backend's authoritative ledger, not a local guess.
-  }, [walletAddress, proofEvents.length]);
+  }, [walletAddress, proofEvents.length, refreshSalvClaim]);
 
   // Only show stats for the currently connected wallet — if it
   // disconnects, don't keep displaying a stale wallet's numbers.
   const effectiveSummary = walletAddress ? summary : null;
   const epoch = effectiveSummary?.currentEpoch ?? null;
+  const effectiveSalvClaim = walletAddress ? salvClaim : null;
+  const salvBadgeStatus = deriveSalvBadgeStatus(effectiveSalvClaim);
+
+  async function handleClaimSalv() {
+    if (!walletAddress || !effectiveSalvClaim?.epoch) return;
+    setClaiming(true);
+    setClaimError(null);
+    setClaimNotice(null);
+    try {
+      const result = await claimSalv(walletAddress, effectiveSalvClaim.epoch);
+      if (result.outcome === "CLAIMED") {
+        setClaimNotice(`Claimed. Tx ${result.transactionSignature?.slice(0, 12)}…`);
+      }
+      refreshSalvClaim(walletAddress);
+    } catch (err) {
+      setClaimError(err instanceof Error ? err.message : "Claim failed.");
+    } finally {
+      setClaiming(false);
+    }
+  }
 
   return (
     <main className="rewards-page">
@@ -80,11 +134,29 @@ export default function RewardsPage() {
             <strong>{epoch ? (effectiveSummary?.rewardPool ?? 0).toLocaleString() : "—"} <small>simulated</small></strong>
           </div>
           <div className="reward-card">
-            <span>Simulated reward</span>
+            <span>$SALV reward</span>
             <strong>
-              {epoch ? `~${effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "—"}{" "}
-              <small>SIMULATED · not $SALV</small>
+              {salvBadgeStatus === "CLAIMABLE" || salvBadgeStatus === "CLAIMED"
+                ? effectiveSalvClaim!.amountSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                : epoch
+                  ? `~${effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                  : "—"}
             </strong>
+            <span className={`status-badge ${SALV_BADGE_CLASS[salvBadgeStatus]}`}>
+              <i />
+              {salvBadgeStatus}
+            </span>
+            {salvBadgeStatus === "CLAIMABLE" && (
+              <button type="button" className="salvage-bin-cta" onClick={handleClaimSalv} disabled={claiming}>
+                {claiming ? "CLAIMING…" : "CLAIM SALV"}
+              </button>
+            )}
+            {salvBadgeStatus === "CLAIMED" && effectiveSalvClaim?.claim?.claimTransactionSignature && (
+              <small>tx {effectiveSalvClaim.claim.claimTransactionSignature.slice(0, 12)}…</small>
+            )}
+            {(salvBadgeStatus === "NOT LIVE" || salvBadgeStatus === "DEVNET") && epoch && <small>SIMULATED · not $SALV</small>}
+            {claimNotice && <small>{claimNotice}</small>}
+            {claimError && <small className="wallet-form-error">{claimError}</small>}
           </div>
         </div>
       )}
