@@ -24,6 +24,7 @@ export async function createTestDb(): Promise<Db> {
 export async function resetTestDb(db: Db): Promise<void> {
   await db.query(`
     TRUNCATE TABLE
+      reward_claims,
       reward_snapshots,
       points_ledger,
       salvage_actions,
@@ -32,7 +33,10 @@ export async function resetTestDb(db: Db): Promise<void> {
       assets,
       epochs,
       wallets,
-      users
+      users,
+      fee_wallet_events,
+      buyback_dry_runs,
+      token_deployments
     RESTART IDENTITY CASCADE;
   `);
 }

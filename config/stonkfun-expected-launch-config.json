@@ -1,0 +1,14 @@
+{
+  "_comment": "This file is NOT a hardcoded assumption baked into application logic -- it is a reviewable, versioned record of the StonkFun launch configuration that a human actually inspected and approved, last updated on the date below. src/lib/salv/stonkfunAdapter.ts compares this against a fresh live fetch of StonkFun's real configuration immediately before any future real launch transaction, and refuses to proceed (fails closed) if they differ. Update this file only after a human re-reviews StonkFun's current live configuration -- never edit it to make a mismatch go away without that review. Phase 5 does not launch on StonkFun or anywhere else; this file exists so the adapter and its fail-closed check are ready and testable ahead of that decision.",
+  "lastReviewedAt": null,
+  "lastReviewedBy": null,
+  "launchType": "STANDARD",
+  "quoteAsset": "SOL",
+  "poolFeeBps": null,
+  "creatorFeeBps": null,
+  "creatorPayoutWallet": null,
+  "tokenStandard": "spl-token",
+  "curveAllocation": null,
+  "graduationBehavior": "RAYDIUM_LAUNCHLAB_BONDING_CURVE",
+  "claimMechanism": null
+}
