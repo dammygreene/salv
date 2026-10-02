@@ -194,8 +194,8 @@ while connected to Devnet.
 **Status: DONE.** Full-suite validation at the time of this commit:
 `npm run lint` clean, `npx tsc --noEmit` clean, `npm run build` succeeds
 (all routes, including the 6 new $SALV routes, registered), `npx vitest
-run` passing across every test file (counts below). Required cases and
-where they live:
+run` passing across every test file (25 files, 184 tests, as of this
+commit). Required cases and where they live:
 
 - Fixed supply / no hidden allocations: `tokenSpec.test.ts`.
 - Vault balance (allocation/distributed/remaining, cap enforcement):

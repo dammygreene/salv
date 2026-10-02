@@ -41,6 +41,8 @@ import { join } from "path";
 import { Connection, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer } from "@solana/spl-token";
 import { COMMUNITY_ALLOCATION_BASE_UNITS, MARKET_ALLOCATION_BASE_UNITS, TOKEN_DECIMALS, TOTAL_SUPPLY_BASE_UNITS } from "../../src/lib/salv/tokenSpec";
+import { getDb } from "../../src/lib/server/db/client";
+import { recordTokenDeployment } from "../../src/lib/server/repositories/tokenDeploymentRepo";
 
 function loadKeypair(path: string): Keypair {
   const raw = JSON.parse(readFileSync(path, "utf8"));
@@ -128,6 +130,37 @@ async function main() {
   const manifestPath = join(process.cwd(), "deployments", "devnet-salv-manifest.json");
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
   console.log(`\nWrote deployment manifest -> ${manifestPath}`);
+
+  // Also record this deployment as a durable, public audit trail in the
+  // app's own database (src/lib/server/repositories/tokenDeploymentRepo.ts)
+  // -- distinct from the SALV_* env vars (Section 16), which are the
+  // app's *runtime* configuration and can be rotated later without
+  // losing this history. Requires a real DATABASE_URL; skipped (with a
+  // clear warning, not a silent no-op) if unset, rather than writing to
+  // a throwaway local PGlite database that nobody would ever read back.
+  if (process.env.DATABASE_URL?.trim()) {
+    const db = await getDb();
+    await recordTokenDeployment(db, {
+      network: "devnet",
+      mintAddress: manifest.mintAddress,
+      tokenProgram: manifest.tokenProgram,
+      decimals: manifest.decimals,
+      mintAuthority: manifest.mintAuthority,
+      freezeAuthority: manifest.freezeAuthority,
+      rewardVaultAddress: manifest.rewardVaultAddress,
+      distributorAddress: manifest.distributorAddress,
+      marketHoldingAddress: manifest.marketHoldingAddress,
+      notes: manifest.notes,
+    });
+    console.log("Recorded this deployment in the token_deployments table.");
+  } else {
+    console.warn(
+      "DATABASE_URL is not set -- skipped recording this deployment in the token_deployments table. " +
+        "The manifest file above is the only durable record in that case; set DATABASE_URL and re-run " +
+        "(safe: this upserts on (network, mint_address)) to also record it in the app's database."
+    );
+  }
+
   console.log("\nNext steps:");
   console.log("  1. Set these environment variables before running the app:");
   console.log(`     SALV_MINT_ADDRESS=${manifest.mintAddress}`);
