@@ -3,3 +3,9 @@ node_modules/
 *.tsbuildinfo
 .env.local
 .env*.local
+
+# Dev-only file-backed salvage event store (MVP stand-in for a real DB).
+.data/
+
+# Scratch images pulled in during research/design exploration, not app assets.
+image-search/

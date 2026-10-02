@@ -46,7 +46,20 @@ Cyber Chrome Y2K Utility. Think futuristic 2000s consumer hardware and utility s
 
 ## Runnable prototype
 
-The first vertical slice lives in `src/app` and uses Next.js, React, and TypeScript. It includes the responsive SALVAGE machine, wallet connection state, documented scan states, deterministic demo classifications, salvage-bin selection, and a transaction review surface.
+The vertical slice lives in `src/app` and uses Next.js (App Router), React, and TypeScript. It is structured as a real multi-page app rather than a single scrolling marketing page:
+
+- `/` — marketing home: hero machine, how-it-works, proof-of-salvage teaser, CTA into the app.
+- `/scan` — connect a wallet, run the scan sequence, review classified assets, and build a salvage bin.
+- `/watch` — unresolved assets SALVAGE is keeping an eye on.
+- `/rewards` — Proof of Salvage receipts and epoch/score summary.
+- `/history` — a timeline of scans, salvages, watch adds, and reward events.
+- `/token` — the one-screen `$SALV` supply/allocation/policy page.
+
+Session state (wallet connection, scan progress, classifications, salvage bin, reward score, proof events, history) lives in a single React context (`src/lib/app-state.tsx`) so it persists as you navigate between pages, the way a real app would.
+
+### Design system
+
+Visual direction is **Cyber Chrome Y2K Futurism** with a touch of **Frutiger Aero**: polished chrome, translucent icy-blue acrylic, soft rounded/orbital shapes, a dark environment with layered light instead of flat black, and glossy specular highlights on primary controls. Typography is `Unbounded` (display/wordmark), `Plus Jakarta Sans` (body/UI), and `JetBrains Mono` (technical metadata only) — self-hosted via `@fontsource` so the build doesn't depend on reaching Google Fonts at runtime. Tokens, base styles, motion, layout, components, and page-specific styles are split under `src/styles/`.
 
 Install and run it with npm:
 

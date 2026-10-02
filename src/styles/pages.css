@@ -1,0 +1,345 @@
+/* ── home ─────────────────────────────────────────────── */
+.home {
+  gap: clamp(64px, 9vw, 120px);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: clamp(24px, 4vw, 48px);
+  padding-top: clamp(10px, 4vw, 40px);
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 600px;
+}
+
+/* plain, editorial headline — bold and large, no pill blocks,
+   no gimmicks. a small accent rule stands in for ornament. */
+.hero-kicker-bar {
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent-text);
+}
+
+.hero-title {
+  font-size: var(--fs-display);
+  color: var(--text);
+}
+
+.hero-support {
+  font-size: 1.08rem;
+  max-width: 48ch;
+  color: var(--text-secondary);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.hero-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.hero-notice span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 700;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 920px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero-object {
+    order: -1;
+  }
+}
+
+/* ── trust strip (replaces a fabricated client-logo row with a
+   real, true line about the product's actual guarantees) ──── */
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 56px);
+  padding: 22px clamp(18px, 4vw, 32px);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.trust-strip span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.trust-strip span::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+/* ── how it works: comfy.org-style numbered step list ─── */
+.how-it-works {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.how-it-works h2 {
+  max-width: 20ch;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 880px) {
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.how-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px clamp(20px, 3vw, 32px);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.how-card:last-child {
+  border-right: none;
+}
+
+@media (max-width: 880px) {
+  .how-card {
+    border-right: none;
+  }
+}
+
+.how-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--border-strong);
+}
+
+.how-step::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.how-card p {
+  font-size: 0.92rem;
+}
+
+/* ── proof teaser ─────────────────────────────────────── */
+.proof-teaser {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media (max-width: 880px) {
+  .proof-teaser {
+    grid-template-columns: 1fr;
+  }
+}
+
+.proof-teaser-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+}
+
+.proof-teaser-copy p {
+  font-size: 1.05rem;
+}
+
+/* ── closing cta ──────────────────────────────────────── */
+.closing-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+  padding: clamp(48px, 8vw, 90px) 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.closing-cta h2 {
+  font-size: var(--fs-h1);
+  max-width: 16ch;
+}
+
+/* ── 404 ──────────────────────────────────────────────── */
+.not-found-page {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.not-found-page h1 {
+  font-size: var(--fs-display);
+}
+
+.not-found-page p {
+  max-width: 44ch;
+}
+
+/* ── legal ────────────────────────────────────────────── */
+.legal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 70ch;
+}
+
+.legal-body section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legal-body h3 {
+  font-size: 1.1rem;
+}
+
+/* ── scan page ────────────────────────────────────────── */
+.scan-console {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+  padding: clamp(24px, 4vw, 48px);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 880px) {
+  .scan-console {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  .scan-console-controls {
+    align-items: center;
+  }
+}
+
+.scan-console-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.scan-console-controls p {
+  max-width: 46ch;
+}
+
+.wallet-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (max-width: 880px) {
+  .wallet-form {
+    justify-content: center;
+  }
+}
+
+.wallet-input {
+  flex: 1;
+  min-width: 220px;
+  padding: 13px 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.wallet-input::placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+}
+
+.wallet-input:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+  border-color: var(--border-accent);
+}
+
+.wallet-form-note {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.wallet-form-error {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.wallet-picker-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
