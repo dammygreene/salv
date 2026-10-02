@@ -68,13 +68,31 @@ export default function RewardsPage() {
             </strong>
           </div>
           <div className="reward-card">
-            <span>Est. $SALV</span>
+            <span>Your points (this epoch)</span>
+            <strong>{epoch ? (effectiveSummary?.epochPoints ?? 0).toLocaleString() : "—"}</strong>
+          </div>
+          <div className="reward-card">
+            <span>Total network points</span>
+            <strong>{epoch ? (effectiveSummary?.networkPoints ?? 0).toLocaleString() : "—"}</strong>
+          </div>
+          <div className="reward-card">
+            <span>Community reward pool</span>
+            <strong>{epoch ? (effectiveSummary?.rewardPool ?? 0).toLocaleString() : "—"} <small>simulated</small></strong>
+          </div>
+          <div className="reward-card">
+            <span>Simulated reward</span>
             <strong>
-              {epoch ? effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}{" "}
-              <small>simulation</small>
+              {epoch ? `~${effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : "—"}{" "}
+              <small>SIMULATED · not $SALV</small>
             </strong>
           </div>
         </div>
+      )}
+
+      {walletAddress && !epoch && (
+        <p className="rewards-epoch-note">
+          No epoch is currently active, so there is nothing to simulate a reward share against yet.
+        </p>
       )}
 
       {loadError && <p className="wallet-form-error">{loadError}</p>}

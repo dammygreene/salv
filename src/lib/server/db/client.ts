@@ -1,4 +1,5 @@
 import "server-only";
+import fs from "fs";
 import path from "path";
 import type { Pool as PgPool } from "pg";
 import type { PGlite } from "@electric-sql/pglite";
@@ -9,14 +10,27 @@ import { runMigrations } from "./migrate";
  * Picks the real backend at runtime:
  *  - DATABASE_URL set  -> a real Postgres instance via `pg` (Supabase,
  *    Neon, RDS, whatever — anything that speaks Postgres wire protocol).
- *  - DATABASE_URL unset -> an embedded PGlite instance (a real Postgres
- *    engine compiled to WASM, persisted under .data/pglite). This is a
- *    genuine Postgres — the same SQL, constraints, and triggers run
- *    either way — just with zero external infrastructure, which is what
- *    makes this usable in this sandbox and in any plain `npm run dev`.
+ *  - DATABASE_URL unset, NOT production -> an embedded PGlite instance (a
+ *    real Postgres engine compiled to WASM, persisted under
+ *    .data/pglite). This is a genuine Postgres — the same SQL,
+ *    constraints, and triggers run either way — just with zero external
+ *    infrastructure, which is what makes local dev/tests usable with no
+ *    setup.
+ *  - DATABASE_URL unset, production -> throws immediately. Production
+ *    must never silently run on a throwaway embedded database; better to
+ *    fail loudly at startup than to serve real traffic against data that
+ *    vanishes on redeploy.
+ *
+ * "Production" means `NODE_ENV === "production"`, which is what
+ * `next build && next start` set automatically — not `next dev`. Set
+ * `SALVAGE_ALLOW_PGLITE_IN_PRODUCTION=true` only for a throwaway staging
+ * deploy that intentionally has no real database; this is not meant for
+ * normal production use.
  *
  * DATABASE_URL must never be NEXT_PUBLIC_*; this module is `server-only`.
  */
+
+export class DatabaseConfigurationError extends Error {}
 
 let dbPromise: Promise<Db> | null = null;
 
@@ -92,6 +106,10 @@ export function wrapPglite(pglite: PGlite): Db {
   };
 }
 
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
 async function createDb(): Promise<Db> {
   const databaseUrl = process.env.DATABASE_URL?.trim();
 
@@ -100,9 +118,17 @@ async function createDb(): Promise<Db> {
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: databaseUrl, max: 5 });
     db = wrapPgPool(pool);
+  } else if (isProduction() && process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION?.trim() !== "true") {
+    throw new DatabaseConfigurationError(
+      "DATABASE_URL is not set. Production (NODE_ENV=production) must use a real Postgres database — " +
+        "SALVAGE never silently falls back to the embedded PGlite engine in production, since that data " +
+        "does not survive a redeploy. Set DATABASE_URL to a real Postgres connection string, or, only for " +
+        "an intentionally throwaway staging deployment, set SALVAGE_ALLOW_PGLITE_IN_PRODUCTION=true."
+    );
   } else {
     const { PGlite } = await import("@electric-sql/pglite");
     const dataDir = path.join(process.cwd(), ".data", "pglite");
+    fs.mkdirSync(dataDir, { recursive: true });
     const pglite = await PGlite.create(dataDir);
     db = wrapPglite(pglite);
   }
@@ -116,7 +142,14 @@ async function createDb(): Promise<Db> {
  * run once per process. */
 export function getDb(): Promise<Db> {
   if (!dbPromise) {
-    dbPromise = createDb();
+    dbPromise = createDb().catch((err) => {
+      // Don't cache a failed connection attempt forever — if the
+      // misconfiguration gets fixed without a full process restart
+      // (e.g. some PaaS env-var reload paths), the next call should try
+      // again instead of being stuck replaying the same rejection.
+      dbPromise = null;
+      throw err;
+    });
   }
   return dbPromise;
 }

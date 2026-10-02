@@ -1,6 +1,7 @@
 import "server-only";
 import { Db } from "./types";
 import { MIGRATION_0001_INIT } from "./migrations/0001_init";
+import { MIGRATION_0002_REWARD_SNAPSHOTS } from "./migrations/0002_reward_snapshots";
 
 interface Migration {
   name: string;
@@ -9,7 +10,10 @@ interface Migration {
 
 // Add new migrations here, in order. Never edit a migration that has
 // already shipped — add a new one instead.
-const MIGRATIONS: Migration[] = [{ name: "0001_init", sql: MIGRATION_0001_INIT }];
+const MIGRATIONS: Migration[] = [
+  { name: "0001_init", sql: MIGRATION_0001_INIT },
+  { name: "0002_reward_snapshots", sql: MIGRATION_0002_REWARD_SNAPSHOTS },
+];
 
 /** Applies any migration not yet recorded in schema_migrations, in
  * order, inside its own transaction. Safe to call on every process boot:

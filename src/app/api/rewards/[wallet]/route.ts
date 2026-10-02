@@ -6,13 +6,14 @@ import { getDb } from "@/lib/server/db/client";
 import { getActiveEpoch, getEpochTotalPointsAwarded } from "@/lib/server/repositories/epochRepo";
 import { getWalletPointsForEpoch, getWalletStats } from "@/lib/server/repositories/pointsRepo";
 import { ensureWallet } from "@/lib/server/repositories/walletRepo";
-import { simulateEstimatedSalv } from "@/lib/salvage/simulation";
+import { simulateWalletReward } from "@/lib/salvage/rewardSimulator";
 
 /**
  * GET /api/rewards/:wallet — this wallet's lifetime verified stats plus
  * its standing in the currently ACTIVE epoch (if any). `estimatedReward`
- * is always a simulation (see lib/salvage/simulation.ts); no real $SALV
- * is ever distributed or referenced here.
+ * is always a simulation (lib/salvage/rewardSimulator.ts), proportional
+ * to the epoch's own configured `rewardPoolPoints` — never a real $SALV
+ * balance, and nothing here ever moves or allocates a real token.
  */
 export async function GET(_req: NextRequest, context: { params: Promise<{ wallet: string }> }) {
   const { wallet } = await context.params;
@@ -26,11 +27,14 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ wallet
   const activeEpoch = await getActiveEpoch(db);
 
   let epochPoints = 0;
+  let networkPoints = 0;
+  let rewardPool = 0;
   let estimatedReward = 0;
   if (activeEpoch) {
     epochPoints = await getWalletPointsForEpoch(db, walletRecord.id, activeEpoch.id);
-    const epochTotalPoints = await getEpochTotalPointsAwarded(db, activeEpoch.id);
-    estimatedReward = simulateEstimatedSalv(epochPoints, epochTotalPoints);
+    networkPoints = await getEpochTotalPointsAwarded(db, activeEpoch.id);
+    rewardPool = activeEpoch.rewardPoolPoints;
+    estimatedReward = simulateWalletReward(epochPoints, networkPoints, rewardPool);
   }
 
   return NextResponse.json({
@@ -44,6 +48,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ wallet
       ? { number: activeEpoch.number, startsAt: activeEpoch.startsAt, endsAt: activeEpoch.endsAt, status: activeEpoch.status }
       : null,
     epochPoints,
+    networkPoints,
+    rewardPool,
     estimatedReward,
   });
 }

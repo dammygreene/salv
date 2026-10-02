@@ -69,11 +69,15 @@ export interface RewardsSummary {
   actualRecoveryLamports: number;
   currentEpoch: { number: number; startsAt: string; endsAt: string; status: string } | null;
   epochPoints: number;
+  /** Sum of every wallet's points in the current epoch so far. */
+  networkPoints: number;
+  /** The current epoch's configured simulated reward pool. */
+  rewardPool: number;
   estimatedReward: number;
 }
 
 /** This wallet's lifetime verified stats + current-epoch standing.
- * `estimatedReward` is always a simulation — see lib/salvage/simulation.ts. */
+ * `estimatedReward` is always a simulation — see lib/salvage/rewardSimulator.ts. */
 export async function fetchRewardsSummary(wallet: string): Promise<RewardsSummary> {
   const response = await fetch(`/api/rewards/${encodeURIComponent(wallet)}`);
   if (!response.ok) {
@@ -81,3 +85,4 @@ export async function fetchRewardsSummary(wallet: string): Promise<RewardsSummar
   }
   return (await response.json()) as RewardsSummary;
 }
+

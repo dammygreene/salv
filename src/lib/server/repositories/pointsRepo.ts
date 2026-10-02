@@ -97,3 +97,27 @@ export async function getWalletPointsForEpoch(db: Db, walletId: string, epochId:
   );
   return Number(result.rows[0]?.total ?? 0);
 }
+
+export interface WalletEpochPoints {
+  walletId: string;
+  walletAddress: string;
+  points: number;
+}
+
+/** Every wallet that earned at least one point in this epoch, with their
+ * total — the real input to simulateEpochRewards() for a given epoch.
+ * Wallets with zero points in this epoch are not included (they have
+ * nothing to allocate; simulateEpochRewards treats an absent wallet the
+ * same as a zero-point one). */
+export async function listWalletPointsForEpoch(db: Db, epochId: string): Promise<WalletEpochPoints[]> {
+  const result = await db.query<{ wallet_id: string; address: string; total: string }>(
+    `SELECT pl.wallet_id, w.address, SUM(pl.points) AS total
+     FROM points_ledger pl
+     JOIN wallets w ON w.id = pl.wallet_id
+     WHERE pl.epoch_id = $1
+     GROUP BY pl.wallet_id, w.address
+     HAVING SUM(pl.points) > 0`,
+    [epochId]
+  );
+  return result.rows.map((row) => ({ walletId: row.wallet_id, walletAddress: row.address, points: Number(row.total) }));
+}
