@@ -65,9 +65,17 @@ export async function claimSalv(wallet: string, epoch: number): Promise<SalvClai
 export interface SalvVaultStatus {
   configured: boolean;
   network: string | null;
+  mintAddress: string | null;
+  treasuryAddress: string | null;
   allocationSalv: number;
   distributedSalv: number;
   remainingSalv: number;
+  /** Phase 6: CLAIMABLE-but-not-yet-CLAIMED reward_claims rows — a
+   * reservation against the 300M cap, not yet an on-chain transfer. */
+  allocatedToRewardsSalv: number;
+  /** Phase 6: permanently destroyed via a multisig-approved burn.
+   * Never counted as distributed rewards. */
+  burnedSalv: number;
 }
 
 export async function fetchSalvVaultStatus(): Promise<SalvVaultStatus> {

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { useAppState } from "@/lib/app-state";
 import { fetchRewardsSummary, RewardsSummary } from "@/lib/solana/executor/verify";
-import { claimSalv, fetchSalvClaimView, SalvClaimView } from "@/lib/solana/executor/salvClaims";
+import { claimSalv, fetchSalvClaimView, fetchSalvVaultStatus, SalvClaimView, SalvVaultStatus } from "@/lib/solana/executor/salvClaims";
+import { COMMUNITY_ALLOCATION_SALV, TOTAL_SUPPLY_SALV } from "@/lib/salv/tokenSpec";
 
 /** Phase 5 Section 17: a $SALV claim's state is always one of these four
  * — never a bare "simulated" label that could be confused with a real
@@ -33,6 +34,7 @@ export default function RewardsPage() {
   const [summary, setSummary] = useState<RewardsSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [salvClaim, setSalvClaim] = useState<SalvClaimView | null>(null);
+  const [vaultStatus, setVaultStatus] = useState<SalvVaultStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimNotice, setClaimNotice] = useState<string | null>(null);
@@ -41,6 +43,15 @@ export default function RewardsPage() {
     fetchSalvClaimView(wallet)
       .then((view) => setSalvClaim(view))
       .catch(() => setSalvClaim(null)); // $SALV status is supplementary; never block the rest of the page on it
+  }, []);
+
+  useEffect(() => {
+    // The community treasury is a public, wallet-independent figure (it
+    // is the same for every visitor), so it loads once on mount rather
+    // than waiting for a wallet connection.
+    fetchSalvVaultStatus()
+      .then((status) => setVaultStatus(status))
+      .catch(() => setVaultStatus(null)); // supplementary; never block the rest of the page on it
   }, []);
 
   useEffect(() => {
@@ -168,6 +179,54 @@ export default function RewardsPage() {
       )}
 
       {loadError && <p className="wallet-form-error">{loadError}</p>}
+
+      <div className="section-intro section-intro-tight">
+        <h2>Community treasury.</h2>
+        <p>
+          Community treasury: up to {(COMMUNITY_ALLOCATION_SALV / 1_000_000).toLocaleString()}M SALV. Controlled by a
+          3-of-3 team multisig — every rewards payout, giveaway, future incentive, or burn requires all three
+          members to sign. Not permanently locked: it is a team-controlled pool for documented community uses,
+          capped at {(COMMUNITY_ALLOCATION_SALV / 1_000_000).toLocaleString()}M and never exceeded.
+        </p>
+      </div>
+
+      {vaultStatus && (
+        <div className="rewards-grid">
+          <div className="reward-card">
+            <span>Current $SALV supply</span>
+            <strong>{TOTAL_SUPPLY_SALV.toLocaleString()}</strong>
+            <span className={`status-badge ${vaultStatus.configured ? "status-review" : "status-keep"}`}>
+              <i />
+              {vaultStatus.configured ? (vaultStatus.network ?? "DEPLOYED") : "NOT LIVE"}
+            </span>
+          </div>
+          <div className="reward-card">
+            <span>Community treasury cap</span>
+            <strong>{vaultStatus.allocationSalv.toLocaleString()}</strong>
+            <small>hard cap · never exceeded</small>
+          </div>
+          <div className="reward-card">
+            <span>Rewards allocated</span>
+            <strong>{vaultStatus.allocatedToRewardsSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <small>claimable, not yet sent</small>
+          </div>
+          <div className="reward-card">
+            <span>Rewards claimed</span>
+            <strong>{vaultStatus.distributedSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <small>sent on-chain</small>
+          </div>
+          <div className="reward-card">
+            <span>Burned</span>
+            <strong>{vaultStatus.burnedSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <small>permanent · multisig-approved</small>
+          </div>
+          <div className="reward-card">
+            <span>Treasury remaining</span>
+            <strong>{vaultStatus.remainingSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <small>of the 300M cap</small>
+          </div>
+        </div>
+      )}
 
       <div className="section-intro section-intro-tight">
         <h2>Your verified events.</h2>
