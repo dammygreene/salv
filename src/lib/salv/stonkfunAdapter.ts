@@ -19,6 +19,22 @@ export interface StonkFunLaunchConfig {
   curveAllocation: number | null;
   graduationBehavior: string;
   claimMechanism: string | null;
+  /**
+   * Phase 6: the platform's whitelisted `total_locked_amount` (Raydium
+   * LaunchLab vesting). StonkFun's own current standard-launch config is
+   * verified (see config/stonkfun-expected-launch-config.json) to
+   * whitelist only `0` here -- not Raydium's wildcard sentinel
+   * (`u64::MAX`) -- meaning vesting/reserved allocations are explicitly
+   * disabled for StonkFun launches, not merely unconfigured. A non-zero
+   * observed value would mean StonkFun's config changed and must be
+   * re-reviewed before assuming a reserved-allocation launch is
+   * possible; this field alone never implies the $SALV treasury split
+   * can be expressed through a LaunchLab transaction -- see
+   * docs/salv-treasury.md.
+   */
+  vestingTotalLockedAmount: number | null;
+  /** The on-chain PlatformConfig account address this launch would use. */
+  platformConfigAddress: string | null;
 }
 
 export class StonkFunAdapterError extends Error {}
@@ -38,6 +54,8 @@ const COMPARABLE_FIELDS: (keyof StonkFunLaunchConfig)[] = [
   "curveAllocation",
   "graduationBehavior",
   "claimMechanism",
+  "vestingTotalLockedAmount",
+  "platformConfigAddress",
 ];
 
 /**
@@ -83,7 +101,37 @@ export function loadExpectedStonkFunConfig(): StonkFunLaunchConfig {
     curveAllocation: raw.curveAllocation,
     graduationBehavior: raw.graduationBehavior,
     claimMechanism: raw.claimMechanism,
+    vestingTotalLockedAmount: raw.vestingTotalLockedAmount ?? null,
+    platformConfigAddress: raw.platformConfigAddress ?? null,
   };
+}
+
+/**
+ * Phase 6: a $SALV-specific, additional gate on top of
+ * `compareLaunchConfig`'s generic field-by-field comparison. Even if
+ * every field in `COMPARABLE_FIELDS` matched exactly, a real StonkFun/
+ * LaunchLab launch transaction mints its own, brand-new total supply as
+ * part of a single instruction -- it cannot "launch" only a portion of
+ * an already-separately-minted, already-split $SALV supply. This
+ * function makes that structural incompatibility an explicit, testable
+ * refusal rather than something only described in a doc comment: it
+ * always rejects, naming the exact reason, because this codebase has no
+ * supported way to reconcile "$SALV already exists as one 1,000,000,000
+ * fixed-supply mint with 300M already transferred to the treasury" with
+ * "LaunchLab mints the declared total_supply itself." See
+ * docs/salv-treasury.md for the chosen alternative (the 300M/700M split
+ * happens entirely outside of any LaunchLab transaction).
+ */
+export function assertStonkFunLaunchCanRepresentExistingSplitMint(): never {
+  throw new StonkFunAdapterError(
+    "Refusing to build a StonkFun/LaunchLab launch transaction for an already-minted, already-split $SALV supply: " +
+      "Raydium LaunchLab's `initialize` instruction always mints the entire declared total_supply itself as part of " +
+      "one launch transaction (see docs.raydium.io/products/launchlab/platform-config) -- it has no parameter for " +
+      "\"only launch this existing mint's 700,000,000-token market tranche, the other 300,000,000 already live " +
+      "elsewhere.\" $SALV's fixed 1,000,000,000 supply and 300M/700M split are therefore implemented entirely " +
+      "outside of any real StonkFun/LaunchLab transaction (see docs/salv-treasury.md); this function exists so no " +
+      "future code path can silently assume otherwise."
+  );
 }
 
 export type StonkFunConfigFetcher = () => Promise<StonkFunLaunchConfig>;

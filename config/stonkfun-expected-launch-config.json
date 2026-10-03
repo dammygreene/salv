@@ -1,14 +1,18 @@
 {
-  "_comment": "This file is NOT a hardcoded assumption baked into application logic -- it is a reviewable, versioned record of the StonkFun launch configuration that a human actually inspected and approved, last updated on the date below. src/lib/salv/stonkfunAdapter.ts compares this against a fresh live fetch of StonkFun's real configuration immediately before any future real launch transaction, and refuses to proceed (fails closed) if they differ. Update this file only after a human re-reviews StonkFun's current live configuration -- never edit it to make a mismatch go away without that review. Phase 5 does not launch on StonkFun or anywhere else; this file exists so the adapter and its fail-closed check are ready and testable ahead of that decision.",
-  "lastReviewedAt": null,
-  "lastReviewedBy": null,
+  "_comment": "This file is NOT a hardcoded assumption baked into application logic -- it is a reviewable, versioned record of the StonkFun launch configuration that a human actually inspected and approved, last updated on the date below. src/lib/salv/stonkfunAdapter.ts compares this against a fresh live fetch of StonkFun's real configuration immediately before any future real launch transaction, and refuses to proceed (fails closed) if they differ. Update this file only after a human re-reviews StonkFun's current live configuration -- never edit it to make a mismatch go away without that review.",
+  "_phase6ReviewNotes": "Reviewed 2026-10-03 via Raydium's own current docs (docs.raydium.io/user-flows/creating-a-launchlab-token, docs.raydium.io/products/launchlab/platform-config) and on-chain-observed StonkFun launch data (Bitquery's StonkFun API reference page, which lists StonkFun's real platform config addresses and real, currently-launching curve parameters). Two StonkFun platform configs currently exist: 'standard launches' (4E876qZTE9FJMrBzgVtBrSrzz2TLivB5Y5QXPjB4gZL7, Token-2022, no transfer fee) and 'reward launches' (6BwHHDg3u1854jC8PDLXvR4spTcLNaoBxLJNGC4nTESt, Token-2022, 1%-3% transfer fee). $SALV's 'no transfer tax' requirement means the 'standard launches' config is the only one that could ever apply -- this file expects that one. CRITICAL FINDING (see docs/phase-6-status.md for the full writeup): StonkFun's own observed launches always set vesting_param to zero (its PlatformConfig's whitelisted curve shapes use total_locked_amount = 0, which Raydium's own docs note is NOT a wildcard -- it means vesting is explicitly disabled for this platform's launches), and set creator_fee_rate to 0 both pre- and post-graduation (StonkFun keeps the full LP position, choosing neither the burn nor the creator-Fee-Key option Raydium's protocol otherwise offers). This means StonkFun's current, real, standard launch config CANNOT represent a reserved/vested allocation with the $SALV treasury multisig as beneficiary, and grants no creator fee revenue. It also mints the ENTIRE declared total_supply itself as part of one launch transaction -- it has no mechanism to launch only a portion of an already-separately-minted supply. Because of this, $SALV's actual 300M/700M split is implemented entirely outside of any real StonkFun/LaunchLab transaction (see docs/salv-treasury.md); if a real StonkFun launch of the 700,000,000 SALV market tranche is pursued later, expectedCurveAllocation/expectedTotalSupply below would need to equal that 700,000,000-token launch's own parameters, not $SALV's full 1,000,000,000 mint.",
+  "lastReviewedAt": "2026-10-03",
+  "lastReviewedBy": "Phase 6 agent session (web research, not a StonkFun-affiliated or authoritative confirmation -- re-verify against StonkFun's live on-chain PlatformConfig account before any real launch)",
   "launchType": "STANDARD",
   "quoteAsset": "SOL",
   "poolFeeBps": null,
-  "creatorFeeBps": null,
+  "creatorFeeBps": 0,
   "creatorPayoutWallet": null,
-  "tokenStandard": "spl-token",
+  "tokenStandard": "token-2022",
   "curveAllocation": null,
   "graduationBehavior": "RAYDIUM_LAUNCHLAB_BONDING_CURVE",
-  "claimMechanism": null
+  "claimMechanism": null,
+  "vestingTotalLockedAmount": 0,
+  "platformConfigAddress": "4E876qZTE9FJMrBzgVtBrSrzz2TLivB5Y5QXPjB4gZL7",
+  "launchLabProgramId": "LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj"
 }

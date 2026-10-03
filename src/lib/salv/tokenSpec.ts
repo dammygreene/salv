@@ -11,6 +11,27 @@ export const TOKEN_NAME = "SALVAGE";
 export const TOKEN_SYMBOL = "SALV";
 export const TOKEN_DECIMALS = 9;
 
+/**
+ * Phase 6 decision (supersedes Phase 5's "standard SPL Token" choice,
+ * which was based on an outdated assumption about StonkFun's launch
+ * path): the SPL **Token-2022** program, base58-encoded, with zero
+ * extensions enabled (no transfer fee, no permanent delegate, no
+ * transfer hook, no confidential transfers). Verified against
+ * StonkFun's own currently-documented on-chain platform configs (see
+ * docs/token-spec.md's "Token program" section and
+ * docs/phase-6-status.md for citations): StonkFun's standard-launch
+ * platform config (`4E876qZTE9FJMrBzgVtBrSrzz2TLivB5Y5QXPjB4gZL7`) mints
+ * Token-2022 tokens without a transfer fee extension -- not the legacy
+ * SPL Token program. A bare Token-2022 mint with no extensions behaves
+ * identically to a legacy SPL Token mint for every operation this
+ * project performs (mint once, transfer, transferChecked, burnChecked,
+ * multisig authorities); this constant is a plain string (not a
+ * `PublicKey`) so this module stays dependency-free -- callers that
+ * need a `PublicKey` construct one with
+ * `new PublicKey(TOKEN_PROGRAM_ID_BASE58)`.
+ */
+export const TOKEN_PROGRAM_ID_BASE58 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+
 export const TOTAL_SUPPLY_SALV = 1_000_000_000;
 export const MARKET_ALLOCATION_SALV = 700_000_000;
 export const COMMUNITY_ALLOCATION_SALV = 300_000_000;

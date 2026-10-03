@@ -13,9 +13,15 @@ ever disagree, this document is correct and the code has a bug.
 | Chain    | Solana         |
 | Decimals | 9              |
 
-Decimals chosen as 9 to match standard SPL Token convention (same as
-SOL and the observed StonkFun/STONK token — see "Token program"
-below) rather than an arbitrary smaller value.
+Decimals chosen as 9 to match SOL and the most common SPL
+Token/Token-2022 convention. (Phase 6 correction: StonkFun's own
+*observed example LaunchLab launches* commonly use 6 decimals, not 9 —
+see `docs/phase-6-status.md`. This does not change $SALV's own
+decimals, because — see "Token program" below — $SALV's 1B/300M/700M
+split is not implemented via an actual StonkFun/LaunchLab mint
+transaction in this phase; $SALV's own independently-created mint is
+free to use 9 decimals, and changing it now would be a wide, high-risk
+change across already-tested code with no real benefit.)
 
 ## Supply
 
@@ -64,37 +70,55 @@ tested — see `src/lib/salv/vault.ts` and its test suite.
 
 ## Token program
 
-**Decision: standard SPL Token program (`TOKEN_PROGRAM_ID`), not
-Token-2022.**
+**Decision (Phase 6, supersedes Phase 5): SPL Token-2022 program
+(`TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`), with zero extensions
+enabled.**
 
-Rationale (researched before this decision, not assumed):
-- The project's own launch plan (`launch.md`) names StonkFun, subject to
-  verifying its live configuration at launch time, as the preferred
-  venue. StonkFun's own token (STONK) and the documented launch path
-  through Raydium's LaunchLab both use the standard SPL Token program at
-  9 decimals, not Token-2022 — confirmed via public token-explorer data
-  for STONK's own mint and multiple independent write-ups of how
-  LaunchLab-based launches work as of this phase.
-- Token-2022 extensions this project would actually need — none. The
-  product has no requirement for transfer fees, a permanent delegate,
-  freeze-on-transfer, confidential transfers, or transfer hooks. Adding
-  Token-2022 only to get a newer program ID, with zero extensions
-  enabled, would add integration risk (more wallets/explorers/DEXs
-  understand plain SPL Token natively) for no product benefit.
-- Phase 5's explicit instruction is "do not add unnecessary extensions"
-  and "the desired $SALV token should be simple." Plain SPL Token is the
-  simpler, more broadly compatible choice that also matches the
-  observed launch venue's own token.
+Phase 5 originally chose the legacy SPL Token program based on an
+assumption that StonkFun's launch path used it. Phase 6's explicit
+instruction was to re-verify this against StonkFun/Raydium LaunchLab's
+**current** live documentation rather than trust that assumption, and
+the current, verified answer is the opposite of Phase 5's:
+
+- StonkFun currently operates two distinct on-chain platform configs
+  against the Raydium LaunchLab program (`LanMV9sAd7wArD4vJFi2qDdfnVhFxYSUg6eADduJ3uj`):
+  a "standard launches" config
+  (`4E876qZTE9FJMrBzgVtBrSrzz2TLivB5Y5QXPjB4gZL7`) and a "reward
+  launches" config (`6BwHHDg3u1854jC8PDLXvR4spTcLNaoBxLJNGC4nTESt`).
+  **Both mint Token-2022 tokens, not legacy SPL Token.** The "reward
+  launches" config additionally imposes a 1%–3% transfer fee extension;
+  the "standard launches" config does not. See
+  `docs/phase-6-status.md` for the full citation list.
+- $SALV's own requirement is "no transfer tax" (Phase 6 spec), which
+  rules out StonkFun's "reward launches" config regardless of token
+  program. The "standard launches" config is Token-2022 with **no**
+  transfer-fee extension enabled — functionally identical to a plain
+  SPL Token mint for every operation this project performs (create,
+  mint once, transfer, `transferChecked`, `burnChecked`, multisig
+  authorities), just under the newer program id.
+- No Token-2022 extension is enabled: no transfer fee, no permanent
+  delegate, no transfer hook, no confidential transfers. `TOKEN_PROGRAM_ID_BASE58`
+  in `src/lib/salv/tokenSpec.ts` pins the exact program id as a plain
+  string so this module stays dependency-free.
 
 This decision is re-checked, not re-assumed, by the StonkFun adapter
 (`src/lib/salv/stonkfunAdapter.ts`) before any real launch: if a real
 launch transaction is ever prepared and the observed, live StonkFun
 configuration reports a different token standard requirement, the
-adapter fails closed rather than silently proceeding with SPL Token.
+adapter fails closed rather than silently proceeding.
 
-No extensions are added: no transfer tax, no automatic fee, no permanent
-delegate, no freeze mechanics beyond the one authority tracked below,
-no hooks.
+**Important, separately documented limitation (Phase 6 — see
+`docs/salv-treasury.md`):** regardless of token program, a real
+StonkFun/LaunchLab launch transaction mints its own, brand-new
+`total_supply` as part of one instruction, and StonkFun's own current
+launches are observed to always whitelist a vesting lock of exactly
+zero (vesting disabled) with zero creator fee. This means the
+1,000,000,000 / 300M / 700M split described below is **not** expressed
+through any real StonkFun/LaunchLab transaction — it happens at the
+token level, before/outside of any such transaction. A real StonkFun
+listing of the 700,000,000 SALV market tranche, if pursued later, would
+be a separate integration decision, not a mechanism for creating the
+split itself.
 
 ## Authorities (fixed-supply deployment design)
 

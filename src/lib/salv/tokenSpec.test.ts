@@ -8,6 +8,7 @@ import {
   MARKET_ALLOCATION_SALV,
   salvToBaseUnits,
   TOKEN_DECIMALS,
+  TOKEN_PROGRAM_ID_BASE58,
   TOTAL_SUPPLY_BASE_UNITS,
   TOTAL_SUPPLY_SALV,
   TokenSpecError,
@@ -49,5 +50,14 @@ describe("$SALV token spec", () => {
 
   it("TokenSpecError is a real Error subclass (so callers can distinguish it)", () => {
     expect(new TokenSpecError("x")).toBeInstanceOf(Error);
+  });
+
+  it("uses the real Token-2022 program id (verified current StonkFun requirement, Phase 6)", () => {
+    // TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb is the well-known,
+    // unchanging Token-2022 program id -- pinned here as a literal (not
+    // imported from @solana/spl-token) so a typo in tokenSpec.ts's own
+    // pure string constant would fail this test even if the dependency
+    // were ever mocked out.
+    expect(TOKEN_PROGRAM_ID_BASE58).toBe("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
   });
 });
