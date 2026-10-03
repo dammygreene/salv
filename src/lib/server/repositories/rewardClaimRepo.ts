@@ -111,6 +111,20 @@ export async function sumClaimedBaseUnits(db: Db): Promise<bigint> {
   return result.rows[0]?.total ? parseBaseUnits(result.rows[0].total) : 0n;
 }
 
+/**
+ * Sum of every CLAIMABLE reward_claims row (Phase 6: `treasury_allocated_to_rewards`
+ * — amounts a reward snapshot has already promised to a wallet but that
+ * have not yet actually left the vault on-chain). This is a *reservation*
+ * against the treasury, not a distribution: it must be subtracted from
+ * "remaining" (so the treasury can never promise more than it holds),
+ * but it must never be counted as `distributed` (a burn or a future
+ * audit must be able to tell "promised" and "actually sent" apart).
+ */
+export async function sumClaimableBaseUnits(db: Db): Promise<bigint> {
+  const result = await db.query<{ total: string | null }>("SELECT SUM(amount_base_units) AS total FROM reward_claims WHERE status = 'CLAIMABLE'");
+  return result.rows[0]?.total ? parseBaseUnits(result.rows[0].total) : 0n;
+}
+
 export const ALREADY_CLAIMED = "ALREADY_CLAIMED" as const;
 
 /**

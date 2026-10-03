@@ -3,6 +3,7 @@ import { Db } from "./types";
 import { MIGRATION_0001_INIT } from "./migrations/0001_init";
 import { MIGRATION_0002_REWARD_SNAPSHOTS } from "./migrations/0002_reward_snapshots";
 import { MIGRATION_0003_SALV_TOKEN } from "./migrations/0003_salv_token";
+import { MIGRATION_0004_SALV_TREASURY } from "./migrations/0004_salv_treasury";
 
 interface Migration {
   name: string;
@@ -15,6 +16,7 @@ const MIGRATIONS: Migration[] = [
   { name: "0001_init", sql: MIGRATION_0001_INIT },
   { name: "0002_reward_snapshots", sql: MIGRATION_0002_REWARD_SNAPSHOTS },
   { name: "0003_salv_token", sql: MIGRATION_0003_SALV_TOKEN },
+  { name: "0004_salv_treasury", sql: MIGRATION_0004_SALV_TREASURY },
 ];
 
 /** Applies any migration not yet recorded in schema_migrations, in

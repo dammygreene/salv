@@ -4,9 +4,10 @@ import { createTestDb, resetTestDb } from "../server/db/testDb";
 import { activateEpoch, closeEpoch, createEpoch } from "../server/repositories/epochRepo";
 import { createRewardSnapshot } from "../server/repositories/rewardSnapshotRepo";
 import { ensureWallet } from "../server/repositories/walletRepo";
+import { recordTreasuryBurn } from "../server/repositories/treasuryBurnRepo";
 import { attemptClaim, createClaimsForEpochSnapshots } from "./claims";
 import { COMMUNITY_ALLOCATION_BASE_UNITS, COMMUNITY_ALLOCATION_SALV } from "./tokenSpec";
-import { getCommunityVaultStatus } from "./vault";
+import { CommunityVaultError, getCommunityVaultStatus } from "./vault";
 
 describe("getCommunityVaultStatus", () => {
   let db: Db;
@@ -25,6 +26,67 @@ describe("getCommunityVaultStatus", () => {
     expect(status.allocationBaseUnits).toBe(COMMUNITY_ALLOCATION_BASE_UNITS);
     expect(status.distributedBaseUnits).toBe(0n);
     expect(status.remainingBaseUnits).toBe(COMMUNITY_ALLOCATION_BASE_UNITS);
+    expect(status.allocatedToRewardsBaseUnits).toBe(0n);
+    expect(status.burnedBaseUnits).toBe(0n);
+  });
+
+  it("a CLAIMABLE-but-not-yet-claimed snapshot reduces remaining via allocatedToRewards, not distributed", async () => {
+    const epoch = await createEpoch(db, {
+      number: 2,
+      startsAt: new Date().toISOString(),
+      endsAt: new Date(Date.now() + 1000).toISOString(),
+      rewardPoolPoints: 50_000,
+    });
+    await activateEpoch(db, epoch.id);
+    await closeEpoch(db, epoch.id);
+    const wallet = await ensureWallet(db, "WalletVaultPending111111111111111111111111");
+    await createRewardSnapshot(db, { epochId: epoch.id, walletId: wallet.id, points: 1, totalPoints: 1, rewardPool: 50_000, allocatedReward: 50_000 });
+    await createClaimsForEpochSnapshots(db, epoch.id);
+
+    const status = await getCommunityVaultStatus(db);
+    expect(status.distributedSalv).toBe(0); // nothing actually claimed yet
+    expect(status.allocatedToRewardsSalv).toBe(50_000); // but 50,000 is promised/reserved
+    expect(status.remainingSalv).toBe(COMMUNITY_ALLOCATION_SALV - 50_000); // reserved amount is NOT available to re-promise
+    expect(status.burnedSalv).toBe(0);
+  });
+
+  it("a recorded burn reduces remaining and is tracked separately from distributed (never counted as a reward)", async () => {
+    await recordTreasuryBurn(db, {
+      amountBaseUnits: 1_000_000_000n, // 1 SALV in base units
+      reason: "Permanent burn of excess buyback-acquired SALV",
+      transactionSignature: "vaultBurnSig1".padEnd(64, "1"),
+    });
+
+    const status = await getCommunityVaultStatus(db);
+    expect(status.burnedSalv).toBe(1);
+    expect(status.distributedSalv).toBe(0); // a burn is never represented as a distributed reward
+    expect(status.remainingSalv).toBe(COMMUNITY_ALLOCATION_SALV - 1);
+  });
+
+  it("throws CommunityVaultError if distributed + allocated + burned were ever found to exceed the 300M cap", async () => {
+    // Burn almost the entire cap, then allocate a claim on top of it --
+    // simulates a hypothetical accounting bug to prove the invariant
+    // check actually fires rather than silently reporting a negative
+    // "remaining" figure.
+    await recordTreasuryBurn(db, {
+      amountBaseUnits: COMMUNITY_ALLOCATION_BASE_UNITS,
+      reason: "test: simulate an over-cap burn",
+      transactionSignature: "vaultBurnOverCap".padEnd(64, "9"),
+    });
+
+    const epoch = await createEpoch(db, {
+      number: 3,
+      startsAt: new Date().toISOString(),
+      endsAt: new Date(Date.now() + 1000).toISOString(),
+      rewardPoolPoints: 1,
+    });
+    await activateEpoch(db, epoch.id);
+    await closeEpoch(db, epoch.id);
+    const wallet = await ensureWallet(db, "WalletVaultOverCap1111111111111111111111111");
+    await createRewardSnapshot(db, { epochId: epoch.id, walletId: wallet.id, points: 1, totalPoints: 1, rewardPool: 1, allocatedReward: 1 });
+    await createClaimsForEpochSnapshots(db, epoch.id);
+
+    await expect(getCommunityVaultStatus(db)).rejects.toBeInstanceOf(CommunityVaultError);
   });
 
   it("remaining decreases exactly by what is actually CLAIMED, never by what is merely claimable", async () => {

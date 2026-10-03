@@ -12,6 +12,7 @@ import {
   markClaimClaimed,
   markClaimFailed,
   markClaimRetryable,
+  sumClaimableBaseUnits,
   sumClaimedBaseUnits,
 } from "./rewardClaimRepo";
 
@@ -145,6 +146,22 @@ describe("rewardClaimRepo", () => {
 
     await markClaimClaimed(db, claimA.id, "sigSum", "receiptSum");
     expect(await sumClaimedBaseUnits(db)).toBe(1_000n); // only claimA, not the still-CLAIMABLE claimB
+  });
+
+  it("sumClaimableBaseUnits only counts CLAIMABLE rows (Phase 6: treasury_allocated_to_rewards), never CLAIMED or FAILED ones", async () => {
+    const a = await seedSnapshot(db, "ClaimRepoWalletK", 11);
+    const b = await seedSnapshot(db, "ClaimRepoWalletL", 12);
+    const c = await seedSnapshot(db, "ClaimRepoWalletM", 13);
+
+    const claimA = (await createRewardClaim(db, { rewardSnapshotId: a.snapshot.id, walletId: a.wallet.id, epochId: a.epoch.id, amountBaseUnits: 1_000n })).claim;
+    await createRewardClaim(db, { rewardSnapshotId: b.snapshot.id, walletId: b.wallet.id, epochId: b.epoch.id, amountBaseUnits: 2_000n }); // left CLAIMABLE
+    const claimC = (await createRewardClaim(db, { rewardSnapshotId: c.snapshot.id, walletId: c.wallet.id, epochId: c.epoch.id, amountBaseUnits: 4_000n })).claim;
+    await markClaimFailed(db, claimC.id); // FAILED -- must not count either
+
+    expect(await sumClaimableBaseUnits(db)).toBe(3_000n); // claimA (still CLAIMABLE) + claimB, not claimC (FAILED)
+
+    await markClaimClaimed(db, claimA.id, "sigClaimable", "receiptClaimable");
+    expect(await sumClaimableBaseUnits(db)).toBe(2_000n); // claimA moved to CLAIMED, only claimB remains CLAIMABLE
   });
 
   it("listClaimsForWallet returns only that wallet's claims, most recent first", async () => {

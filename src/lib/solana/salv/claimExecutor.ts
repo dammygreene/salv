@@ -11,7 +11,7 @@ import {
   createAssociatedTokenAccountIdempotentInstruction,
   createTransferCheckedInstruction,
   getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import { ClaimExecutionResult, ClaimExecutor } from "@/lib/salv/claims";
 import { deriveClaimReceiptAddress, deriveClaimReceiptSeed } from "./claimReceipt";
@@ -37,12 +37,23 @@ import { deriveClaimReceiptAddress, deriveClaimReceiptSeed } from "./claimReceip
  *     Vault's token account to the claiming wallet's associated token
  *     account (created idempotently if it doesn't exist yet).
  *
- * Devnet simplification, documented honestly: the vault's token account
- * is owned directly by the distributor keypair (a single hot wallet),
- * not by a dedicated on-chain program or a multisig. This is acceptable
- * for a Devnet rehearsal of the mechanism; launch.md's "use multisig for
- * administrative treasury controls when possible" should be revisited
- * before any mainnet deployment of this vault design.
+ * Role separation (Phase 6 — see docs/salv-treasury.md): the account
+ * this function spends from (`rewardVaultTokenAccount`) is the
+ * **operational Reward Distribution Vault**, not the community
+ * treasury. It is intentionally a plain distributor-controlled token
+ * account (a "hot wallet" in the sense that one keypair can sign for
+ * it) because it must be able to pay out many small, automatic,
+ * per-wallet claims without requiring a 3-of-3 multisig signature on
+ * every single claim. It holds only whatever amount the 3-of-3
+ * treasury multisig has explicitly approved moving into it (a
+ * "funding transfer" — see `src/lib/solana/salv/treasuryProposals.ts`)
+ * — it never holds the full 300M community allocation at once, and the
+ * web app has no code path that can move funds *into* it on its own
+ * authority. The real community treasury (holding whatever portion of
+ * the 300M has not yet been funded into this vault) is a separate
+ * token account whose owner is a 3-of-3 SPL Token `Multisig` account
+ * (see `scripts/salv/create-devnet-multisig.ts`), which this function
+ * never touches.
  *
  * This function requires a real, reachable Solana RPC endpoint. It
  * cannot be exercised in this sandbox (no outbound network access to any
@@ -75,7 +86,7 @@ export function createOnChainClaimExecutor(options: {
       walletAddress
     );
 
-    const destinationAta = await getAssociatedTokenAddress(mint, walletPubkey);
+    const destinationAta = await getAssociatedTokenAddress(mint, walletPubkey, false, TOKEN_2022_PROGRAM_ID);
 
     const rentExemptMinimum = await options.connection.getMinimumBalanceForRentExemption(0);
 
@@ -94,7 +105,13 @@ export function createOnChainClaimExecutor(options: {
       }),
       // (2) Create the destination ATA if it doesn't exist yet (no-op
       // otherwise).
-      createAssociatedTokenAccountIdempotentInstruction(options.distributor.publicKey, destinationAta, walletPubkey, mint),
+      createAssociatedTokenAccountIdempotentInstruction(
+        options.distributor.publicKey,
+        destinationAta,
+        walletPubkey,
+        mint,
+        TOKEN_2022_PROGRAM_ID
+      ),
       // (3) The actual transfer out of the vault. transferChecked (not
       // plain transfer) so a decimals mismatch between what this caller
       // believes and what the mint actually has fails loudly instead of
@@ -107,7 +124,7 @@ export function createOnChainClaimExecutor(options: {
         amountBaseUnits,
         options.decimals,
         [],
-        TOKEN_PROGRAM_ID
+        TOKEN_2022_PROGRAM_ID
       )
     );
 
