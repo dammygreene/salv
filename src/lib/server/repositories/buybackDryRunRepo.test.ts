@@ -58,8 +58,15 @@ describe("buybackDryRunRepo", () => {
   });
 
   it("listBuybackDryRuns returns most-recent-first and respects the limit", async () => {
+    // A small delay between inserts guarantees a strictly increasing
+    // created_at for each row (same pattern used in
+    // tokenDeploymentRepo.test.ts's ordering test) -- without it,
+    // several inserts issued back-to-back in the same tick can land on
+    // an identical timestamp, making "most recent first" ambiguous and
+    // this assertion flaky under a fast/WASM-backed test database.
     for (let i = 0; i < 5; i++) {
       await recordBuybackDryRun(db, baseInput({ feeBalance: i }));
+      await new Promise((resolve) => setTimeout(resolve, 5));
     }
     const limited = await listBuybackDryRuns(db, 3);
     expect(limited).toHaveLength(3);

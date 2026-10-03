@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getDistributorSecretKey, getSalvConfig } from "./config";
 
-const SALV_VARS = ["SALV_MINT_ADDRESS", "SALV_REWARD_VAULT", "SALV_DISTRIBUTOR", "SOLANA_RPC_URL", "SALV_FEE_WALLET", "SALV_NETWORK"];
+const SALV_VARS = [
+  "SALV_MINT_ADDRESS",
+  "SALV_REWARD_VAULT",
+  "SALV_DISTRIBUTOR",
+  "SOLANA_RPC_URL",
+  "SALV_FEE_WALLET",
+  "SALV_NETWORK",
+  "SALV_TREASURY_ADDRESS",
+];
 
 function clearSalvEnv() {
   for (const name of SALV_VARS) delete process.env[name];
@@ -32,6 +40,7 @@ describe("getSalvConfig", () => {
     if (config.configured) {
       expect(config.network).toBe("devnet");
       expect(config.feeWalletAddress).toBeNull();
+      expect(config.treasuryAddress).toBeNull();
     }
   });
 
@@ -43,12 +52,14 @@ describe("getSalvConfig", () => {
     process.env.SOLANA_RPC_URL = "https://api.devnet.solana.com";
     process.env.SALV_NETWORK = "testnet";
     process.env.SALV_FEE_WALLET = "FeeWallet111111111111111111111111111111111";
+    process.env.SALV_TREASURY_ADDRESS = "Treasury11111111111111111111111111111111111";
 
     const config = getSalvConfig();
     expect(config.configured).toBe(true);
     if (config.configured) {
       expect(config.network).toBe("testnet");
       expect(config.feeWalletAddress).toBe("FeeWallet111111111111111111111111111111111");
+      expect(config.treasuryAddress).toBe("Treasury11111111111111111111111111111111111");
     }
   });
 });

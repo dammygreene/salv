@@ -25,6 +25,13 @@ export interface SalvConfig {
   rewardVaultAddress: string;
   distributorAddress: string;
   feeWalletAddress: string | null;
+  /** Phase 6: the community treasury's own token account address
+   * (owned by the 3-of-3 multisig -- see src/lib/salv/multisig.ts),
+   * distinct from rewardVaultAddress. Public information (an on-chain
+   * address), safe to display, but the app never has any authority to
+   * move funds out of it. Null if not yet set (e.g. a Phase 5-style
+   * deployment recorded before this field existed). */
+  treasuryAddress: string | null;
 }
 
 export interface SalvNotConfigured {
@@ -54,6 +61,7 @@ export function getSalvConfig(): SalvConfig | SalvNotConfigured {
     rewardVaultAddress: process.env.SALV_REWARD_VAULT!.trim(),
     distributorAddress: process.env.SALV_DISTRIBUTOR!.trim(),
     feeWalletAddress: process.env.SALV_FEE_WALLET?.trim() || null,
+    treasuryAddress: process.env.SALV_TREASURY_ADDRESS?.trim() || null,
   };
 }
 
