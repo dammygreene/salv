@@ -15,6 +15,13 @@ export interface TokenDeploymentRecord {
   rewardVaultAddress: string;
   distributorAddress: string;
   marketHoldingAddress: string;
+  /** Phase 6: the community treasury's own token account address,
+   * owned by the 3-of-3 multisig -- distinct from rewardVaultAddress
+   * (the smaller, distributor-operated, periodically-funded operational
+   * account the real claim executor spends from). Nullable only for
+   * backward compatibility with Phase 5 manifests recorded before this
+   * column existed; every Phase 6+ deployment must set it. */
+  treasuryAddress: string | null;
   deployedAt: string;
   notes: string | null;
 }
@@ -30,6 +37,7 @@ interface TokenDeploymentRow {
   reward_vault_address: string;
   distributor_address: string;
   market_holding_address: string;
+  treasury_address: string | null;
   deployed_at: string;
   notes: string | null;
 }
@@ -46,6 +54,7 @@ function mapRow(row: TokenDeploymentRow): TokenDeploymentRecord {
     rewardVaultAddress: row.reward_vault_address,
     distributorAddress: row.distributor_address,
     marketHoldingAddress: row.market_holding_address,
+    treasuryAddress: row.treasury_address,
     deployedAt: row.deployed_at,
     notes: row.notes,
   };
@@ -61,6 +70,7 @@ export interface RecordTokenDeploymentInput {
   rewardVaultAddress: string;
   distributorAddress: string;
   marketHoldingAddress: string;
+  treasuryAddress?: string | null;
   notes?: string | null;
 }
 
@@ -75,11 +85,12 @@ export interface RecordTokenDeploymentInput {
 export async function recordTokenDeployment(db: Db, input: RecordTokenDeploymentInput): Promise<TokenDeploymentRecord> {
   const result = await db.query<TokenDeploymentRow>(
     `INSERT INTO token_deployments
-       (network, mint_address, token_program, decimals, mint_authority, freeze_authority, reward_vault_address, distributor_address, market_holding_address, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (network, mint_address, token_program, decimals, mint_authority, freeze_authority, reward_vault_address, distributor_address, market_holding_address, treasury_address, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      ON CONFLICT (network, mint_address) DO UPDATE SET
        mint_authority = EXCLUDED.mint_authority,
        freeze_authority = EXCLUDED.freeze_authority,
+       treasury_address = EXCLUDED.treasury_address,
        notes = EXCLUDED.notes
      RETURNING *`,
     [
@@ -92,6 +103,7 @@ export async function recordTokenDeployment(db: Db, input: RecordTokenDeployment
       input.rewardVaultAddress,
       input.distributorAddress,
       input.marketHoldingAddress,
+      input.treasuryAddress ?? null,
       input.notes ?? null,
     ]
   );

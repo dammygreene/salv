@@ -37,6 +37,17 @@ describe("tokenDeploymentRepo", () => {
     expect(record.rewardVaultAddress).toBe("Vault1111111111111111111111111111111111111");
   });
 
+  it("records a Phase 6 treasuryAddress distinct from the reward vault address", async () => {
+    const record = await recordTokenDeployment(db, baseInput({ treasuryAddress: "Treasury11111111111111111111111111111111111" }));
+    expect(record.treasuryAddress).toBe("Treasury11111111111111111111111111111111111");
+    expect(record.treasuryAddress).not.toBe(record.rewardVaultAddress);
+  });
+
+  it("treasuryAddress defaults to null for backward compatibility with pre-Phase-6 manifests", async () => {
+    const record = await recordTokenDeployment(db, baseInput());
+    expect(record.treasuryAddress).toBeNull();
+  });
+
   it("records revoked authorities as null, never as an empty string or placeholder", async () => {
     const record = await recordTokenDeployment(db, baseInput({ mintAuthority: null, freezeAuthority: null }));
     expect(record.mintAuthority).toBeNull();
