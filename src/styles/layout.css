@@ -169,6 +169,22 @@
   font-weight: 700;
 }
 
+.nav-official-x {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  transition: color var(--t-base) var(--ease);
+}
+
+.nav-official-x:hover {
+  color: var(--text);
+}
+
 .nav-wallet {
   display: flex;
   align-items: center;
@@ -199,10 +215,13 @@
 .nav-burger {
   display: none;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
   background: none;
   border: none;
   padding: 10px;
+  cursor: pointer;
 }
 
 .nav-burger span {
@@ -210,6 +229,20 @@
   height: 2px;
   background: var(--text);
   border-radius: 2px;
+  transform-origin: center;
+  transition: transform var(--t-base) var(--ease-spring), opacity var(--t-fast) var(--ease);
+}
+
+.nav-burger.is-open {
+  gap: 0;
+}
+
+.nav-burger.is-open span:first-child {
+  transform: translateY(1px) rotate(45deg);
+}
+
+.nav-burger.is-open span:last-child {
+  transform: translateY(-1px) rotate(-45deg);
 }
 
 .nav-sheet {
@@ -222,6 +255,7 @@
   }
   .nav-burger {
     display: flex;
+    margin-left: auto;
   }
   .nav-sheet {
     display: flex;
@@ -366,8 +400,13 @@ main {
 
 @media (max-width: 720px) {
   .site-footer {
-    grid-template-columns: 1fr;
-    gap: 28px;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 24px;
+  }
+
+  .site-footer-brand,
+  .site-footer-note {
+    grid-column: 1 / -1;
   }
 }
 
@@ -417,6 +456,12 @@ main {
 
 .site-footer-col a:hover {
   color: var(--text);
+}
+
+.site-footer-x {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .site-footer-note {

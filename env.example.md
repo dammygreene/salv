@@ -18,6 +18,7 @@ Rename the actual file to `.env.example` in the project.
   `mainnet-beta`.
 - NEXT_PUBLIC_APP_URL=
   Legacy fallback for metadata/share links when `NEXT_PUBLIC_SITE_URL` is unset.
+
 - NEXT_PUBLIC_ENV=development
 
 ## Solana

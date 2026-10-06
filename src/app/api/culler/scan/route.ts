@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     recordError = err instanceof Error ? err.message : "Could not record this scan in the reward ledger.";
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     solanaWallet,
     robinhoodWallet,
     scan: { solana: solanaScan, robinhood: robinhoodScan },
@@ -162,6 +162,14 @@ export async function POST(req: NextRequest) {
     ...(recordError ? { recordError } : {}),
     scanId,
   });
+  response.cookies.set("culler_wallet", solanaWallet, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
+  return response;
 }
 
 function mapClaimViewStatus(status: ClaimViewStatus): RewardLedgerStatus {

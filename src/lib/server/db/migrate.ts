@@ -6,6 +6,7 @@ import { MIGRATION_0003_SALV_TOKEN } from "./migrations/0003_salv_token";
 import { MIGRATION_0004_SALV_TREASURY } from "./migrations/0004_salv_treasury";
 import { MIGRATION_0005_REWARD_LEDGER } from "./migrations/0005_reward_ledger";
 import { MIGRATION_0006_COMBINED_REWARD_SUBMISSION } from "./migrations/0006_combined_reward_submission";
+import { MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD } from "./migrations/0008_remove_x_identity_leaderboard";
 
 interface Migration {
   name: string;
@@ -21,6 +22,7 @@ const MIGRATIONS: Migration[] = [
   { name: "0004_salv_treasury", sql: MIGRATION_0004_SALV_TREASURY },
   { name: "0005_reward_ledger", sql: MIGRATION_0005_REWARD_LEDGER },
   { name: "0006_combined_reward_submission", sql: MIGRATION_0006_COMBINED_REWARD_SUBMISSION },
+  { name: "0008_remove_x_identity_leaderboard", sql: MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD },
 ];
 
 /** Applies any migration not yet recorded in schema_migrations, in

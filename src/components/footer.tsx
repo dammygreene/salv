@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CullerLogo } from "./culler-logo";
+import { OfficialXLink } from "./official-x-link";
 
 export function SiteFooter() {
   return (
@@ -23,6 +24,7 @@ export function SiteFooter() {
         <span className="site-footer-col-title">Legal</span>
         <Link href="/legal/privacy">Privacy</Link>
         <Link href="/legal/terms">Terms</Link>
+        <OfficialXLink className="site-footer-x" />
       </nav>
 
       <p className="site-footer-note">

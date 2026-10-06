@@ -4,12 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CullerLogo } from "./culler-logo";
+import { OfficialXLink } from "./official-x-link";
 
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/scan", label: "Scan" },
   { href: "/watch", label: "Watch" },
   { href: "/rewards", label: "Rewards" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/token", label: "$CULLER" },
 ];
 
@@ -67,8 +69,10 @@ export function NavCapsule() {
           })}
         </nav>
 
+        <OfficialXLink className="nav-official-x" />
+
         <button
-          className="nav-burger"
+          className={`nav-burger ${open ? "is-open" : ""}`}
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle navigation"
           aria-controls="mobile-navigation"

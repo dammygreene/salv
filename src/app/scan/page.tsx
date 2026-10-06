@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { CullMachine } from "@/components/cull-machine";
 import { StatModule } from "@/components/stat-module";
@@ -56,6 +56,17 @@ export default function ScanPage() {
   const validation = validateCombinedWalletSubmission({ solanaWallet: addressInput, robinhoodWallet: robinhoodInput });
   const hasWallet = Boolean(walletAddress);
 
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("culler-last-ledger-result");
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as LedgerScanResult;
+      window.setTimeout(() => setLedgerResult(parsed), 0);
+    } catch {
+      window.sessionStorage.removeItem("culler-last-ledger-result");
+    }
+  }, []);
+
   // One form, one "Scan wallet" click performs TWO independent things:
   // (1) the existing live, read-only Solana recovery scan (unchanged,
   // via `startScan`, Solana-only, drives the asset grid below), and
@@ -87,6 +98,7 @@ export default function ScanPage() {
         return;
       }
       setLedgerResult(data);
+      window.sessionStorage.setItem("culler-last-ledger-result", JSON.stringify(data));
     } catch {
       setLedgerError("Could not reach the reward ledger. Try again shortly.");
     } finally {

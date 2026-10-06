@@ -8,7 +8,6 @@ export type CullerShareData = {
   walletAddress?: string;
   epochId?: number | null;
   verified: boolean;
-  xHandle?: string;
   siteUrl?: string;
 };
 
@@ -41,9 +40,8 @@ export function hasCullerAllocation(value: string): boolean {
 }
 
 export function buildCullerPostText(data: CullerShareData): string {
-  const handle = data.xHandle ? ` @${data.xHandle.replace(/^@/, "")}` : "";
   return [
-    `Just checked my wallet with CULLER${handle}.`,
+    "Just checked my wallet with CULLER.",
     "",
     `Found an allocation of +${formatCullerAllocation(data.allocation)} $CULLER.`,
     "",

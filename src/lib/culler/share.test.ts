@@ -42,4 +42,10 @@ describe("Culler share data", () => {
     expect(card).toContain("/brand/culler-logo-on-dark.svg");
     expect(card).toContain("cullerlabs.xyz");
   });
+
+  it("renders the shortened wallet without an X identity", () => {
+    const card = buildCullerShareCardSvg({ allocation: "128400", walletAddress: "7xK2abcdefghijklmnopqrstuvwxyzmP9Q", verified: true });
+    expect(card).toContain("7xK2...mP9Q");
+    expect(card).not.toContain("@undefined");
+  });
 });

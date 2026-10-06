@@ -1047,6 +1047,115 @@
   color: var(--text-muted);
 }
 
+.leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+
+.leaderboard-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+}
+
+.leaderboard-heading h2 {
+  margin-top: 8px;
+}
+
+.leaderboard-heading p {
+  max-width: 34ch;
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 8px;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+}
+
+.leaderboard-row:nth-child(-n + 3) {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.leaderboard-row.is-current {
+  border-color: var(--border-accent);
+  background: var(--accent-soft);
+}
+
+.leaderboard-rank {
+  color: var(--accent-text);
+}
+
+.leaderboard-user {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.leaderboard-allocation {
+  color: var(--ok);
+  white-space: nowrap;
+}
+
+.leaderboard-empty {
+  padding: 30px 0;
+  color: var(--text-secondary);
+}
+
+.leaderboard-current {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.leaderboard-current strong:last-child {
+  color: var(--ok);
+}
+
+@media (max-width: 700px) {
+  .leaderboard-heading {
+    display: grid;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .leaderboard-allocation {
+    grid-column: 2;
+  }
+
+  .leaderboard-current {
+    grid-template-columns: auto auto;
+  }
+
+  .leaderboard-current span:nth-of-type(2),
+  .leaderboard-current strong:last-child {
+    grid-column: 2;
+  }
+}
+
 .reward-card {
   display: flex;
   flex-direction: column;
