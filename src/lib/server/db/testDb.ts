@@ -38,7 +38,8 @@ export async function resetTestDb(db: Db): Promise<void> {
       buyback_dry_runs,
       token_deployments,
       treasury_burns,
-      treasury_proposals
+      treasury_proposals,
+      reward_ledger_entries
     RESTART IDENTITY CASCADE;
   `);
 }
