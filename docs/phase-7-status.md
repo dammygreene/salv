@@ -7,6 +7,23 @@ occurred; no new secrets were introduced. See `docs/salv-architecture.md`
 §15 for the module map and `docs/salv-reward-ledger.md` for the full
 ledger design, schema, and rationale.
 
+> **Superseded by Phase 8 for the wallet submission model.** Everything
+> below describes Phase 7's original "paste any Solana **or** EVM
+> address" model, which has since been refined. See
+> `docs/salv-reward-ledger.md` and `docs/salv-architecture.md` §16 for
+> the current behavior. In short: **every SALV reward submission
+> requires a Solana wallet. Robinhood is optional and can be attached to
+> the same submission. Submitting both addresses performs one scan and
+> produces one reward allocation. The Solana wallet is the primary reward
+> identity.** Phase 7's single `{ wallet }` request shape, its
+> `network`-keyed ledger identity (`wallet_address, network, epoch`), and
+> its `NOT_APPLICABLE` status value have all been replaced — a standalone
+> EVM/Robinhood-only submission, which Phase 7 allowed, is now always
+> rejected as a validation error. If Robinhood scanning is not yet
+> available (it is not), the address is stored as an optional linked
+> address but does not create a second reward — Robinhood asset scanning
+> does not work today and this document does not claim otherwise.
+
 ## 1. What changed
 
 - **No more "Connect Wallet."** `/scan` (the real, read-only SPL

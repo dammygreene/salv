@@ -351,9 +351,9 @@ Dev-gated (same `x-dev-admin-secret` convention as the existing
   reward allocation ledger as CSV. Same dev-admin gate; read-only. See
   §15 and `docs/salv-reward-ledger.md`.
 
-Public, no wallet connection required (Phase 7, new):
-- `POST /api/salv/scan` — paste-address scan + reward-ledger record. See
-  §15.
+Public, no wallet connection required (Phase 7, refined in Phase 8):
+- `POST /api/salv/scan` — combined Solana(required)+Robinhood(optional)
+  scan + reward-ledger record. See §15/§16.
 
 **No route in either list can sign or submit a treasury-moving
 transaction.** The only route that moves real tokens at all is the claim
@@ -380,49 +380,15 @@ minimally) renders:
   identity beyond public addresses, and no other sensitive operational
   configuration.
 
-## 15. No-wallet-connect scan + reward ledger (Phase 7)
+## 15. No-wallet-connect scan + reward ledger (Phase 7, refined in Phase 8)
 
 Phase 7 removed wallet-adapter *connection* from the primary user flow
 entirely. Users never connect Phantom/Solflare/Backpack/etc. to preview a
 wallet, scan it, or see $SALV standing — they paste a public address.
-Full design, CSV schema, and privacy rationale: `docs/salv-reward-ledger.md`.
-Summary:
+Phase 8 (§16) then refined *which* addresses that paste flow accepts and
+how they relate to each other; this section describes the parts that are
+unchanged since Phase 7.
 
-- **Input**: a pasted address only, classified as `solana` or `evm` by
-  `src/lib/walletAddress.ts` (`detectWalletAddress`) — reuses the
-  existing, already-tested `isValidSolanaAddress`; adds a new
-  `isValidEvmAddress` (`0x` + 40 hex chars, the same shape used by
-  Robinhood Wallet and every standard EVM chain). Garbage, empty, and
-  oversized (>128 char) input is rejected before any further processing.
-- **`POST /api/salv/scan`** (`src/app/api/salv/scan/route.ts`): the one
-  endpoint behind both the `/scan` demo-recovery flow's "scan a wallet"
-  step and the `/rewards` page's reward lookup. For a Solana address it
-  (a) runs the real, existing read-only RPC scan (`scanWallet()`,
-  unchanged from Phase 1-6) and (b) independently computes the
-  authoritative $SALV allocation via `getClaimView()` — the same
-  reward-snapshot/claim system `/api/salv/claims/:wallet` already uses —
-  never from the live scan or from anything the client sent. For an EVM
-  address, the live scan and epoch lookup are both skipped (that system
-  is Solana-only); the wallet is still recorded with `NOT_APPLICABLE`.
-  The response keeps three signals explicitly separate so none of them
-  can be mistaken for the others: `scan.{attempted,succeeded}` (live RPC
-  outcome), `salvAllocated`/`status`/`epochId` (authoritative reward
-  figure), `csvRecorded` (whether the ledger write succeeded).
-- **Reward ledger** (`reward_ledger_entries` table, migration `0005`,
-  `src/lib/server/repositories/rewardLedgerRepo.ts`): one row per
-  `(wallet_address, network, epoch)`. A rescan of the same wallet+epoch
-  **updates** that row (`INSERT ... ON CONFLICT ... DO UPDATE`); a new
-  epoch for the same wallet creates a new row. It is a plain Postgres
-  table in the same database as every other repository in this app — not
-  Vercel Blob (never configured in this project) and never a write to
-  the local filesystem. See `docs/salv-reward-ledger.md` for the full
-  storage-choice rationale.
-- **`GET /api/dev/salv/rewards/export`**: serializes the ledger table to
-  CSV (`wallet_address,network,salv_allocated,epoch_id,scanned_at,status`),
-  gated by the same `assertDevAuthorized`/`DEV_ADMIN_SECRET` convention
-  as every other dev-admin route in §13. Never public, read-only, and
-  structurally incapable of exposing a secret (the table itself has no
-  key/seed/signature/RPC-credential columns).
 - **Signing is untouched, just relocated.** Actually executing a
   recovery transaction still genuinely requires a real signature from
   the wallet that holds the funds — that has not changed and cannot
@@ -433,3 +399,72 @@ Summary:
   additionally gated on the connected extension's public key matching
   the address currently being previewed, since `walletAddress` can now
   be set independently of any extension connection.
+- `GET /api/dev/salv/rewards/export`: serializes the ledger table to CSV,
+  gated by the same `assertDevAuthorized`/`DEV_ADMIN_SECRET` convention
+  as every other dev-admin route in §13. Never public, read-only, and
+  structurally incapable of exposing a secret (the table itself has no
+  key/seed/signature/RPC-credential columns). Current CSV column order:
+  see §16.
+
+## 16. Solana-primary combined Solana+Robinhood submission (Phase 8)
+
+**SALV is a Solana token: every SALV reward submission requires a Solana
+wallet.** Robinhood is optional and can be attached to the same
+submission. Submitting both addresses performs one scan and produces one
+reward allocation — the Solana wallet is the primary (and only) reward
+identity; Robinhood is never a second identity and never a second
+allocation. Full design, CSV schema, replacement-policy rationale, and
+status enum: `docs/salv-reward-ledger.md`. Summary:
+
+- **Input**: `validateCombinedWalletSubmission()` in
+  `src/lib/walletAddress.ts` — the single function both
+  `POST /api/salv/scan` and both UI pages (`/scan`, `/rewards`) call, so
+  they can never disagree about what a valid submission looks like.
+  Solana is required and validated with the existing, unchanged
+  `isValidSolanaAddress`; Robinhood is optional, but if present at all
+  must pass `isValidEvmAddress` (`0x` + 40 hex chars — the same shape
+  used by Robinhood Wallet and every standard EVM chain). A Robinhood
+  address submitted with **no** Solana address is always rejected — there
+  is no code path that can produce a "Robinhood only" success. Both
+  fields are trimmed and length-capped (128 chars) before validation.
+- **`POST /api/salv/scan`** (`src/app/api/salv/scan/route.ts`): takes
+  `{ solanaWallet, robinhoodWallet? }` (replaces Phase 7's `{ wallet }`
+  shape entirely — no backward-compat shim, since there are no external
+  callers). It (a) always runs the real, existing read-only Solana RPC
+  scan (`scanWallet()`, unchanged from Phase 1-6) against the Solana
+  wallet, (b) if a Robinhood wallet was submitted, records it as a linked
+  wallet (bookkeeping only, via `ensureWallet`) and marks its scan state
+  as `NOT_IMPLEMENTED` — **never fakes** a Robinhood scan result — (c)
+  independently computes the authoritative $SALV allocation via
+  `getClaimView()` — the same reward-snapshot/claim system
+  `/api/salv/claims/:wallet` already uses — computed **solely from the
+  Solana wallet**, never from Robinhood and never from anything the
+  client sent, and (d) upserts exactly **one** ledger row keyed on
+  `(solanaWallet, epoch)`. The response keeps scan/reward/record signals
+  explicitly separate: `scan.{solana,robinhood}` (independent scan
+  outcomes), `reward.{salvAllocated,status,epochId}` (the one
+  authoritative figure), `csvRecorded` (whether the ledger write
+  succeeded).
+- **Reward ledger** (`reward_ledger_entries` table, altered in place by
+  migration `0006` on top of Phase 7's `0005` — never a duplicate table,
+  following the repo's existing precedent of altering earlier tables in
+  later migrations (`0002`, `0004`);
+  `src/lib/server/repositories/rewardLedgerRepo.ts`): one row per
+  `(solana_wallet, epoch)`. Robinhood is a plain nullable column on that
+  row, never a uniqueness key. **Robinhood replacement policy**: the
+  latest submitted Robinhood address (or its absence) fully replaces
+  whatever was linked before for that Solana wallet + epoch on every
+  upsert — never an additive merge, never two competing Robinhood links
+  for one Solana wallet + epoch. A rescan of the same Solana wallet+epoch
+  **updates** that row (`INSERT ... ON CONFLICT (solana_wallet,
+  epoch_key) DO UPDATE`); a new epoch for the same Solana wallet creates
+  a new row. Still a plain Postgres table in the same database as every
+  other repository in this app — not Vercel Blob (never configured in
+  this project) and never a write to the local filesystem.
+- **CSV column order** (`GET /api/dev/salv/rewards/export`):
+  `solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status`
+  — `robinhood_wallet` is blank when none is linked, never a placeholder.
+- **Robinhood asset scanning is NOT implemented.** The address is stored
+  as an optional linked address but does not create a second reward, and
+  the UI/API never claim it works — every response marks it explicitly
+  as `NOT_IMPLEMENTED` (submitted) or `NOT_LINKED` (not submitted).
