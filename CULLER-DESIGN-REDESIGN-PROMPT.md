@@ -1,8 +1,8 @@
-# SALVAGE — Visual Redesign / Design-Lab Prompt
+# CULLER — Visual Redesign / Design-Lab Prompt
 
 ## Read this before touching the UI
 
-The current SALVAGE prototype is functional, but the visual result is **not acceptable**.
+The current CULLER prototype is functional, but the visual result is **not acceptable**.
 
 The current screenshot looks like a dark crypto dashboard with rectangular metal borders. That is not the intended identity.
 
@@ -10,7 +10,7 @@ The redesign must be treated as a **visual re-art-direction**, not a CSS polish 
 
 Reference the attached screenshots:
 
-1. Current SALVAGE prototype: technically clean, but too sharp, too linear, too dashboard-like and too AI-generated.
+1. Current CULLER prototype: technically clean, but too sharp, too linear, too dashboard-like and too AI-generated.
 2. Y2K futurism reference: glossy blue/silver, soft organic forms, luminous translucent materials, layered depth, early-2000s futurist consumer-tech/album-art energy.
 
 The target is **CYBER CHROME Y2K FUTURISM**.
@@ -75,7 +75,7 @@ The solution is **composition + materials + typography + depth + restraint**.
 
 # 3. TARGET ART DIRECTION
 
-## SALVAGE should feel like:
+## CULLER should feel like:
 
 A futuristic consumer-tech machine from approximately 2000–2005.
 
@@ -127,7 +127,7 @@ Avoid:
 - robots
 - dark dystopian scenes
 
-SALVAGE is **clean futurism**.
+CULLER is **clean futurism**.
 
 Think:
 
@@ -283,7 +283,7 @@ Avoid generic aurora gradients.
 
 Use a clean geometric display face for:
 
-SALVAGE
+CULLER
 large headings
 major values
 
@@ -307,7 +307,7 @@ Large headings can be visually bold and expressive.
 
 # 10. LOGO / WORDMARK
 
-The SALVAGE wordmark must eventually have a distinctive visual mark.
+The CULLER wordmark must eventually have a distinctive visual mark.
 
 Do not simply use text plus a circle icon.
 
@@ -333,7 +333,7 @@ Avoid generic S gradients.
 Do not use the current:
 
 ```text
-SALVAGE
+CULLER
 YOUR WALLET HAS LEFTOVERS.
 paragraph
 wallet input
@@ -347,7 +347,7 @@ The page should feel like a machine/object has entered the scene.
 
 Possible composition:
 
-- oversized chrome/blue SALVAGE device
+- oversized chrome/blue CULLER device
 - wallet scan interface integrated into it
 - floating translucent objects around it
 - curved layers
@@ -425,7 +425,7 @@ For example:
 
 A large glass module with a bright numerical display.
 
-### SALVAGE
+### CULLER
 
 A physical collection tray.
 
@@ -443,9 +443,9 @@ Not every module needs equal visual weight.
 
 ---
 
-# 15. SALVAGE BIN
+# 15. CULLER BIN
 
-Keep the salvage bin concept.
+Keep the cull bin concept.
 
 But make it a visually memorable object.
 
@@ -579,7 +579,7 @@ Every visual detail must have a reason.
 
 Use the Design Lab before committing.
 
-Generate **5 genuinely different SALVAGE homepage directions**.
+Generate **5 genuinely different CULLER homepage directions**.
 
 Do not generate five color variations of the same layout.
 
@@ -636,7 +636,7 @@ The reference has:
 - futuristic optimism
 - visual richness
 
-SALVAGE should translate those principles into a usable product.
+CULLER should translate those principles into a usable product.
 
 ---
 
@@ -658,7 +658,7 @@ left:
 brand/copy
 
 center:
-large SALVAGE machine
+large CULLER machine
 
 right:
 small system telemetry
@@ -727,9 +727,9 @@ Keep the current functionality:
 - scan states
 - scan completion
 - asset classification
-- salvage bin
+- cull bin
 - transaction review
-- Proof of Salvage
+- Proof of Cull
 - mobile layout
 - reduced motion
 
@@ -775,7 +775,7 @@ If yes: continue.
 
 ### Question 5
 
-Can the SALVAGE brand be recognized from one screenshot with the text hidden?
+Can the CULLER brand be recognized from one screenshot with the text hidden?
 
 If no: strengthen the visual identity.
 

@@ -1,0 +1,106 @@
+:root {
+  color-scheme: dark;
+
+  /* ── surfaces ───────────────────────────────────────────
+     deep blue-black base (comfy.org's dark-purple-base idea,
+     remapped to blue) — flat layers, no chrome, no glass. */
+  --bg: #0a0e1b;
+  --bg-raised: #0d1322;
+  --surface: #121a2c;
+  --surface-hover: #182238;
+  --surface-sunken: #0b0f1c;
+
+  --border: rgba(150, 180, 255, 0.1);
+  --border-strong: rgba(150, 180, 255, 0.2);
+  --border-accent: rgba(70, 100, 255, 0.55);
+
+  /* ── text ───────────────────────────────────────────── */
+  --text: #f3f5fa;
+  --text-secondary: #9aa6c3;
+  --text-muted: #5f6a88;
+  --text-on-accent: #ffffff;
+  --text-on-secondary: #1a0d00;
+
+  /* blue — the primary brand color: nav wordmark, links, focus
+     rings, the hero accent bar, selected states. ─────────── */
+  --accent: #0000ff;
+  --accent-hover: #2a4bff;
+  --accent-soft: rgba(0, 0, 255, 0.16);
+  --accent-soft-strong: rgba(0, 0, 255, 0.28);
+
+  /* pure #0000ff reads very dark against this near-black base, so
+     thin lines, small text and progress fills use this lifted
+     tint instead — same hue, enough luminance to stay legible. */
+  --accent-text: #4d7aff;
+  --accent-text-hover: #86a8ff;
+
+  /* orange — the action color: every solid button fill (primary
+     CTAs, add-to-bin, cull, connect) plus reward/value
+     callouts. Pairs with dark text, not white. */
+  --secondary: #ff7a1a;
+  --secondary-hover: #ff9142;
+  --secondary-soft: rgba(255, 122, 26, 0.14);
+  --secondary-soft-strong: rgba(255, 122, 26, 0.3);
+  --border-secondary: rgba(255, 141, 56, 0.5);
+
+  /* live/in-progress indicator — a lighter blue tint distinct
+
+     from the saturated primary, used only for "this is actively
+     happening right now" states (scanning, processing). */
+  --data: #5ab6ff;
+  --data-soft: rgba(90, 182, 255, 0.14);
+
+  /* status */
+  --ok: #34d399;
+  --ok-soft: rgba(52, 211, 153, 0.14);
+  --warn: #fbbf24;
+  --warn-soft: rgba(251, 191, 36, 0.14);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+
+
+  /* ── radii ──────────────────────────────────────────── */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* ── shadow — minimal, used on hover/elevation only ──── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
+  --shadow-accent: 0 8px 24px rgba(255, 122, 26, 0.35);
+
+  /* ── type — one clean grotesk family, JetBrains Mono for
+     addresses and hashes only ─────────────────────────── */
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --fs-display: clamp(2.75rem, 6vw, 4.75rem);
+  --fs-h1: clamp(2rem, 4vw, 2.75rem);
+  --fs-h2: clamp(1.5rem, 3vw, 2.125rem);
+  --fs-h3: 1.15rem;
+  --fs-body: 1rem;
+  --fs-small: 0.9rem;
+  --fs-micro: 0.8rem;
+
+  --content-max: 1180px;
+
+  /* ── motion ─────────────────────────────────────────── */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 150ms;
+  --t-base: 250ms;
+  --t-slow: 450ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

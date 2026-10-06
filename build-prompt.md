@@ -1,27 +1,27 @@
-# SALVAGE - Master Build Prompt
+# CULLER - Master Build Prompt
 
 ## Role
-You are the lead product engineer, product designer, and implementation agent for SALVAGE.
+You are the lead product engineer, product designer, and implementation agent for CULLER.
 
-Build a production-quality first release of SALVAGE, a cross-chain digital-asset recovery product focused on identifying abandoned, spammy, obsolete, zero-value, or potentially recoverable crypto assets and helping users safely dispose of or recover them.
+Build a production-quality first release of CULLER, a cross-chain digital-asset recovery product focused on identifying abandoned, spammy, obsolete, zero-value, or potentially recoverable crypto assets and helping users safely dispose of or recover them.
 
-The native token is `$SALV` on Solana.
+The native token is `$CULLER` on Solana.
 
 The product should feel like a real consumer crypto product, not a meme landing page and not another analytics terminal.
 
 ## Core product idea
-SALVAGE is a recovery layer for stranded onchain assets.
+CULLER is a recovery layer for stranded onchain assets.
 
 A user can:
 1. Connect a supported wallet.
 2. Scan their wallet history and current balances.
-3. See assets classified as `SALVAGEABLE`, `WATCH`, `REVIEW`, or `KEEP`.
+3. See assets classified as `CULLABLE`, `WATCH`, `REVIEW`, or `KEEP`.
 4. Recover legitimate value where technically supported.
 5. Safely dispose of eligible dead assets.
-6. Earn `$SALV` through verified Proof of Salvage activity.
+6. Earn `$CULLER` through verified Proof of Cull activity.
 7. Monitor old assets for future recovery opportunities.
 
-A second path is `DROP`: the user sends an eligible asset to a protocol-controlled salvage flow. The system verifies the asset and credits rewards only after verification.
+A second path is `DROP`: the user sends an eligible asset to a protocol-controlled cull flow. The system verifies the asset and credits rewards only after verification.
 
 ## Product principles
 - Useful first, token second.
@@ -35,10 +35,10 @@ A second path is `DROP`: the user sends an eligible asset to a protocol-controll
 - Avoid generic crypto dashboard patterns.
 
 ## Token structure
-Target supply: 1,000,000,000 `$SALV`.
+Target supply: 1,000,000,000 `$CULLER`.
 
 - 70% market allocation.
-- 30% community salvage rewards.
+- 30% community cull rewards.
 - No investor allocation.
 - No strategic allocation.
 - No separate marketing allocation.
@@ -50,7 +50,7 @@ The 30% community allocation is a finite rewards pool, released over epochs.
 The exact launchpad configuration and creator fee percentage must be configurable and verified against the launch venue's current official documentation at implementation time. Do not hardcode unverified fee assumptions.
 
 The intended economic loop is:
-SALVAGE activity -> protocol/creator fees -> treasury -> transparent open-market `$SALV` purchases according to a published policy.
+CULLER activity -> protocol/creator fees -> treasury -> transparent open-market `$CULLER` purchases according to a published policy.
 
 Do not implement guaranteed price support, automatic price promises, or copy that implies investment returns.
 
@@ -62,14 +62,14 @@ Implement:
 - Basic EVM wallet scan abstraction for future Robinhood Chain and other supported EVM networks.
 - Asset inventory.
 - Asset classification.
-- Salvage report.
-- Salvage action creation for supported token-account closures and supported burn flows.
+- Cull report.
+- Cull action creation for supported token-account closures and supported burn flows.
 - Drop flow placeholder with real verification architecture, not a fake success path.
-- Proof of Salvage event model.
+- Proof of Cull event model.
 - Reward points ledger.
 - Epoch reward allocation model.
-- `$SALV` rewards dashboard.
-- Salvage history.
+- `$CULLER` rewards dashboard.
+- Cull history.
 - Watchlist for unresolved or potentially recoverable assets.
 - Basic public wallet report route.
 - Responsive mobile and desktop UI.
@@ -132,7 +132,7 @@ Avoid:
 - giant decorative blobs
 - AI-generated-looking visual clutter
 
-The site must feel like a real machine called SALVAGE.
+The site must feel like a real machine called CULLER.
 
 ## Voice
 Short, blunt, human, slightly mischievous.
@@ -141,7 +141,7 @@ Good:
 - `YOUR WALLET HAS LEFTOVERS.`
 - `73 ASSETS FOUND.`
 - `0.184 SOL RECOVERABLE.`
-- `READY TO SALVAGE.`
+- `READY TO CULLER.`
 - `WE FOUND SOMETHING.`
 - `WATCH THIS ONE.`
 
@@ -155,7 +155,7 @@ Avoid:
 - `/`
 - `/scan`
 - `/wallet/[address]`
-- `/salvage`
+- `/cull`
 - `/watch`
 - `/rewards`
 - `/history`
@@ -164,21 +164,21 @@ Avoid:
 - `/legal`
 
 ## Core components
-- SalvageMachine
+- CullMachine
 - WalletConnectButton
 - ScanLauncher
 - ScanProgress
 - AssetGrid
 - AssetCard
 - AssetStatusBadge
-- SalvageBin
-- SalvageSummary
+- CullBin
+- CullSummary
 - RecoveryValueCard
 - WatchCard
 - RewardMeter
 - EpochProgress
-- SalvageHistory
-- ProofOfSalvageCard
+- CullHistory
+- ProofOfCullCard
 - TransactionReviewModal
 - CrossChainTabs
 - EmptyState
@@ -204,11 +204,11 @@ Minimum states:
 - `KEEP`: no reason to dispose.
 - `WATCH`: currently inactive or uncertain, but worth monitoring.
 - `REVIEW`: potentially meaningful asset requiring user review.
-- `SALVAGEABLE`: verified candidate for safe disposal or recovery.
+- `CULLABLE`: verified candidate for safe disposal or recovery.
 
 Classification must be deterministic in MVP and explainable.
 
-## Proof of Salvage
+## Proof of Cull
 Each eligible action produces a record with:
 - wallet
 - chain
@@ -240,7 +240,7 @@ Do not expose internal fraud thresholds in the public UI.
 
 ## Reward model
 Use a simple public concept:
-`SALVAGE SCORE`.
+`CULLER SCORE`.
 
 Do not expose a complex mathematical formula to users.
 
@@ -285,11 +285,11 @@ The build is not complete until:
 - A user can connect a Solana wallet.
 - A real wallet scan returns real assets.
 - Unsupported assets are clearly marked.
-- A supported salvage action creates an exact reviewable transaction.
+- A supported cull action creates an exact reviewable transaction.
 - Rewards are only credited after verification.
 - Duplicate events do not generate duplicate rewards.
 - The UI works on mobile and desktop.
-- There are no fake balances or fake salvage confirmations.
+- There are no fake balances or fake cull confirmations.
 - All tokenomics copy matches the actual configured supply/allocation.
 - The app has a coherent visual system across all routes.
 - Errors are understandable to non-technical users.

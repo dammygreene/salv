@@ -1,4 +1,4 @@
-# SALVAGE - API Contract
+# CULLER - API Contract
 
 Use versioned endpoints under `/api/v1`.
 
@@ -39,17 +39,17 @@ Return normalized scan results.
 ### `GET /assets/:chain/:id`
 Return normalized asset details.
 
-## Salvage actions
+## Cull actions
 
-### `POST /salvage/prepare`
+### `POST /cull/prepare`
 Input selected asset IDs.
 
 Output transaction payload(s) and safety summary.
 
-### `POST /salvage/verify`
+### `POST /cull/verify`
 Input signed transaction ID/hash.
 
-Server independently verifies and creates a Proof of Salvage event if valid.
+Server independently verifies and creates a Proof of Cull event if valid.
 
 ## Rewards
 

@@ -1,4 +1,4 @@
-# SALVAGE - Security and Abuse Prevention
+# CULLER - Security and Abuse Prevention
 
 ## Threat model
 Assume attackers will try to:
@@ -16,7 +16,7 @@ Assume attackers will try to:
 ## Non-negotiable rules
 1. Never ask for seed phrases or private keys.
 2. Never auto-sign destructive transactions.
-3. Never auto-salvage ambiguous assets.
+3. Never auto-cull ambiguous assets.
 4. Never credit rewards solely from frontend state.
 5. Never rely on token price alone to decide an asset is dead.
 6. Never trust user-submitted transaction IDs without independent verification.
@@ -41,7 +41,7 @@ A supported action must specify:
 - verification rule
 
 ## Reward verification
-A salvage event is valid only after server/indexer verification.
+A cull event is valid only after server/indexer verification.
 
 Required fields:
 - chain

@@ -1,0 +1,115 @@
+import { describe, expect, it } from "vitest";
+import { Asset } from "@/lib/types";
+import { buildCullTransactionPlan, PlanningError } from "./planner";
+
+function cullableAsset(overrides: Partial<Asset> = {}): Asset {
+  return {
+    id: "acct-1",
+    name: "Empty USDC account",
+    ticker: "USDC",
+    kind: "ACCOUNT",
+    address: "abcd...wxyz",
+    status: "CULLABLE",
+    age: "2d ago",
+    value: "0.0020 SOL",
+    valueKnown: true,
+    reason: "Empty token account can be closed to recover rent.",
+    action: "CLOSE ACCOUNT",
+    tokenAccount: "TokenAccountAddress1111111111111111111111",
+    programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    mint: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    lamports: 2_039_280,
+    ...overrides,
+  };
+}
+
+const WALLET = "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T";
+
+describe("buildCullTransactionPlan", () => {
+  it("throws when no assets are provided", () => {
+    expect(() =>
+      buildCullTransactionPlan({ wallet: WALLET, network: "mainnet-beta", assets: [], estimatedFeeLamports: 5000 })
+    ).toThrow(PlanningError);
+  });
+
+  it("builds a plan with one CLOSE_EMPTY_TOKEN_ACCOUNT action per eligible asset", () => {
+    const plan = buildCullTransactionPlan({
+      wallet: WALLET,
+      network: "mainnet-beta",
+      assets: [cullableAsset()],
+      estimatedFeeLamports: 5000,
+    });
+    expect(plan.actions).toHaveLength(1);
+    expect(plan.actions[0].type).toBe("CLOSE_EMPTY_TOKEN_ACCOUNT");
+    expect(plan.actions[0].tokenAccount).toBe("TokenAccountAddress1111111111111111111111");
+    expect(plan.totalExpectedRecoveryLamports).toBe(2_039_280);
+  });
+
+  it("rejects an asset that is not CULLABLE", () => {
+    expect(() =>
+      buildCullTransactionPlan({
+        wallet: WALLET,
+        network: "mainnet-beta",
+        assets: [cullableAsset({ status: "KEEP" })],
+        estimatedFeeLamports: 5000,
+      })
+    ).toThrow(PlanningError);
+  });
+
+  it("rejects an asset that is not an ACCOUNT kind (e.g. a watched NFT)", () => {
+    expect(() =>
+      buildCullTransactionPlan({
+        wallet: WALLET,
+        network: "mainnet-beta",
+        assets: [cullableAsset({ kind: "NFT", status: "CULLABLE" })],
+        estimatedFeeLamports: 5000,
+      })
+    ).toThrow(PlanningError);
+  });
+
+  it("rejects an asset missing on-chain identifiers instead of silently skipping it", () => {
+    expect(() =>
+      buildCullTransactionPlan({
+        wallet: WALLET,
+        network: "mainnet-beta",
+        assets: [cullableAsset({ tokenAccount: undefined })],
+        estimatedFeeLamports: 5000,
+      })
+    ).toThrow(PlanningError);
+  });
+
+  it("is deterministic: selection order never changes the resulting action order", () => {
+    const a = cullableAsset({ id: "a", tokenAccount: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" });
+    const b = cullableAsset({ id: "b", tokenAccount: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" });
+
+    const planForward = buildCullTransactionPlan({
+      wallet: WALLET,
+      network: "mainnet-beta",
+      assets: [a, b],
+      estimatedFeeLamports: 5000,
+    });
+    const planReversed = buildCullTransactionPlan({
+      wallet: WALLET,
+      network: "mainnet-beta",
+      assets: [b, a],
+      estimatedFeeLamports: 5000,
+    });
+
+    expect(planForward.actions.map((x) => x.tokenAccount)).toEqual(planReversed.actions.map((x) => x.tokenAccount));
+    expect(planForward.actions[0].tokenAccount).toBe("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+  });
+
+  it("sums total expected recovery across multiple actions", () => {
+    const plan = buildCullTransactionPlan({
+      wallet: WALLET,
+      network: "mainnet-beta",
+      assets: [
+        cullableAsset({ id: "a", tokenAccount: "A".repeat(43), lamports: 1_000_000 }),
+        cullableAsset({ id: "b", tokenAccount: "B".repeat(43), lamports: 2_000_000 }),
+      ],
+      estimatedFeeLamports: 5000,
+    });
+    expect(plan.totalExpectedRecoveryLamports).toBe(3_000_000);
+    expect(plan.estimatedFeeLamports).toBe(5000);
+  });
+});

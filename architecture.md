@@ -1,4 +1,4 @@
-# SALVAGE - Technical Architecture
+# CULLER - Technical Architecture
 
 ## High-level architecture
 
@@ -50,7 +50,7 @@ Responsibilities:
 - ingest onchain events
 - refresh asset state
 - detect supported recovery paths
-- verify salvage events
+- verify cull events
 - calculate epochs
 - flag suspicious activity
 
@@ -61,7 +61,7 @@ Define interfaces such as:
 interface ChainAdapter {
   chainId: string;
   scanWallet(address: string): Promise<NormalizedAsset[]>;
-  buildSalvageAction(asset: NormalizedAsset): Promise<SalvageAction | null>;
+  buildCullAction(asset: NormalizedAsset): Promise<CullAction | null>;
   verifyTransaction(tx: string): Promise<VerifiedEvent | null>;
 }
 ```
@@ -100,7 +100,7 @@ Minimum:
 - asset_snapshots
 - scans
 - scan_items
-- salvage_events
+- cull_events
 - reward_ledger
 - reward_epochs
 - reward_claims
@@ -118,7 +118,7 @@ Reward creation must be idempotent.
 - wallet refresh
 - asset classification refresh
 - watch evaluation
-- salvage verification
+- cull verification
 - reward epoch closing
 - reward allocation
 - notification dispatch

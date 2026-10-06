@@ -1,0 +1,215 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none !important;
+}
+
+input {
+  font-family: inherit;
+}
+
+code,
+.code {
+  font-family: var(--font-mono), monospace;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* the one display treatment — big, bold, tight tracking. Used only
+   for the hero headline, 28px and up. No gradients, no uppercase. */
+.display {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+}
+
+.stat {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 16px;
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: var(--r-pill);
+  background: var(--secondary);
+  color: var(--text-on-secondary);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  transition: top var(--t-base) var(--ease);
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+.page-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 70vh;
+}
+
+/* ── surfaces ─────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+/* ── buttons ──────────────────────────────────────────── */
+
+.primary-button,
+.ghost-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  padding: 13px 24px;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  isolation: isolate;
+  transition: transform var(--t-fast) var(--ease), background var(--t-base) var(--ease), border-color var(--t-base) var(--ease),
+    box-shadow var(--t-base) var(--ease), color var(--t-base) var(--ease);
+}
+
+.primary-button:active,
+.ghost-button:active {
+  transform: scale(0.97);
+}
+
+/* primary — the one accent-filled action on screen. orange,
+   same as before the blue pass: buttons stay the warm color. */
+.primary-button {
+  color: var(--text-on-secondary);
+  background: var(--secondary);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.primary-button:hover {
+  background: var(--secondary-hover);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, var(--shadow-accent);
+  transform: translateY(-1px);
+}
+
+.primary-button-lg {
+  padding: 17px 34px;
+  font-size: 1.02rem;
+}
+
+/* ghost — bordered, fills flat on hover. No blur, no sheen. */
+.ghost-button {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border-strong);
+}
+
+.ghost-button:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-small);
+  color: var(--accent-text);
+  width: fit-content;
+  text-underline-offset: 3px;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-soft-strong);
+  transition: color var(--t-base) var(--ease);
+}
+
+.text-link:hover {
+  color: var(--accent-text-hover);
+}

@@ -1,16 +1,16 @@
-# SALVAGE - UI/UX Specification
+# CULLER - UI/UX Specification
 
 ## Primary user journey
-Connect wallet -> scan -> understand -> salvage -> verify -> earn -> watch.
+Connect wallet -> scan -> understand -> cull -> verify -> earn -> watch.
 
 ## Homepage
 Sections:
 1. Hero.
-2. Live salvage statistics.
-3. How SALVAGE works.
-4. Example salvage report.
-5. Proof of Salvage.
-6. `$SALV` overview.
+2. Live cull statistics.
+3. How CULLER works.
+4. Example cull report.
+5. Proof of Cull.
+6. `$CULLER` overview.
 7. Supported chains.
 8. Footer with docs/legal.
 
@@ -40,14 +40,14 @@ The progress indicator should feel believable. Never fabricate specific backend 
 ## Scan results
 Top summary:
 - total assets
-- salvageable
+- cullable
 - review
 - watch
 - recoverable value
 - chains detected
 
 Primary action:
-`SALVAGE SELECTED`
+`CULLER SELECTED`
 
 Secondary:
 `VIEW ALL`
@@ -61,7 +61,7 @@ Each asset card shows:
 - reason for classification
 - action available
 
-## Salvage bin
+## Cull bin
 A persistent interactive component.
 
 Users can add assets to the bin.
@@ -85,14 +85,14 @@ Must include:
 - warning if any asset is permanently destroyed
 
 CTA:
-`CONFIRM SALVAGE`
+`CONFIRM CULLER`
 
 Never use a vague button like `CONTINUE` for destructive actions.
 
 ## Rewards
 Show:
 - current epoch
-- user Salvage Score
+- user Cull Score
 - network score
 - reward pool
 - estimated share
@@ -113,7 +113,7 @@ Each item:
 ## History
 Timeline of:
 - scans
-- salvages
+- culls
 - recoveries
 - rewards
 - watch events
@@ -135,7 +135,7 @@ Use direct language.
 Examples:
 `WALLET NOT CONNECTED`
 `THIS ASSET IS NOT SUPPORTED`
-`NOT SAFE TO AUTO-SALVAGE`
+`NOT SAFE TO AUTO-CULLER`
 `TRANSACTION REJECTED`
 `WE COULDN'T VERIFY THAT EVENT`
 
@@ -145,7 +145,7 @@ without context.
 
 ## Mobile
 - wallet connect always reachable
-- salvage bin becomes bottom sheet
+- cull bin becomes bottom sheet
 - review modal becomes full-screen sheet
 - cards remain touch friendly
 - no hover-only interactions

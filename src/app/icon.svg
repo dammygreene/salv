@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="markChrome" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7fbff" />
+      <stop offset="0.35" stop-color="#c6d6e3" />
+      <stop offset="0.6" stop-color="#7891a3" />
+      <stop offset="1" stop-color="#1c2630" />
+    </linearGradient>
+    <linearGradient id="markIce" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bfe8ff" />
+      <stop offset="1" stop-color="#4fa8e8" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" rx="14" fill="#04060a" />
+  <circle cx="24" cy="24" r="17" stroke="url(#markChrome)" stroke-width="3" stroke-linecap="round" stroke-dasharray="80 28" transform="rotate(-38 24 24)" />
+  <circle cx="24" cy="24" r="10" fill="url(#markIce)" opacity="0.92" />
+  <circle cx="20.2" cy="20" r="2.8" fill="#f4fbff" opacity="0.9" />
+  <circle cx="34" cy="24" r="2.1" fill="url(#markChrome)" />
+</svg>

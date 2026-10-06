@@ -1,9 +1,9 @@
-# SALVAGE - Visual Design System
+# CULLER - Visual Design System
 
 ## Art direction
 `Cyber Chrome Y2K Utility`
 
-SALVAGE should feel like a real piece of futuristic consumer software from a parallel 2003, rebuilt with modern web technology and connected to Solana.
+CULLER should feel like a real piece of futuristic consumer software from a parallel 2003, rebuilt with modern web technology and connected to Solana.
 
 The design should be recognizable without looking like a crypto template.
 
@@ -71,7 +71,7 @@ Mobile:
 - no horizontal data tables
 
 ## Hero
-Hero should be an interactive `SALVAGE MACHINE`.
+Hero should be an interactive `CULLER MACHINE`.
 
 Main hierarchy:
 1. brand
@@ -114,7 +114,7 @@ Use:
 Use simple geometric icons.
 Prefer custom SVG marks for key actions:
 - scan
-- salvage
+- cull
 - watch
 - recover
 - burn
@@ -131,7 +131,7 @@ They must not reduce readability or create accessibility problems.
 Motion should reinforce state changes:
 - scan progress
 - asset discovery
-- salvage confirmation
+- cull confirmation
 - reward increment
 - tab transitions
 
@@ -141,11 +141,11 @@ Respect `prefers-reduced-motion`.
 
 ## Branding
 Wordmark:
-`SALVAGE`
+`CULLER`
 
 Logo direction:
 - strong geometric wordmark
-- simple salvage/recovery symbol
+- simple cull/recovery symbol
 - avoid literal recycling iconography
 
 Potential visual symbol: a broken/partial circular arrow combined with a hardware port or extraction mark.
