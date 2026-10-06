@@ -49,8 +49,12 @@ export interface AddressDetectionResult {
  * Classifies a pasted address as Solana or EVM/Robinhood, or rejects it
  * outright. Garbage, empty strings, seed phrases, and absurdly long
  * input are all rejected here rather than passed any further down the
- * pipeline -- this is the one place both the API route and the UI call,
- * so the two can never disagree about what counts as a valid address.
+ * pipeline. Kept as a general-purpose single-address classifier (still
+ * directly tested below); the combined Solana+Robinhood submission flow
+ * (`POST /api/salv/scan`, `/scan`, `/rewards`) uses
+ * `validateCombinedWalletSubmission` instead, since that flow has two
+ * separate fields with two different requirement levels (Solana
+ * required, Robinhood optional) rather than one address to classify.
  */
 export function detectWalletAddress(input: string): AddressDetectionResult {
   const trimmed = (input ?? "").trim();
@@ -66,3 +70,71 @@ export function detectWalletAddress(input: string): AddressDetectionResult {
   }
   return { valid: false, network: null, address: trimmed };
 }
+
+/**
+ * A single combined reward submission: a required Solana wallet (the
+ * sole reward identity) plus an optional linked Robinhood/EVM wallet
+ * (metadata on that submission, never a second identity). See
+ * docs/salv-reward-ledger.md for the full product model.
+ */
+export interface CombinedWalletSubmission {
+  /** Trimmed, validated Solana address. Always present. */
+  solanaWallet: string;
+  /** Trimmed, validated EVM address, or `null` if none was submitted
+   * this time. A `null` here is a deliberate, valid state -- Robinhood
+   * is optional -- never an error by itself. */
+  robinhoodWallet: string | null;
+}
+
+export type CombinedWalletValidationResult =
+  | { valid: true; submission: CombinedWalletSubmission }
+  | { valid: false; error: string };
+
+/**
+ * Validates one combined scan/reward submission: Solana is required and
+ * must be a real Solana address; Robinhood is optional, but if present
+ * at all (a non-empty string after trimming) it must be a real EVM-style
+ * address -- an empty/missing Robinhood field is never an error, but an
+ * invalid non-empty one always is. A Robinhood address submitted with no
+ * Solana address is always rejected (Solana is unconditionally
+ * required, so "Robinhood only" can never pass this check) -- there is
+ * no separate "reject Robinhood-only" branch because the Solana
+ * requirement alone already makes that shape impossible to satisfy.
+ * Both client (`/scan`, `/rewards`) and server (`POST /api/salv/scan`)
+ * call this exact function, so they can never disagree about what a
+ * valid submission looks like.
+ */
+export function validateCombinedWalletSubmission(input: {
+  solanaWallet?: unknown;
+  robinhoodWallet?: unknown;
+}): CombinedWalletValidationResult {
+  const rawSolana = input.solanaWallet;
+  if (typeof rawSolana !== "string" || rawSolana.trim().length === 0) {
+    return {
+      valid: false,
+      error: "A Solana wallet address is required for $SALV rewards — a Robinhood address alone cannot be submitted.",
+    };
+  }
+  const solanaWallet = rawSolana.trim();
+  if (solanaWallet.length > MAX_ADDRESS_INPUT_LENGTH || !isValidSolanaAddress(solanaWallet)) {
+    return { valid: false, error: "That does not look like a valid Solana wallet address." };
+  }
+
+  const rawRobinhood = input.robinhoodWallet;
+  if (rawRobinhood === undefined || rawRobinhood === null) {
+    return { valid: true, submission: { solanaWallet, robinhoodWallet: null } };
+  }
+  if (typeof rawRobinhood !== "string") {
+    return { valid: false, error: "robinhoodWallet must be a string." };
+  }
+  const trimmedRobinhood = rawRobinhood.trim();
+  if (trimmedRobinhood.length === 0) {
+    return { valid: true, submission: { solanaWallet, robinhoodWallet: null } };
+  }
+  if (trimmedRobinhood.length > MAX_ADDRESS_INPUT_LENGTH || !isValidEvmAddress(trimmedRobinhood)) {
+    return { valid: false, error: "That does not look like a valid Robinhood wallet address." };
+  }
+
+  return { valid: true, submission: { solanaWallet, robinhoodWallet: trimmedRobinhood } };
+}
+

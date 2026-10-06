@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectWalletAddress, isValidEvmAddress, MAX_ADDRESS_INPUT_LENGTH } from "./walletAddress";
+import { detectWalletAddress, isValidEvmAddress, MAX_ADDRESS_INPUT_LENGTH, validateCombinedWalletSubmission } from "./walletAddress";
 import { isValidSolanaAddress } from "./solana/base58";
 
 // A real, publicly documented Solana address (the same one used
@@ -85,5 +85,92 @@ describe("detectWalletAddress", () => {
     // assert it explicitly as a safety net against a future regression.
     expect(detectWalletAddress(VALID_SOLANA).network).not.toBe("evm");
     expect(detectWalletAddress(VALID_EVM_LOWER_FIXED).network).not.toBe("solana");
+  });
+});
+
+describe("validateCombinedWalletSubmission (Phase 8: Solana required, Robinhood optional)", () => {
+  // Robustness scenarios 1-8 from the Phase 8 spec.
+  it("1. Solana-only submission succeeds", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA });
+    expect(result).toEqual({ valid: true, submission: { solanaWallet: VALID_SOLANA, robinhoodWallet: null } });
+  });
+
+  it("2. Solana + Robinhood submission succeeds", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: VALID_EVM_LOWER_FIXED });
+    expect(result).toEqual({
+      valid: true,
+      submission: { solanaWallet: VALID_SOLANA, robinhoodWallet: VALID_EVM_LOWER_FIXED },
+    });
+  });
+
+  it("3. Robinhood-only submission always fails -- Solana is unconditionally required", () => {
+    const result = validateCombinedWalletSubmission({ robinhoodWallet: VALID_EVM_LOWER_FIXED });
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.error).toMatch(/solana/i);
+    }
+  });
+
+  it("3b. Robinhood-only submission fails even with an explicit empty-string Solana field", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: "", robinhoodWallet: VALID_EVM_LOWER_FIXED });
+    expect(result.valid).toBe(false);
+  });
+
+  it("4. Invalid Solana address fails, regardless of Robinhood", () => {
+    expect(validateCombinedWalletSubmission({ solanaWallet: "not-a-solana-address" }).valid).toBe(false);
+    expect(
+      validateCombinedWalletSubmission({ solanaWallet: "not-a-solana-address", robinhoodWallet: VALID_EVM_LOWER_FIXED }).valid
+    ).toBe(false);
+  });
+
+  it("5. Invalid Robinhood address fails, even with a valid Solana address", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: "not-an-evm-address" });
+    expect(result.valid).toBe(false);
+  });
+
+  it("6. Empty Robinhood succeeds (undefined, null, and empty string all mean 'no Robinhood')", () => {
+    expect(validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA }).valid).toBe(true);
+    expect(validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: null }).valid).toBe(true);
+    expect(validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: "" }).valid).toBe(true);
+    expect(validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: "   " }).valid).toBe(true);
+  });
+
+  it("7. Whitespace is trimmed from both fields before validating", () => {
+    const result = validateCombinedWalletSubmission({
+      solanaWallet: `  ${VALID_SOLANA}  `,
+      robinhoodWallet: `\t${VALID_EVM_LOWER_FIXED}\n`,
+    });
+    expect(result).toEqual({
+      valid: true,
+      submission: { solanaWallet: VALID_SOLANA, robinhoodWallet: VALID_EVM_LOWER_FIXED },
+    });
+  });
+
+  it("8. Oversized input is rejected for both the Solana and Robinhood fields", () => {
+    const hugeSolana = "1".repeat(MAX_ADDRESS_INPUT_LENGTH + 1);
+    expect(validateCombinedWalletSubmission({ solanaWallet: hugeSolana }).valid).toBe(false);
+
+    const hugeRobinhood = "0x" + "a".repeat(MAX_ADDRESS_INPUT_LENGTH + 1);
+    expect(validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: hugeRobinhood }).valid).toBe(false);
+  });
+
+  it("rejects a missing/non-string solanaWallet outright", () => {
+    expect(validateCombinedWalletSubmission({}).valid).toBe(false);
+    expect(validateCombinedWalletSubmission({ solanaWallet: 12345 }).valid).toBe(false);
+    expect(validateCombinedWalletSubmission({ solanaWallet: null }).valid).toBe(false);
+  });
+
+  it("rejects a non-string robinhoodWallet (e.g. a number or object) rather than silently coercing it", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: 12345 });
+    expect(result.valid).toBe(false);
+  });
+
+  it("never reports the Robinhood address as the Solana identity, even when both are valid", () => {
+    const result = validateCombinedWalletSubmission({ solanaWallet: VALID_SOLANA, robinhoodWallet: VALID_EVM_LOWER_FIXED });
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.submission.solanaWallet).toBe(VALID_SOLANA);
+      expect(result.submission.solanaWallet).not.toBe(VALID_EVM_LOWER_FIXED);
+    }
   });
 });
