@@ -347,6 +347,13 @@ Dev-gated (same `x-dev-admin-secret` convention as the existing
   recorded burns / **record** (never execute) an already-confirmed,
   already-multisig-approved burn transaction, identified by its real
   on-chain `transactionSignature`.
+- `GET /api/dev/salv/rewards/export` (Phase 7, new) — downloads the full
+  reward allocation ledger as CSV. Same dev-admin gate; read-only. See
+  §15 and `docs/salv-reward-ledger.md`.
+
+Public, no wallet connection required (Phase 7, new):
+- `POST /api/salv/scan` — paste-address scan + reward-ledger record. See
+  §15.
 
 **No route in either list can sign or submit a treasury-moving
 transaction.** The only route that moves real tokens at all is the claim
@@ -372,3 +379,57 @@ minimally) renders:
   cap is not permanently locked. Exposes no secret key, no member
   identity beyond public addresses, and no other sensitive operational
   configuration.
+
+## 15. No-wallet-connect scan + reward ledger (Phase 7)
+
+Phase 7 removed wallet-adapter *connection* from the primary user flow
+entirely. Users never connect Phantom/Solflare/Backpack/etc. to preview a
+wallet, scan it, or see $SALV standing — they paste a public address.
+Full design, CSV schema, and privacy rationale: `docs/salv-reward-ledger.md`.
+Summary:
+
+- **Input**: a pasted address only, classified as `solana` or `evm` by
+  `src/lib/walletAddress.ts` (`detectWalletAddress`) — reuses the
+  existing, already-tested `isValidSolanaAddress`; adds a new
+  `isValidEvmAddress` (`0x` + 40 hex chars, the same shape used by
+  Robinhood Wallet and every standard EVM chain). Garbage, empty, and
+  oversized (>128 char) input is rejected before any further processing.
+- **`POST /api/salv/scan`** (`src/app/api/salv/scan/route.ts`): the one
+  endpoint behind both the `/scan` demo-recovery flow's "scan a wallet"
+  step and the `/rewards` page's reward lookup. For a Solana address it
+  (a) runs the real, existing read-only RPC scan (`scanWallet()`,
+  unchanged from Phase 1-6) and (b) independently computes the
+  authoritative $SALV allocation via `getClaimView()` — the same
+  reward-snapshot/claim system `/api/salv/claims/:wallet` already uses —
+  never from the live scan or from anything the client sent. For an EVM
+  address, the live scan and epoch lookup are both skipped (that system
+  is Solana-only); the wallet is still recorded with `NOT_APPLICABLE`.
+  The response keeps three signals explicitly separate so none of them
+  can be mistaken for the others: `scan.{attempted,succeeded}` (live RPC
+  outcome), `salvAllocated`/`status`/`epochId` (authoritative reward
+  figure), `csvRecorded` (whether the ledger write succeeded).
+- **Reward ledger** (`reward_ledger_entries` table, migration `0005`,
+  `src/lib/server/repositories/rewardLedgerRepo.ts`): one row per
+  `(wallet_address, network, epoch)`. A rescan of the same wallet+epoch
+  **updates** that row (`INSERT ... ON CONFLICT ... DO UPDATE`); a new
+  epoch for the same wallet creates a new row. It is a plain Postgres
+  table in the same database as every other repository in this app — not
+  Vercel Blob (never configured in this project) and never a write to
+  the local filesystem. See `docs/salv-reward-ledger.md` for the full
+  storage-choice rationale.
+- **`GET /api/dev/salv/rewards/export`**: serializes the ledger table to
+  CSV (`wallet_address,network,salv_allocated,epoch_id,scanned_at,status`),
+  gated by the same `assertDevAuthorized`/`DEV_ADMIN_SECRET` convention
+  as every other dev-admin route in §13. Never public, read-only, and
+  structurally incapable of exposing a secret (the table itself has no
+  key/seed/signature/RPC-credential columns).
+- **Signing is untouched, just relocated.** Actually executing a
+  recovery transaction still genuinely requires a real signature from
+  the wallet that holds the funds — that has not changed and cannot
+  change. What moved is *where* that one unavoidable wallet-adapter
+  "connect" control lives: `src/components/review-modal.tsx`, shown only
+  at the moment a transaction is about to be signed, never on the
+  primary paste/scan screen. `src/lib/app-state.tsx`'s `canSign` is now
+  additionally gated on the connected extension's public key matching
+  the address currently being previewed, since `walletAddress` can now
+  be set independently of any extension connection.

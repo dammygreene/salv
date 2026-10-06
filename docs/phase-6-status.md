@@ -4,7 +4,10 @@ This phase finalized SALV's supply/treasury architecture and prepared
 (but did not execute) a real Devnet deployment under it. No mainnet
 activity occurred. This document is the authoritative Phase 6 record;
 see `docs/salv-architecture.md` for the module-by-module map and
-`docs/salv-treasury.md` for the treasury model specifically.
+`docs/salv-treasury.md` for the treasury model specifically. See
+`docs/phase-7-status.md` for the next phase (removing wallet-connect
+from the user flow and adding the reward allocation ledger), which
+builds on this phase's treasury/claim system without changing it.
 
 ## 1. Final supply / account architecture
 
