@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { CullerMark } from "./culler-mark";
+import { CullerLogo } from "./culler-logo";
 
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-brand">
         <span className="site-footer-brand-mark">
-          <CullerMark size={24} />
-          CULLER
+          <CullerLogo />
         </span>
         <p>Find the assets your wallet forgot, recover what still matters, and get rewarded for cleaning up.</p>
       </div>

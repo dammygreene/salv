@@ -1,3 +1,4 @@
+import { CullerMintDisplay } from "@/components/culler-mint-display";
 import { PageHeader } from "@/components/page-header";
 
 export default function TokenPage() {
@@ -53,10 +54,7 @@ export default function TokenPage() {
         </article>
       </div>
 
-      <div className="token-contract">
-        <span>Contract address</span>
-        <strong>Not yet live. Published at launch.</strong>
-      </div>
+      <CullerMintDisplay />
     </main>
   );
 }

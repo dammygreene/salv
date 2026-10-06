@@ -15,13 +15,21 @@ import "@fontsource/jetbrains-mono/500.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://cullerlabs.xyz"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://cullerlabs.xyz"),
   title: "CULLER: wallet recovery layer",
   description: "Find the assets your wallet forgot. Recover what still matters. Get rewarded for cleaning up.",
   openGraph: {
     title: "CULLER: your wallet has leftovers.",
     description: "Find the assets you forgot. Recover what still matters. Get rewarded for cleaning up.",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Culler",
+      },
+    ],
   },
 };
 

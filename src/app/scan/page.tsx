@@ -10,6 +10,8 @@ import { ReviewModal } from "@/components/review-modal";
 import { DEMO_ADDRESS, shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
+import { CullerShareModal } from "@/components/culler-share-modal";
+import { hasCullerAllocation } from "@/lib/culler/share";
 
 /** Response shape of POST /api/culler/scan — see that route for the full
  * contract. This is the authoritative, server-computed reward-ledger
@@ -50,6 +52,7 @@ export default function ScanPage() {
   const [ledgerError, setLedgerError] = useState<string | null>(null);
   const [ledgerResult, setLedgerResult] = useState<LedgerScanResult | null>(null);
   const [ledgerScanning, setLedgerScanning] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const validation = validateCombinedWalletSubmission({ solanaWallet: addressInput, robinhoodWallet: robinhoodInput });
   const hasWallet = Boolean(walletAddress);
 
@@ -211,6 +214,11 @@ export default function ScanPage() {
                   ) : (
                     <small className="wallet-form-error">Not recorded ({ledgerResult.recordError ?? "unknown error"}).</small>
                   )}
+                  {hasCullerAllocation(ledgerResult.reward.cullerAllocated) && (
+                    <button type="button" className="primary-button share-allocation-button" onClick={() => setShowShare(true)}>
+                      Share on X
+                    </button>
+                  )}
                 </div>
               )}
             </>
@@ -282,6 +290,19 @@ export default function ScanPage() {
           window.setTimeout(() => setJustCompleted(false), 4000);
         }}
       />
+
+      {ledgerResult && hasCullerAllocation(ledgerResult.reward.cullerAllocated) && (
+        <CullerShareModal
+          open={showShare}
+          onClose={() => setShowShare(false)}
+          data={{
+            allocation: ledgerResult.reward.cullerAllocated,
+            walletAddress: ledgerResult.solanaWallet,
+            epochId: ledgerResult.reward.epochId,
+            verified: ledgerResult.csvRecorded,
+          }}
+        />
+      )}
 
       {justCompleted && (
         <div className="toast-confirm" role="status">

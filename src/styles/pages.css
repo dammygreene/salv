@@ -80,6 +80,7 @@
   }
   .hero-object {
     order: -1;
+    margin-bottom: 28px;
   }
 }
 

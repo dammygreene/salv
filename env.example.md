@@ -3,11 +3,21 @@
 Rename the actual file to `.env.example` in the project.
 
 ## App
-- NEXT_PUBLIC_APP_URL=
+- NEXT_PUBLIC_SITE_URL=https://cullerlabs.xyz
   The canonical production URL, e.g. `https://cullerlabs.xyz`. Used only for
-  resolving relative Open Graph/metadata URLs (`metadataBase` in
-  `src/app/layout.tsx`); leaving it unset falls back to `https://cullerlabs.xyz`
-  so local dev never needs it. No other code reads this variable today.
+  resolving relative Open Graph/metadata URLs and public share links.
+- NEXT_PUBLIC_CULLER_MINT_ADDRESS=
+  The public CULLER mint address. Leave empty before launch; the UI then shows
+  an intentional pre-launch state. A value must be a valid Solana address.
+- NEXT_PUBLIC_CULLER_TOKEN_SYMBOL=CULLER
+  Public token symbol used by the UI.
+- NEXT_PUBLIC_CULLER_TOKEN_NAME=CULLER
+  Public token name used by the UI.
+- NEXT_PUBLIC_CULLER_NETWORK=mainnet-beta
+  Public network used for explorer links. Use `devnet`, `testnet`, or
+  `mainnet-beta`.
+- NEXT_PUBLIC_APP_URL=
+  Legacy fallback for metadata/share links when `NEXT_PUBLIC_SITE_URL` is unset.
 - NEXT_PUBLIC_ENV=development
 
 ## Solana
@@ -30,11 +40,10 @@ signature against mainnet-beta and always fail to find it.
   set this as `NEXT_PUBLIC_*`. If unset, those endpoints refuse every
   request (fail-closed; there is no "open" fallback).
 
-## $CULLER (Phase 5 — see docs/culler-architecture.md)
+## $CULLER server configuration (Phase 5 — see docs/culler-architecture.md)
 - CULLER_MINT_ADDRESS=
-  The deployed $CULLER mint's public address. Public information — safe to
-  expose, but still read server-side only (never `NEXT_PUBLIC_*`) because
-  the backend is the single source of truth the client must trust.
+  Server-side mint address used by claim execution. Keep this aligned with the
+  public value after launch; it is never exposed through `NEXT_PUBLIC_*`.
 - CULLER_REWARD_VAULT=
   The Community Reward Vault's token account address (holds the fixed
   300,000,000 CULLER community allocation).

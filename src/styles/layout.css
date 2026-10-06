@@ -116,14 +116,14 @@
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-sans);
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
-  margin-right: 12px;
+  margin-right: 16px;
   flex-shrink: 0;
-  color: var(--accent-text);
+}
+
+.nav-brand img {
+  display: block;
+  width: 104px;
+  height: auto;
 }
 
 .nav-links {
@@ -227,13 +227,18 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin-top: 10px;
-    padding: 10px;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: clamp(16px, 3vw, 32px);
+    right: clamp(16px, 3vw, 32px);
+    width: auto;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 8px;
     border-radius: var(--r-lg);
     background: var(--surface);
     border: 1px solid var(--border);
-    max-width: var(--content-max);
-    width: 100%;
+    box-shadow: var(--shadow-lg);
   }
   .nav-sheet a {
     padding: 12px 14px;
@@ -362,10 +367,13 @@ main {
 .site-footer-brand-mark {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-family: var(--font-sans);
-  font-weight: 800;
   color: var(--text);
+}
+
+.site-footer-brand-mark img {
+  display: block;
+  width: 116px;
+  height: auto;
 }
 
 .site-footer-brand p {

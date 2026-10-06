@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { CullerMark } from "./culler-mark";
+import { CullerLogo } from "./culler-logo";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -44,8 +44,7 @@ export function NavCapsule() {
     <header className="nav-dock">
       <div className="nav-capsule">
         <Link href="/" className="nav-brand" aria-label="CULLER home" onClick={() => setOpen(false)}>
-          <CullerMark size={26} />
-          <span>CULLER</span>
+          <CullerLogo />
         </Link>
 
         <nav className="nav-links" aria-label="Primary" ref={trackRef} onMouseLeave={resetToActive}>
@@ -68,14 +67,20 @@ export function NavCapsule() {
           })}
         </nav>
 
-        <button className="nav-burger" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation" aria-expanded={open}>
+        <button
+          className="nav-burger"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Toggle navigation"
+          aria-controls="mobile-navigation"
+          aria-expanded={open}
+        >
           <span />
           <span />
         </button>
       </div>
 
       {open && (
-        <nav className="nav-sheet" aria-label="Primary mobile">
+        <nav id="mobile-navigation" className="nav-sheet" aria-label="Primary mobile">
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className={pathname === link.href ? "is-active" : ""} onClick={() => setOpen(false)}>
               {link.label}
