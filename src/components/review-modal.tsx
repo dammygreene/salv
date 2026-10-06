@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { shortAddress, useAppState } from "@/lib/app-state";
 import { SOLANA_NETWORK } from "@/lib/solana/constants";
-import { SALVAGE_REGISTRY } from "@/lib/salvage/registry";
+import { CULLER_REGISTRY } from "@/lib/cull/registry";
 
 const NETWORK_LABEL: Record<string, string> = {
   "mainnet-beta": "Solana mainnet-beta",
@@ -19,14 +19,14 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onClose: () => void; onConfirmed: () => void }) {
-  const { assets, selected, confirmSalvage, canSign, walletAddress, availableWallets, connectExtensionWallet, addressError, salvageStatus, salvageError } =
+  const { assets, selected, confirmCull, canSign, walletAddress, availableWallets, connectExtensionWallet, addressError, cullStatus, cullError } =
     useAppState();
   const [submitting, setSubmitting] = useState(false);
   const chosen = useMemo(() => assets.filter((asset) => selected.includes(asset.id)), [assets, selected]);
   // Pre-verification estimate only: base points per the registry, times
   // the number of accounts. The real total (base + any recovery bonus
   // tier) is only known once the backend verifies the transaction.
-  const closeBasePoints = SALVAGE_REGISTRY.EMPTY_TOKEN_ACCOUNT.basePoints ?? 0;
+  const closeBasePoints = CULLER_REGISTRY.EMPTY_TOKEN_ACCOUNT.basePoints ?? 0;
   const reward = chosen.length * closeBasePoints;
   const recoveredSol = useMemo(
     () =>
@@ -40,11 +40,11 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
 
   if (!open) return null;
 
-  const busy = submitting || salvageStatus === "BUILDING" || salvageStatus === "AWAITING_SIGNATURE" || salvageStatus === "CONFIRMING" || salvageStatus === "VERIFYING";
+  const busy = submitting || cullStatus === "BUILDING" || cullStatus === "AWAITING_SIGNATURE" || cullStatus === "CONFIRMING" || cullStatus === "VERIFYING";
 
   async function handleConfirm() {
     setSubmitting(true);
-    const result = await confirmSalvage();
+    const result = await confirmCull();
     setSubmitting(false);
     if (result) onConfirmed();
   }
@@ -61,7 +61,7 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
         <button className="modal-close" onClick={onClose} aria-label="Close review" disabled={busy}>
           ×
         </button>
-        <h2 id="review-title">Confirm salvage</h2>
+        <h2 id="review-title">Confirm cull</h2>
         <div className="review-rows">
           <div className="review-row">
             <span>Assets</span>
@@ -81,7 +81,7 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
           </div>
           <div className="review-row">
             <span>Reward (if verified)</span>
-            <strong>+{reward} salvage score</strong>
+            <strong>+{reward} cull score</strong>
           </div>
         </div>
         {canSign ? (
@@ -93,7 +93,7 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
           <div className="review-signer">
             <p className="review-note">
               This is a preview of a pasted address. Executing this action for real requires a signature from the wallet
-              extension that holds {shortAddress(walletAddress)}&rsquo;s own key — SALVAGE only ever requests its public key
+              extension that holds {shortAddress(walletAddress)}&rsquo;s own key — CULLER only ever requests its public key
               here, never a seed phrase or private key.
             </p>
             {availableWallets.length > 0 ? (
@@ -120,10 +120,10 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
         <div className="review-warning">
           <span>!</span> Account closure is permanent. Only proceed when you recognize every asset above.
         </div>
-        {busy && <p className="review-note">{STATUS_LABEL[salvageStatus] ?? "Working…"}</p>}
-        {!busy && salvageStatus === "ERROR" && salvageError && <p className="wallet-form-error">{salvageError}</p>}
+        {busy && <p className="review-note">{STATUS_LABEL[cullStatus] ?? "Working…"}</p>}
+        {!busy && cullStatus === "ERROR" && cullError && <p className="wallet-form-error">{cullError}</p>}
         <button className="primary-button" onClick={handleConfirm} disabled={!canSign || busy || !chosen.length}>
-          {busy ? STATUS_LABEL[salvageStatus] ?? "Working…" : "Confirm salvage"}
+          {busy ? STATUS_LABEL[cullStatus] ?? "Working…" : "Confirm cull"}
         </button>
       </section>
     </div>

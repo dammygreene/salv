@@ -1,4 +1,4 @@
-# SALVAGE - Agent Execution Workflow
+# CULLER - Agent Execution Workflow
 
 ## Before coding
 Read these files in order:
@@ -22,7 +22,7 @@ Read these files in order:
 5. Implement chain adapters.
 6. Implement Solana scanner.
 7. Implement classification engine.
-8. Implement salvage transaction builders.
+8. Implement cull transaction builders.
 9. Implement verification.
 10. Implement reward ledger.
 11. Implement watch system.

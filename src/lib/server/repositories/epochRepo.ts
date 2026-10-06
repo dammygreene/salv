@@ -84,7 +84,7 @@ export async function activateEpoch(db: Db, epochId: string): Promise<EpochRecor
 }
 
 /** Total points awarded network-wide within one epoch so far. Used only
- * to drive the EST. SALV simulation — it is not a real token supply. */
+ * to drive the EST. CULLER simulation — it is not a real token supply. */
 export async function getEpochTotalPointsAwarded(db: Db, epochId: string): Promise<number> {
   const result = await db.query<{ total: string | null }>("SELECT SUM(points) AS total FROM points_ledger WHERE epoch_id = $1", [
     epochId,

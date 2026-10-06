@@ -4,13 +4,13 @@ node_modules/
 .env.local
 .env*.local
 
-# Dev-only file-backed salvage event store (MVP stand-in for a real DB).
+# Dev-only file-backed cull event store (MVP stand-in for a real DB).
 .data/
 
 # Scratch images pulled in during research/design exploration, not app assets.
 image-search/
 
-# $SALV deployment secret keys (never commit a private key). The public
-# deployment manifest (deployments/devnet-salv-manifest.json) IS meant
+# \$CULLER deployment secret keys (never commit a private key). The public
+# deployment manifest (deployments/devnet-culler-manifest.json) IS meant
 # to be committed -- only *-keypair.json files are secrets.
 deployments/*-keypair.json

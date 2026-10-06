@@ -1,17 +1,17 @@
 # Phase 7 status — no-wallet-connect scan + reward allocation ledger
 
-This phase removed wallet-adapter *connection* from the primary SALVAGE
+This phase removed wallet-adapter *connection* from the primary CULLER
 user flow and replaced it with paste-address scanning, and added a
 durable, admin-exportable reward allocation ledger. No mainnet activity
-occurred; no new secrets were introduced. See `docs/salv-architecture.md`
-§15 for the module map and `docs/salv-reward-ledger.md` for the full
+occurred; no new secrets were introduced. See `docs/culler-architecture.md`
+§15 for the module map and `docs/culler-reward-ledger.md` for the full
 ledger design, schema, and rationale.
 
 > **Superseded by Phase 8 for the wallet submission model.** Everything
 > below describes Phase 7's original "paste any Solana **or** EVM
 > address" model, which has since been refined. See
-> `docs/salv-reward-ledger.md` and `docs/salv-architecture.md` §16 for
-> the current behavior. In short: **every SALV reward submission
+> `docs/culler-reward-ledger.md` and `docs/culler-architecture.md` §16 for
+> the current behavior. In short: **every CULLER reward submission
 > requires a Solana wallet. Robinhood is optional and can be attached to
 > the same submission. Submitting both addresses performs one scan and
 > produces one reward allocation. The Solana wallet is the primary reward
@@ -37,9 +37,9 @@ ledger design, schema, and rationale.
   on the primary paste/scan screen (`src/lib/app-state.tsx`'s `canSign`
   now also requires the connected extension's pubkey to match the
   address being previewed).
-- **New endpoint**: `POST /api/salv/scan` — classifies a pasted address
+- **New endpoint**: `POST /api/culler/scan` — classifies a pasted address
   as Solana or EVM, runs the real existing Solana scan when applicable,
-  computes the $SALV allocation from the existing authoritative
+  computes the $CULLER allocation from the existing authoritative
   reward-snapshot/claim system (never from the client, never from the
   live scan), and upserts one row into a new reward ledger.
 - **New table**: `reward_ledger_entries` (migration `0005`), one row per
@@ -47,7 +47,7 @@ ledger design, schema, and rationale.
   by the same Postgres database every other repository already uses —
   not Vercel Blob (not configured in this project) and never the local
   filesystem.
-- **New admin endpoint**: `GET /api/dev/salv/rewards/export` — downloads
+- **New admin endpoint**: `GET /api/dev/culler/rewards/export` — downloads
   the ledger as CSV, gated by the existing `DEV_ADMIN_SECRET` /
   `assertDevAuthorized` convention used by every other `/api/dev/*`
   route.
@@ -58,7 +58,7 @@ ledger design, schema, and rationale.
   treasury accounting, the buyback dry-run, the StonkFun adapter, and
   every existing admin/dev route are all untouched and still pass their
   existing tests.
-- Claiming (`POST /api/salv/claims/:wallet/claim`) is functionally
+- Claiming (`POST /api/culler/claims/:wallet/claim`) is functionally
   identical — it never depended on a wallet-adapter connection in the
   first place (it only ever needed the address string, executed
   server-side from the distributor key). `/rewards` now states explicitly,
@@ -76,8 +76,8 @@ ledger design, schema, and rationale.
   `walletAddress` tests, 5 new `tokenSpec` decimal-string tests, and a
   new static-source-grep test confirming no wallet-adapter UI appears in
   the primary scan/rewards flow).
-- `npm run build` — succeeds; `/api/salv/scan` and
-  `/api/dev/salv/rewards/export` both appear as server-rendered routes.
+- `npm run build` — succeeds; `/api/culler/scan` and
+  `/api/dev/culler/rewards/export` both appear as server-rendered routes.
 - Manual smoke test against a locally running dev server (embedded
   PGlite database): pasted a real Solana address → scan attempted (RPC
   unreachable from this sandbox, reported honestly as
@@ -88,7 +88,7 @@ ledger design, schema, and rationale.
   dev routes → rescanned → status correctly became `NO_SNAPSHOT` and a
   **second** row appeared for the new epoch (dedup-by-epoch confirmed) →
   pasted an EVM-shaped address → recorded as `NOT_APPLICABLE` with no
-  live scan attempted → `GET /api/dev/salv/rewards/export` without a
+  live scan attempted → `GET /api/dev/culler/rewards/export` without a
   secret header returned 403; with the correct secret returned a
   correctly-formatted CSV (ISO-8601 timestamps, deterministic decimal
   amounts, exactly one row per wallet+network+epoch).

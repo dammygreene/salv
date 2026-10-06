@@ -36,7 +36,7 @@ export function AssetCard({ asset, variant = "default" }: { asset: Asset; varian
         </span>
       </div>
       <p>{asset.reason}</p>
-      {asset.status === "SALVAGEABLE" && (
+      {asset.status === "CULLABLE" && (
         <button className="asset-action asset-action-primary" onClick={() => toggleSelected(asset.id)}>
           <DrawCheck show={isSelected} size={13} />
           {isSelected ? "In bin" : "Add to bin"}

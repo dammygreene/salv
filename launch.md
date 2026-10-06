@@ -1,7 +1,7 @@
-# SALVAGE - Launch Plan
+# CULLER - Launch Plan
 
 ## Launch position
-Launch `$SALV` on Solana.
+Launch `$CULLER` on Solana.
 
 The product can scan supported assets across multiple chains, but Solana is the native home of the token and first-class product experience.
 
@@ -33,20 +33,20 @@ The first message should sell the product, not the token.
 Example:
 `YOUR WALLET IS FULL OF DEAD ASSETS.`
 
-`SALVAGE finds them, helps you remove them, and rewards the cleanup.`
+`CULLER finds them, helps you remove them, and rewards the cleanup.`
 
-Then introduce `$SALV` as the reward token.
+Then introduce `$CULLER` as the reward token.
 
 ## Launch sequence
 1. Publish product demo.
 2. Open waitlist or early access if useful.
 3. Release public scan.
-4. Verify salvage flow.
+4. Verify cull flow.
 5. Publish reward rules.
 6. Launch token.
 7. Activate first reward epoch.
 8. Begin treasury fee accounting.
-9. Publish salvage statistics.
+9. Publish cull statistics.
 
 ## Important operational separation
 Keep treasury, reward distribution, and deployment authority in separate addresses where appropriate.

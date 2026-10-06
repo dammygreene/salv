@@ -4,7 +4,7 @@ import { Db } from "../db/types";
 export interface PointsEntryRecord {
   id: string;
   walletId: string;
-  salvageActionId: string;
+  cullActionId: string;
   epochId: string | null;
   points: number;
   reason: string;
@@ -25,7 +25,7 @@ function mapRow(row: PointsEntryRow): PointsEntryRecord {
   return {
     id: row.id,
     walletId: row.wallet_id,
-    salvageActionId: row.salvage_action_id,
+    cullActionId: row.salvage_action_id,
     epochId: row.epoch_id,
     points: row.points,
     reason: row.reason,
@@ -35,26 +35,26 @@ function mapRow(row: PointsEntryRow): PointsEntryRecord {
 
 /**
  * Appends a points entry. Every point in this system traces back to
- * exactly one VERIFIED salvage_action via the UNIQUE(salvage_action_id)
+ * exactly one VERIFIED cull_action via the UNIQUE(salvage_action_id)
  * constraint — this function is idempotent on that id: calling it twice
  * for the same action never double-counts.
  */
 export async function awardPoints(
   db: Db,
-  input: { walletId: string; salvageActionId: string; points: number; reason: string; epochId: string | null }
+  input: { walletId: string; cullActionId: string; points: number; reason: string; epochId: string | null }
 ): Promise<{ entry: PointsEntryRecord; created: boolean }> {
   const result = await db.query<PointsEntryRow>(
     `INSERT INTO points_ledger (wallet_id, salvage_action_id, epoch_id, points, reason)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (salvage_action_id) DO NOTHING
      RETURNING *`,
-    [input.walletId, input.salvageActionId, input.epochId, input.points, input.reason]
+    [input.walletId, input.cullActionId, input.epochId, input.points, input.reason]
   );
 
   if (result.rows[0]) return { entry: mapRow(result.rows[0]), created: true };
 
   const existing = await db.query<PointsEntryRow>("SELECT * FROM points_ledger WHERE salvage_action_id = $1", [
-    input.salvageActionId,
+    input.cullActionId,
   ]);
   return { entry: mapRow(existing.rows[0]), created: false };
 }
@@ -62,7 +62,7 @@ export async function awardPoints(
 export interface WalletStats {
   points: number;
   verifiedEvents: number;
-  assetsSalvaged: number;
+  assetsCulld: number;
   actualRecoveryLamports: number;
 }
 
@@ -84,7 +84,7 @@ export async function getWalletStats(db: Db, walletId: string): Promise<WalletSt
 
   return {
     points: Number(pointsResult.rows[0]?.total ?? 0),
-    assetsSalvaged: Number(assetsResult.rows[0]?.count ?? 0),
+    assetsCulld: Number(assetsResult.rows[0]?.count ?? 0),
     verifiedEvents: Number(eventsResult.rows[0]?.count ?? 0),
     actualRecoveryLamports: Number(recoveryResult.rows[0]?.total ?? 0),
   };

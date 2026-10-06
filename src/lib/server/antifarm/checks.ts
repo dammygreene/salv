@@ -1,12 +1,12 @@
 import "server-only";
-import { SalvageActionType } from "@/lib/salvage/registry";
+import { CullActionType } from "@/lib/cull/registry";
 import { Db } from "../db/types";
-import { countDistinctWalletsForMintAction, findActionByWalletTokenAccountAction } from "../repositories/salvageRepo";
+import { countDistinctWalletsForMintAction, findActionByWalletTokenAccountAction } from "../repositories/cullRepo";
 
 export interface AntiFarmContext {
   walletId: string;
   tokenAccount: string;
-  action: SalvageActionType;
+  action: CullActionType;
   mint: string | null;
 }
 
@@ -16,7 +16,7 @@ export interface AntiFarmResult {
 }
 
 const CROSS_WALLET_MINT_REUSE_WINDOW_MS = 24 * 60 * 60 * 1000;
-/** If this many distinct wallets have already been paid for salvaging the
+/** If this many distinct wallets have already been paid for culleraging the
  * same mint within the window, further payouts for that mint are
  * withheld (the underlying on-chain action can still succeed and is
  * still recorded — this only withholds points). This is a blunt,
@@ -39,7 +39,7 @@ const CROSS_WALLET_MINT_REUSE_THRESHOLD = 25;
  *      spreading the same spam/dust mint across many wallets).
  *
  *  NOT YET IMPLEMENTED (architecture only):
- *   - Self-created assets (mint authority === the salvaging wallet).
+ *   - Self-created assets (mint authority === the culleraging wallet).
  *   - Repeated circular transfers (needs multi-hop transaction graph
  *     analysis across the wallet's full history).
  *   - Suspiciously new spam assets (needs mint creation slot + a
@@ -61,7 +61,7 @@ export async function evaluateAntiFarmRisk(db: Db, ctx: AntiFarmContext): Promis
     if (distinctWallets >= CROSS_WALLET_MINT_REUSE_THRESHOLD) {
       return {
         allowed: false,
-        reason: `This mint has already been salvaged by ${distinctWallets} different wallets in the last 24h; withholding points as a precaution.`,
+        reason: `This mint has already been culld by ${distinctWallets} different wallets in the last 24h; withholding points as a precaution.`,
       };
     }
   }

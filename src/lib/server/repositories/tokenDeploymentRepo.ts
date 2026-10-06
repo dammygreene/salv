@@ -75,8 +75,8 @@ export interface RecordTokenDeploymentInput {
 }
 
 /**
- * Records a $SALV mint deployment as a public audit trail. This is NOT
- * the app's runtime configuration source (that is the SALV_* environment
+ * Records a $CULLER mint deployment as a public audit trail. This is NOT
+ * the app's runtime configuration source (that is the CULLER_* environment
  * variables, Section 16) — it exists so the deployment history and
  * authority state at deploy time are durably, publicly recorded even if
  * environment variables are later rotated. Never stores a private key or

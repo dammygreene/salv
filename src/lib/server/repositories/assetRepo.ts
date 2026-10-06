@@ -1,5 +1,5 @@
 import "server-only";
-import { AssetClassification } from "@/lib/salvage/registry";
+import { AssetClassification } from "@/lib/cull/registry";
 import { Db } from "../db/types";
 
 export async function ensureAsset(db: Db, input: { mint: string; kind: "TOKEN" | "NFT"; chain?: string }): Promise<{ id: string }> {

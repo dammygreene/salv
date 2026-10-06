@@ -5,7 +5,7 @@ import { useAppState } from "@/lib/app-state";
 
 const KIND_LABEL: Record<string, string> = {
   SCAN: "Scan",
-  SALVAGE: "Salvage",
+  CULLER: "Cull",
   WATCH: "Watch",
   REWARD: "Reward",
 };
@@ -15,7 +15,7 @@ export default function HistoryPage() {
 
   return (
     <main className="history-page">
-      <PageHeader title="Everything, in order." support="Scans, salvages, verifications and watch activity for this session." />
+      <PageHeader title="Everything, in order." support="Scans, culls, verifications and watch activity for this session." />
 
       {history.length === 0 ? (
         <div className="empty-state">

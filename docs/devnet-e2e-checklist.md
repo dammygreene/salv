@@ -29,7 +29,7 @@ values — only values copied from a real transaction.
 - Confirmed slot: `<unfilled>`
 - Recovered lamports (actual, from the on-chain `closeAccount` result):
   `<unfilled>`
-- Salvage event ID (from `GET /api/salvage/events/<wallet>`):
+- Cull event ID (from `GET /api/cull/events/<wallet>`):
   `<unfilled>`
 - Points awarded (from `GET /api/rewards/<wallet>`): `<unfilled>`
 - Replay check (step 6.4) result: `<unfilled>`
@@ -72,7 +72,7 @@ Restart `npm run dev` after changing env vars.
 2. Airdrop yourself Devnet SOL: `solana airdrop 2 <your-address> --url devnet`
    (requires the Solana CLI) or use a Devnet faucet website.
 3. Create at least one SPL token account on Devnet and then empty it, so
-   SALVAGE's scanner has something real to find:
+   CULLER's scanner has something real to find:
    - `spl-token create-token --url devnet` (creates a new mint you control)
    - `spl-token create-account <MINT> --url devnet` (creates your ATA)
    - Do **not** mint any tokens into it, or mint then transfer/burn them
@@ -111,23 +111,23 @@ Restart `npm run dev` after changing env vars.
 2. Confirm the token account no longer appears in `spl-token accounts
    --url devnet` for your wallet.
 
-## 6. Confirm Proof of Salvage + points
+## 6. Confirm Proof of Cull + points
 
-1. The app should show the salvage as Confirmed, with the real recovered
+1. The app should show the cull as Confirmed, with the real recovered
    SOL amount (your actual rent, not an estimate) and a point value.
-2. Hit `GET /api/salvage/events/<your-wallet-address>` directly (e.g. via
+2. Hit `GET /api/cull/events/<your-wallet-address>` directly (e.g. via
    curl or the browser) and confirm it returns exactly one VERIFIED event
    for that transaction signature, with the right token account and
    points.
 3. Hit `GET /api/rewards/<your-wallet-address>` and confirm `points`,
-   `verifiedEvents`, `assetsSalvaged`, and `actualRecovery` all reflect
+   `verifiedEvents`, `assetsCulld`, and `actualRecovery` all reflect
    this one action.
-4. Re-submit the exact same signature to `/api/salvage/verify` again
+4. Re-submit the exact same signature to `/api/cull/verify` again
    (e.g. replay the request your browser sent, or re-click confirm if the
    UI allows it) and confirm:
    - `/api/rewards/<wallet>` still reports the *same* points (no double
      count).
-   - `/api/salvage/events/<wallet>` still reports exactly one event, not
+   - `/api/cull/events/<wallet>` still reports exactly one event, not
      two.
 
 ## 7. (Optional) Exercise an epoch
@@ -136,9 +136,9 @@ Restart `npm run dev` after changing env vars.
    DEV_ADMIN_SECRET>` and body
    `{"number":1,"startsAt":"<iso>","endsAt":"<iso>","rewardPoolPoints":1000000}`.
 2. `POST /api/dev/epochs/<id>/activate` with the same header.
-3. Repeat step 4 (a new salvage) and confirm `/api/rewards/<wallet>` now
+3. Repeat step 4 (a new cull) and confirm `/api/rewards/<wallet>` now
    shows a non-null `currentEpoch`, a non-zero `epochPoints`, and some
-   `estimatedReward` (clearly a simulation, not a real $SALV balance).
+   `estimatedReward` (clearly a simulation, not a real $CULLER balance).
 
 ## What "pass" looks like
 

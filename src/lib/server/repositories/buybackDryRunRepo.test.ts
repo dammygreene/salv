@@ -7,12 +7,12 @@ function baseInput(overrides: Partial<Parameters<typeof recordBuybackDryRun>[1]>
   return {
     feeBalance: 1.2,
     feeAsset: "SOL",
-    currentSalvQuote: 150_000,
+    currentCullerQuote: 150_000,
     maxSpend: 1,
     minOutput: 100_000,
     slippageLimitBps: 300,
     plannedSpend: 1,
-    expectedSalvOutput: 150_000,
+    expectedCullerOutput: 150_000,
     rejected: false,
     rejectionReason: null,
     ...overrides,
@@ -34,7 +34,7 @@ describe("buybackDryRunRepo", () => {
     const record = await recordBuybackDryRun(db, baseInput());
     expect(record.feeBalance).toBe(1.2);
     expect(record.plannedSpend).toBe(1);
-    expect(record.expectedSalvOutput).toBe(150_000);
+    expect(record.expectedCullerOutput).toBe(150_000);
     expect(record.rejected).toBe(false);
     expect(record.rejectionReason).toBeNull();
   });
@@ -42,7 +42,7 @@ describe("buybackDryRunRepo", () => {
   it("records a rejected dry run with its reason, and zeroed plan fields", async () => {
     const record = await recordBuybackDryRun(
       db,
-      baseInput({ rejected: true, rejectionReason: "slippage limit would be violated", plannedSpend: 0, expectedSalvOutput: 0 })
+      baseInput({ rejected: true, rejectionReason: "slippage limit would be violated", plannedSpend: 0, expectedCullerOutput: 0 })
     );
     expect(record.rejected).toBe(true);
     expect(record.rejectionReason).toBe("slippage limit would be violated");

@@ -28,7 +28,7 @@ describe("treasuryBurnRepo", () => {
   it("is idempotent on transactionSignature -- recording the same burn twice is a no-op, never double-counted", async () => {
     const input = {
       amountBaseUnits: 5_000_000_000n,
-      reason: "Permanent burn of excess buyback-acquired SALV",
+      reason: "Permanent burn of excess buyback-acquired CULLER",
       transactionSignature: "burnSigDup".padEnd(64, "2"),
     };
     const first = await recordTreasuryBurn(db, input);

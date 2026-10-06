@@ -1,6 +1,6 @@
-# $SALV Token Specification
+# $CULLER Token Specification
 
-Authoritative spec for the $SALV token. This document is the single
+Authoritative spec for the $CULLER token. This document is the single
 source of truth for supply and allocation — if code and this document
 ever disagree, this document is correct and the code has a bug.
 
@@ -8,31 +8,31 @@ ever disagree, this document is correct and the code has a bug.
 
 | Field    | Value          |
 |----------|----------------|
-| Name     | SALVAGE        |
-| Symbol   | SALV           |
+| Name     | CULLER        |
+| Symbol   | CULLER           |
 | Chain    | Solana         |
 | Decimals | 9              |
 
 Decimals chosen as 9 to match SOL and the most common SPL
 Token/Token-2022 convention. (Phase 6 correction: StonkFun's own
 *observed example LaunchLab launches* commonly use 6 decimals, not 9 —
-see `docs/phase-6-status.md`. This does not change $SALV's own
-decimals, because — see "Token program" below — $SALV's 1B/300M/700M
+see `docs/phase-6-status.md`. This does not change $CULLER's own
+decimals, because — see "Token program" below — $CULLER's 1B/300M/700M
 split is not implemented via an actual StonkFun/LaunchLab mint
-transaction in this phase; $SALV's own independently-created mint is
+transaction in this phase; $CULLER's own independently-created mint is
 free to use 9 decimals, and changing it now would be a wide, high-risk
 change across already-tested code with no real benefit.)
 
 ## Supply
 
-| Bucket             | Amount (SALV) | Share |
+| Bucket             | Amount (CULLER) | Share |
 |--------------------|---------------|-------|
 | Total supply       | 1,000,000,000 | 100%  |
 | Market             |   700,000,000 | 70%   |
 | Community rewards  |   300,000,000 | 30%   |
 
 `market + community_rewards = total_supply` exactly. This is enforced in
-code by `src/lib/salv/tokenSpec.ts`'s `assertNoHiddenAllocations()`,
+code by `src/lib/culler/tokenSpec.ts`'s `assertNoHiddenAllocations()`,
 which is itself exercised by a test that fails the build if anyone ever
 adds a third bucket or changes a number without updating this file.
 
@@ -49,24 +49,24 @@ supply past 1,000,000,000) and reflected in `tokenSpec.ts` in the same
 change — never introduced only in a deployment script or a wallet
 transfer with no corresponding entry here.
 
-## Market allocation (700,000,000 SALV)
+## Market allocation (700,000,000 CULLER)
 
 Intended destination: the chosen launch venue's liquidity mechanism (see
-`launch.md` and the StonkFun adapter, `src/lib/salv/stonkfunAdapter.ts`).
+`launch.md` and the StonkFun adapter, `src/lib/culler/stonkfunAdapter.ts`).
 Phase 5 does not launch on any venue — see "Launch status" below. On
 Devnet, this allocation sits in a plain token account (the "market
 holding account") pending a real launch decision; it is never
 distributed to users directly.
 
-## Community allocation (300,000,000 SALV)
+## Community allocation (300,000,000 CULLER)
 
 Destination: the Community Reward Vault (see
-`docs/salv-architecture.md`). Distributed over time, epoch by epoch,
+`docs/culler-architecture.md`). Distributed over time, epoch by epoch,
 driven only by verified reward snapshots (Phase 4 Part D) — never by
 discretionary transfer. The vault's own balance invariant (it can never
 distribute more than it holds) and the global invariant (total
-distributed can never exceed 300,000,000 SALV) are enforced in code and
-tested — see `src/lib/salv/vault.ts` and its test suite.
+distributed can never exceed 300,000,000 CULLER) are enforced in code and
+tested — see `src/lib/culler/vault.ts` and its test suite.
 
 ## Token program
 
@@ -89,7 +89,7 @@ the current, verified answer is the opposite of Phase 5's:
   launches" config additionally imposes a 1%–3% transfer fee extension;
   the "standard launches" config does not. See
   `docs/phase-6-status.md` for the full citation list.
-- $SALV's own requirement is "no transfer tax" (Phase 6 spec), which
+- $CULLER's own requirement is "no transfer tax" (Phase 6 spec), which
   rules out StonkFun's "reward launches" config regardless of token
   program. The "standard launches" config is Token-2022 with **no**
   transfer-fee extension enabled — functionally identical to a plain
@@ -98,17 +98,17 @@ the current, verified answer is the opposite of Phase 5's:
   authorities), just under the newer program id.
 - No Token-2022 extension is enabled: no transfer fee, no permanent
   delegate, no transfer hook, no confidential transfers. `TOKEN_PROGRAM_ID_BASE58`
-  in `src/lib/salv/tokenSpec.ts` pins the exact program id as a plain
+  in `src/lib/culler/tokenSpec.ts` pins the exact program id as a plain
   string so this module stays dependency-free.
 
 This decision is re-checked, not re-assumed, by the StonkFun adapter
-(`src/lib/salv/stonkfunAdapter.ts`) before any real launch: if a real
+(`src/lib/culler/stonkfunAdapter.ts`) before any real launch: if a real
 launch transaction is ever prepared and the observed, live StonkFun
 configuration reports a different token standard requirement, the
 adapter fails closed rather than silently proceeding.
 
 **Important, separately documented limitation (Phase 6 — see
-`docs/salv-treasury.md`):** regardless of token program, a real
+`docs/culler-treasury.md`):** regardless of token program, a real
 StonkFun/LaunchLab launch transaction mints its own, brand-new
 `total_supply` as part of one instruction, and StonkFun's own current
 launches are observed to always whitelist a vesting lock of exactly
@@ -116,23 +116,23 @@ zero (vesting disabled) with zero creator fee. This means the
 1,000,000,000 / 300M / 700M split described below is **not** expressed
 through any real StonkFun/LaunchLab transaction — it happens at the
 token level, before/outside of any such transaction. A real StonkFun
-listing of the 700,000,000 SALV market tranche, if pursued later, would
+listing of the 700,000,000 CULLER market tranche, if pursued later, would
 be a separate integration decision, not a mechanism for creating the
 split itself.
 
 ## Authorities (fixed-supply deployment design)
 
-Intended production sequence (see `docs/salv-devnet-claim-checklist.md`
+Intended production sequence (see `docs/culler-devnet-claim-checklist.md`
 for the Devnet dry run of this sequence):
 
 1. Create the mint with a deployer-controlled mint authority and
    freeze authority (both required temporarily to perform the one-time
    mint below; Solana's `createMint` always sets both at creation).
-2. Mint the entire 1,000,000,000 SALV supply in a single mint
+2. Mint the entire 1,000,000,000 CULLER supply in a single mint
    instruction, to a deployer-controlled token account. The mint
    instruction is never called a second time.
-3. Transfer 300,000,000 SALV to the Community Reward Vault's token
-   account and 700,000,000 SALV to the market holding account. After
+3. Transfer 300,000,000 CULLER to the Community Reward Vault's token
+   account and 700,000,000 CULLER to the market holding account. After
    this step, 100% of supply is accounted for and sitting in one of
    exactly two documented, publicly recorded addresses.
 4. Only once every required production setup step (vault wiring,
@@ -146,16 +146,16 @@ for the Devnet dry run of this sequence):
 deployments keep both authorities live (held by the deployer keypair) so
 the test token can be re-minted or adjusted if the Devnet rehearsal
 surfaces a bug. Every Devnet deployment manifest
-(`deployments/devnet-salv-manifest.json`) records the exact authority
+(`deployments/devnet-culler-manifest.json`) records the exact authority
 state — `mintAuthority` and `freezeAuthority` fields are either a real
 address (authority still live) or the string `"null (revoked)"`. Nobody
 should assume an authority is revoked without checking that field.
 
 ## No hidden allocations — how this is enforced, not just claimed
 
-- `src/lib/salv/tokenSpec.ts` exports exactly two allocation constants
-  (`MARKET_ALLOCATION_SALV`, `COMMUNITY_ALLOCATION_SALV`) and a test
-  asserts their sum equals `TOTAL_SUPPLY_SALV` with no other constant in
+- `src/lib/culler/tokenSpec.ts` exports exactly two allocation constants
+  (`MARKET_ALLOCATION_CULLER`, `COMMUNITY_ALLOCATION_CULLER`) and a test
+  asserts their sum equals `TOTAL_SUPPLY_CULLER` with no other constant in
   the module contributing to supply.
 - The Devnet deployment script never mints more than once, and never to
   more than the two documented addresses (deployer's own distribution
@@ -163,6 +163,6 @@ should assume an authority is revoked without checking that field.
   count as a third bucket — it is emptied into the two real buckets in
   the same script run and its balance is asserted to be zero before the
   script reports success).
-- Every address that ever receives SALV from the deployment script is
+- Every address that ever receives CULLER from the deployment script is
   written to the deployment manifest (public record), per Phase 5
   Section 9.

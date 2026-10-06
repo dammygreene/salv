@@ -1,9 +1,9 @@
-# SALVAGE - Product and Engineering Plan
+# CULLER - Product and Engineering Plan
 
 ## 1. Product thesis
-SALVAGE is a recovery network for stranded digital assets.
+CULLER is a recovery network for stranded digital assets.
 
-The first wedge is simple: scan a wallet, find things the user probably forgot or no longer wants, safely recover what can be recovered, dispose of supported dead assets, and reward verified participation with `$SALV`.
+The first wedge is simple: scan a wallet, find things the user probably forgot or no longer wants, safely recover what can be recovered, dispose of supported dead assets, and reward verified participation with `$CULLER`.
 
 The long-term product is not merely a wallet cleaner. It is a persistent layer that remembers dormant assets and alerts users when previously useless assets become redeemable or recoverable.
 
@@ -11,7 +11,7 @@ The long-term product is not merely a wallet cleaner. It is a persistent layer t
 Prove three things:
 1. People enjoy seeing hidden or forgotten assets surfaced.
 2. People trust the product enough to execute legitimate cleanup/recovery transactions.
-3. Proof of Salvage can distribute rewards without becoming an obvious farming exploit.
+3. Proof of Cull can distribute rewards without becoming an obvious farming exploit.
 
 ## 3. Build phases
 
@@ -28,7 +28,7 @@ Prove three things:
 ### Phase 1 - Visual shell
 - Global design tokens.
 - Landing page.
-- Salvage machine hero.
+- Cull machine hero.
 - Navigation.
 - Wallet connection.
 - Responsive shell.
@@ -42,7 +42,7 @@ Prove three things:
 - Classification engine.
 - Scan persistence.
 
-### Phase 3 - Salvage actions
+### Phase 3 - Cull actions
 - Supported token burn.
 - Supported token account close.
 - Supported NFT burn.
@@ -52,7 +52,7 @@ Prove three things:
 - Onchain verification.
 
 ### Phase 4 - Rewards
-- Proof of Salvage events.
+- Proof of Cull events.
 - Point ledger.
 - Epochs.
 - User reward calculation.
@@ -86,14 +86,14 @@ Track:
 - scan starts
 - scan completion rate
 - unique wallets scanned
-- salvage transactions completed
+- cull transactions completed
 - recovery value returned
-- valid Proof of Salvage events
+- valid Proof of Cull events
 - suspicious event rate
 - reward distribution
 - repeat users
 - watchlist adoption
-- average time from scan to first salvage
+- average time from scan to first cull
 
 Do not optimize for raw transaction count without validating event quality.
 
@@ -110,4 +110,4 @@ Do not optimize for raw transaction count without validating event quality.
 
 ## 6. Definition of done
 A vertical slice is done when a real user can:
-connect -> scan -> review -> salvage -> verify -> see Proof of Salvage -> see reward accounting.
+connect -> scan -> review -> cull -> verify -> see Proof of Cull -> see reward accounting.

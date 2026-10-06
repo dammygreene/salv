@@ -55,7 +55,7 @@ export interface RecordFeeEventInput {
 
 /**
  * Records one real, observed fee wallet inflow or outflow. This table is
- * SALVAGE's protocol revenue ledger — the SALVAGE FEE WALLET — and is
+ * CULLER's protocol revenue ledger — the CULLER FEE WALLET — and is
  * completely separate from the community reward vault
  * (reward_snapshots / reward_claims). Append-only and keyed by a unique
  * transaction signature, so replaying the same on-chain transaction
@@ -93,7 +93,7 @@ export interface FeeWalletStatus {
   /** Current balance available to claim: totalReceived - claimed. Never
    * negative in correct operation (an OUT event should never be
    * recorded for more than the current balance -- see
-   * src/lib/salv/feeWallet.ts for the guard that enforces this before
+   * src/lib/culler/feeWallet.ts for the guard that enforces this before
    * calling recordFeeEvent with direction 'OUT'). */
   balance: number;
   events: FeeWalletEventRecord[];

@@ -22,7 +22,7 @@
   flex-shrink: 0;
 }
 
-.status-salvageable {
+.status-cullable {
   color: var(--ok);
   border-color: rgba(52, 211, 153, 0.3);
   background: var(--ok-soft);
@@ -474,7 +474,7 @@
   color: var(--data);
 }
 
-.stat-salvage .stat-value {
+.stat-cull .stat-value {
   color: var(--ok);
 }
 
@@ -605,8 +605,8 @@
   color: var(--text-muted);
 }
 
-/* ── salvage bin ──────────────────────────────────────── */
-.salvage-bin {
+/* ── cull bin ──────────────────────────────────────── */
+.cull-bin {
   position: sticky;
   top: 110px;
   align-self: start;
@@ -620,22 +620,22 @@
   transition: border-color var(--t-base) var(--ease);
 }
 
-.salvage-bin.is-active {
+.cull-bin.is-active {
   border-color: var(--border-accent);
 }
 
-.salvage-bin-head {
+.cull-bin-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.salvage-bin-count {
+.cull-bin-count {
   font-size: 1.3rem;
   font-weight: 800;
 }
 
-.salvage-bin-chamber {
+.cull-bin-chamber {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -651,7 +651,7 @@
   color: var(--text-secondary);
 }
 
-.salvage-bin-ring {
+.cull-bin-ring {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -660,36 +660,36 @@
   animation: spin 6s linear infinite;
 }
 
-.is-active .salvage-bin-ring {
+.is-active .cull-bin-ring {
   animation-duration: 1.6s;
   border-top-color: var(--accent-text);
 }
 
-.salvage-bin-summary {
+.cull-bin-summary {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
 
-.salvage-bin-summary div {
+.cull-bin-summary div {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.salvage-bin-summary span {
+.cull-bin-summary span {
   font-family: var(--font-sans);
   font-weight: 600;
   font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.salvage-bin-summary strong {
+.cull-bin-summary strong {
   font-size: 1.05rem;
   font-weight: 800;
 }
 
-.salvage-bin-cta {
+.cull-bin-cta {
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 0.85rem;
@@ -701,15 +701,15 @@
   transition: background var(--t-base) var(--ease), transform var(--t-fast) var(--ease);
 }
 
-.salvage-bin-cta:hover:not(:disabled) {
+.cull-bin-cta:hover:not(:disabled) {
   background: var(--secondary-hover);
 }
 
-.salvage-bin-cta:active:not(:disabled) {
+.cull-bin-cta:active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.salvage-bin small {
+.cull-bin small {
   font-size: 0.72rem;
   color: var(--text-muted);
   text-align: center;
@@ -726,7 +726,7 @@
   .scan-results-layout {
     grid-template-columns: 1fr;
   }
-  .salvage-bin {
+  .cull-bin {
     position: static;
   }
 }
@@ -1066,7 +1066,7 @@
   box-shadow: 0 0 0 4px var(--bg);
 }
 
-.timeline-salvage .timeline-dot {
+.timeline-cull .timeline-dot {
   background: var(--ok);
 }
 

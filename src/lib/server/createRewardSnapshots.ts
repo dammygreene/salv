@@ -1,5 +1,5 @@
 import "server-only";
-import { simulateEpochRewards } from "@/lib/salvage/rewardSimulator";
+import { simulateEpochRewards } from "@/lib/cull/rewardSimulator";
 import { Db } from "./db/types";
 import { EpochError, getEpochByNumber, listEpochs } from "./repositories/epochRepo";
 import { listWalletPointsForEpoch } from "./repositories/pointsRepo";

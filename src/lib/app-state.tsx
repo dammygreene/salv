@@ -7,14 +7,14 @@ import { getConnection } from "./solana/connection";
 import { SOLANA_NETWORK } from "./solana/constants";
 import { isValidSolanaAddress } from "./solana/base58";
 import { ExecutionError } from "./solana/executor/sendAndConfirm";
-import { runSalvagePlan } from "./solana/executor/runSalvage";
+import { runCullPlan } from "./solana/executor/runCull";
 import { submitForVerification } from "./solana/executor/verify";
 import { RecoveryValidationError } from "./solana/recovery/closeAccount";
 import { scanWallet, WalletScanError } from "./solana/scanner/scan";
-import { buildSalvageTransactionPlan, PlanningError } from "./solana/transactions/planner";
+import { buildCullTransactionPlan, PlanningError } from "./solana/transactions/planner";
 import { Asset, HistoryEvent, ProofEvent, ScanState, WatchItem } from "./types";
 
-export type SalvageStatus =
+export type CullStatus =
   | "IDLE"
   | "BUILDING"
   | "AWAITING_SIGNATURE"
@@ -30,7 +30,7 @@ type AppState = {
    * has been entered yet. */
   walletAddress: string;
   setWalletAddress: (address: string) => void;
-  /** Clears the current address and every bit of scan/salvage state tied
+  /** Clears the current address and every bit of scan/cull state tied
    * to it (and drops a real wallet-extension session, if one happened to
    * be connected for signing). */
   clearWallet: () => void;
@@ -55,8 +55,8 @@ type AppState = {
   proofEvents: ProofEvent[];
   history: HistoryEvent[];
   rewardScore: number;
-  salvageStatus: SalvageStatus;
-  salvageError: string | null;
+  cullStatus: CullStatus;
+  cullError: string | null;
   /** Runs the real, read-only Solana scan for an address. Pass an
    * address to scan something other than the currently-set
    * `walletAddress` (it becomes the new `walletAddress` as a side
@@ -66,7 +66,7 @@ type AppState = {
   toggleSelected: (id: string) => void;
   clearSelected: () => void;
   addToWatch: (assetId: string) => void;
-  confirmSalvage: () => Promise<ProofEvent | null>;
+  confirmCull: () => Promise<ProofEvent | null>;
 };
 
 const AppStateContext = createContext<AppState | null>(null);
@@ -103,8 +103,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [proofEvents, setProofEvents] = useState<ProofEvent[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [rewardScore, setRewardScore] = useState(0);
-  const [salvageStatus, setSalvageStatus] = useState<SalvageStatus>("IDLE");
-  const [salvageError, setSalvageError] = useState<string | null>(null);
+  const [cullStatus, setCullStatus] = useState<CullStatus>("IDLE");
+  const [cullError, setCullError] = useState<string | null>(null);
   const connectingExtension = useRef(false);
 
   // A real wallet-adapter extension session can only ever sign for the
@@ -174,8 +174,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setAccountsFound(0);
     setAccountsTruncated(false);
     setSelected([]);
-    setSalvageStatus("IDLE");
-    setSalvageError(null);
+    setCullStatus("IDLE");
+    setCullError(null);
   }, [extensionConnected, disconnect]);
 
   const scanProgress = useMemo(() => {
@@ -201,8 +201,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setAssets([]);
       setAccountsFound(0);
       setAccountsTruncated(false);
-      setSalvageStatus("IDLE");
-      setSalvageError(null);
+      setCullStatus("IDLE");
+      setCullError(null);
       setScanState("SCANNING WALLET");
       pushHistory({ kind: "SCAN", label: "Scan started", detail: shortAddress(target) });
 
@@ -255,53 +255,53 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * The real end-to-end salvage flow for CLOSE_EMPTY_TOKEN_ACCOUNT actions:
+   * The real end-to-end cull flow for CLOSE_EMPTY_TOKEN_ACCOUNT actions:
    * build a deterministic plan -> re-verify on chain -> wallet signs ->
    * send -> confirm -> ask the backend to independently verify the
    * resulting signature. A ProofEvent is only ever created from a
    * backend-VERIFIED event; nothing here fabricates a success state.
    */
-  const confirmSalvage = useCallback(async (): Promise<ProofEvent | null> => {
+  const confirmCull = useCallback(async (): Promise<ProofEvent | null> => {
     if (!selected.length) return null;
     const chosen = assets.filter((asset) => selected.includes(asset.id));
 
     if (!canSign || !publicKey) {
-      setSalvageStatus("ERROR");
-      setSalvageError("Connect the wallet extension for this exact address to sign a transaction.");
+      setCullStatus("ERROR");
+      setCullError("Connect the wallet extension for this exact address to sign a transaction.");
       return null;
     }
 
-    setSalvageError(null);
-    setSalvageStatus("BUILDING");
+    setCullError(null);
+    setCullStatus("BUILDING");
 
     try {
-      const plan = buildSalvageTransactionPlan({
+      const plan = buildCullTransactionPlan({
         wallet: walletAddress,
         network: SOLANA_NETWORK,
         assets: chosen,
         estimatedFeeLamports: 5000,
       });
 
-      setSalvageStatus("AWAITING_SIGNATURE");
+      setCullStatus("AWAITING_SIGNATURE");
       const connection = getConnection();
-      const result = await runSalvagePlan(connection, publicKey, plan, sendTransaction);
+      const result = await runCullPlan(connection, publicKey, plan, sendTransaction);
 
-      setSalvageStatus("VERIFYING");
+      setCullStatus("VERIFYING");
       const { events } = await submitForVerification(result);
 
       const verified = events.filter((event) => event.status === "VERIFIED");
       const failed = events.filter((event) => event.status !== "VERIFIED");
 
       if (!verified.length) {
-        setSalvageStatus("ERROR");
-        setSalvageError(failed[0]?.reason ?? "The backend could not verify this transaction.");
+        setCullStatus("ERROR");
+        setCullError(failed[0]?.reason ?? "The backend could not verify this transaction.");
         return null;
       }
 
       const recoveredLamports = verified.reduce((sum, event) => sum + (event.actualRecoveryLamports ?? 0), 0);
       const recoveredSol = recoveredLamports / 1_000_000_000;
       // Real points, as computed and awarded by the backend's
-      // deterministic calculateSalvagePoints() — never invented here.
+      // deterministic calculateCullPoints() — never invented here.
       const reward = verified.reduce((sum, e) => sum + (e.points ?? 0), 0);
 
       const verifiedAssetIds = new Set(
@@ -326,32 +326,32 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setAssets((current) => current.filter((asset) => !verifiedAssetIds.has(asset.id)));
       setSelected((current) => current.filter((id) => !verifiedAssetIds.has(id)));
       pushHistory({
-        kind: "SALVAGE",
-        label: "Salvage confirmed on-chain",
+        kind: "CULLER",
+        label: "Cull confirmed on-chain",
         detail: `${verified.length} asset(s), ${recoveredSol.toFixed(4)} SOL, tx ${shortAddress(result.signature)}`,
       });
-      pushHistory({ kind: "REWARD", label: "Proof verified", detail: `+${reward} salvage score` });
+      pushHistory({ kind: "REWARD", label: "Proof verified", detail: `+${reward} cull score` });
 
       if (failed.length) {
-        setSalvageStatus("ERROR");
-        setSalvageError(`${failed.length} of ${events.length} actions could not be verified: ${failed[0]?.reason ?? ""}`);
+        setCullStatus("ERROR");
+        setCullError(`${failed.length} of ${events.length} actions could not be verified: ${failed[0]?.reason ?? ""}`);
       } else {
-        setSalvageStatus("DONE");
+        setCullStatus("DONE");
       }
 
       return event;
     } catch (err) {
-      setSalvageStatus("ERROR");
+      setCullStatus("ERROR");
       if (err instanceof PlanningError) {
-        setSalvageError(err.message);
+        setCullError(err.message);
       } else if (err instanceof RecoveryValidationError) {
-        setSalvageError(`On-chain re-check failed: ${err.message}`);
+        setCullError(`On-chain re-check failed: ${err.message}`);
       } else if (err instanceof ExecutionError) {
-        setSalvageError(err.message);
+        setCullError(err.message);
       } else if (err instanceof Error && /reject/i.test(err.message)) {
-        setSalvageError("Signature request was rejected in the wallet.");
+        setCullError("Signature request was rejected in the wallet.");
       } else {
-        setSalvageError(err instanceof Error ? err.message : "Salvage failed. Nothing was recorded.");
+        setCullError(err instanceof Error ? err.message : "Cull failed. Nothing was recorded.");
       }
       return null;
     }
@@ -378,13 +378,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       proofEvents,
       history,
       rewardScore,
-      salvageStatus,
-      salvageError,
+      cullStatus,
+      cullError,
       startScan,
       toggleSelected,
       clearSelected,
       addToWatch,
-      confirmSalvage,
+      confirmCull,
     }),
     [
       walletAddress,
@@ -406,13 +406,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       proofEvents,
       history,
       rewardScore,
-      salvageStatus,
-      salvageError,
+      cullStatus,
+      cullError,
       startScan,
       toggleSelected,
       clearSelected,
       addToWatch,
-      confirmSalvage,
+      confirmCull,
     ]
   );
 

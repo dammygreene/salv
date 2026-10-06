@@ -5,12 +5,12 @@ export interface BuybackDryRunRecord {
   id: string;
   feeBalance: number;
   feeAsset: string;
-  currentSalvQuote: number;
+  currentCullerQuote: number;
   maxSpend: number;
   minOutput: number;
   slippageLimitBps: number;
   plannedSpend: number;
-  expectedSalvOutput: number;
+  expectedCullerOutput: number;
   rejected: boolean;
   rejectionReason: string | null;
   createdAt: string;
@@ -36,12 +36,12 @@ function mapRow(row: BuybackDryRunRow): BuybackDryRunRecord {
     id: row.id,
     feeBalance: Number(row.fee_balance),
     feeAsset: row.fee_asset,
-    currentSalvQuote: Number(row.current_salv_quote),
+    currentCullerQuote: Number(row.current_salv_quote),
     maxSpend: Number(row.max_spend),
     minOutput: Number(row.min_output),
     slippageLimitBps: row.slippage_limit_bps,
     plannedSpend: Number(row.planned_spend),
-    expectedSalvOutput: Number(row.expected_salv_output),
+    expectedCullerOutput: Number(row.expected_salv_output),
     rejected: row.rejected,
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
@@ -51,12 +51,12 @@ function mapRow(row: BuybackDryRunRow): BuybackDryRunRecord {
 export interface RecordBuybackDryRunInput {
   feeBalance: number;
   feeAsset: string;
-  currentSalvQuote: number;
+  currentCullerQuote: number;
   maxSpend: number;
   minOutput: number;
   slippageLimitBps: number;
   plannedSpend: number;
-  expectedSalvOutput: number;
+  expectedCullerOutput: number;
   rejected: boolean;
   rejectionReason?: string | null;
 }
@@ -73,12 +73,12 @@ export async function recordBuybackDryRun(db: Db, input: RecordBuybackDryRunInpu
     [
       input.feeBalance,
       input.feeAsset,
-      input.currentSalvQuote,
+      input.currentCullerQuote,
       input.maxSpend,
       input.minOutput,
       input.slippageLimitBps,
       input.plannedSpend,
-      input.expectedSalvOutput,
+      input.expectedCullerOutput,
       input.rejected,
       input.rejectionReason ?? null,
     ]

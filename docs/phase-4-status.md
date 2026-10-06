@@ -1,4 +1,4 @@
-# SALVAGE Phase 4 — status
+# CULLER Phase 4 — status
 
 Honest status of each Phase 4 part as of this commit. This file exists so
 status doesn't have to be reconstructed from conversation history — keep
@@ -12,7 +12,7 @@ Not executed. This requires a real browser, a real Phantom/Solflare
 wallet, and outbound network access to a Solana Devnet RPC endpoint —
 none of which this sandbox has. See `docs/devnet-e2e-checklist.md` for
 the exact procedure and the TODO block where real results (transaction
-signature, slot, recovered lamports, salvage event ID, points awarded)
+signature, slot, recovered lamports, cull event ID, points awarded)
 must be recorded once it is actually run by a developer with the right
 environment.
 
@@ -26,7 +26,7 @@ successfully" is **not met** until this checklist is run for real.
 **Status: DONE.** `getDb()` (`src/lib/server/db/client.ts`) throws
 `DatabaseConfigurationError` when `NODE_ENV=production` and
 `DATABASE_URL` is unset, instead of silently using PGlite. Escape hatch:
-`SALVAGE_ALLOW_PGLITE_IN_PRODUCTION=true` for an intentionally throwaway
+`CULLER_ALLOW_PGLITE_IN_PRODUCTION=true` for an intentionally throwaway
 staging deploy only. Verified both by `src/lib/server/db/client.test.ts`
 and live via `npm run build && npm start` with no `DATABASE_URL` set,
 which returns HTTP 500 with the exact configuration error in the server
@@ -34,7 +34,7 @@ log, and never creates a `.data/pglite` directory.
 
 ## Part C — Reward Simulator
 
-**Status: DONE.** `src/lib/salvage/rewardSimulator.ts` — pure,
+**Status: DONE.** `src/lib/cull/rewardSimulator.ts` — pure,
 deterministic, `walletPoints / totalValidPoints * rewardPool`. Handles
 zero total points, zero wallet points, non-positive pool, closed/no
 active epoch (callers only invoke it with a real active/closed epoch's
@@ -57,14 +57,14 @@ insert and a direct `UPDATE` attempt (both rejected).
 **Status: DONE.** `src/app/rewards/page.tsx` (no redesign — existing page
 extended) shows CURRENT EPOCH, YOUR POINTS (this epoch), TOTAL NETWORK
 POINTS, COMMUNITY REWARD POOL, and a reward figure explicitly labeled
-"SIMULATED · not $SALV". `/api/rewards/[wallet]` returns `epochPoints`,
+"SIMULATED · not $CULLER". `/api/rewards/[wallet]` returns `epochPoints`,
 `networkPoints`, and `rewardPool` alongside the existing fields. Verified
 live via curl against a running dev server through a full
 create/activate/close/snapshot epoch lifecycle.
 
 ## Part F — Economic stress-testing
 
-**Status: DONE.** `src/lib/salvage/economicSimulation.ts` +
+**Status: DONE.** `src/lib/cull/economicSimulation.ts` +
 `scripts/economic-simulations.ts` run all 6 scenarios (low/normal/high
 participation, one heavy farmer, many sybil wallets, mixed
 legit+farming) across population sizes 100/1,000/10,000/100,000 with a
@@ -104,5 +104,5 @@ Full-suite validation at the time of this commit:
   (Part D).
 - "The total allocated reward can never exceed the epoch reward pool" —
   **met and tested** (Parts C, D, F).
-- "No $SALV token has been deployed yet" — **true**, nothing in this
+- "No $CULLER token has been deployed yet" — **true**, nothing in this
   phase deploys, mints, or transfers any token.

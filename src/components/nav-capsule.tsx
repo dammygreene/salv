@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { SalvageMark } from "./salvage-mark";
+import { CullerMark } from "./culler-mark";
 
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/scan", label: "Scan" },
   { href: "/watch", label: "Watch" },
   { href: "/rewards", label: "Rewards" },
-  { href: "/token", label: "$SALV" },
+  { href: "/token", label: "$CULLER" },
 ];
 
 export function NavCapsule() {
@@ -43,9 +43,9 @@ export function NavCapsule() {
   return (
     <header className="nav-dock">
       <div className="nav-capsule">
-        <Link href="/" className="nav-brand" aria-label="SALVAGE home" onClick={() => setOpen(false)}>
-          <SalvageMark size={26} />
-          <span>SALVAGE</span>
+        <Link href="/" className="nav-brand" aria-label="CULLER home" onClick={() => setOpen(false)}>
+          <CullerMark size={26} />
+          <span>CULLER</span>
         </Link>
 
         <nav className="nav-links" aria-label="Primary" ref={trackRef} onMouseLeave={resetToActive}>

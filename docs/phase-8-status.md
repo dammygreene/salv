@@ -1,16 +1,16 @@
 # Phase 8 status — Solana-primary combined wallet submission
 
-This phase refined Phase 7's wallet submission model. SALV is a Solana
+This phase refined Phase 7's wallet submission model. CULLER is a Solana
 token, so a **Solana wallet is now REQUIRED for every reward
 submission**; Robinhood is **optional** and attaches to that same
 submission as a linked address — never a second reward identity, never a
 second allocation. "Robinhood only" is always rejected. See
-`docs/salv-reward-ledger.md` for the full design and
-`docs/salv-architecture.md` §16 for the module-map summary.
+`docs/culler-reward-ledger.md` for the full design and
+`docs/culler-architecture.md` §16 for the module-map summary.
 
 ## 1. Product statements (verbatim, as required)
 
-- Every SALV reward submission requires a Solana wallet.
+- Every CULLER reward submission requires a Solana wallet.
 - Robinhood is optional and can be attached to the same submission.
 - Submitting both addresses performs one scan and produces one reward
   allocation.
@@ -23,11 +23,11 @@ second allocation. "Robinhood only" is always rejected. See
 
 ## 2. What changed
 
-- **Request/response contract.** `POST /api/salv/scan` now takes
+- **Request/response contract.** `POST /api/culler/scan` now takes
   `{ solanaWallet: string, robinhoodWallet?: string | null }` — Phase
   7's single `{ wallet }` shape is gone entirely (no backward-compat
   shim; there were no external callers). Response:
-  `{ solanaWallet, robinhoodWallet, scan: { solana, robinhood }, reward: { salvAllocated, status, epochId }, csvRecorded, scanId }`.
+  `{ solanaWallet, robinhoodWallet, scan: { solana, robinhood }, reward: { cullerAllocated, status, epochId }, csvRecorded, scanId }`.
 - **Validation.** New `validateCombinedWalletSubmission()`
   (`src/lib/walletAddress.ts`) is the single function the server route
   and both UI pages call. Solana required + must be a valid Solana
@@ -58,11 +58,11 @@ second allocation. "Robinhood only" is always rejected. See
   epoch. Implemented via `INSERT ... ON CONFLICT (solana_wallet,
   epoch_key) DO UPDATE SET robinhood_wallet = EXCLUDED.robinhood_wallet, ...`.
 - **CSV schema.** New column order:
-  `solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status`
-  (note `epoch_id` now precedes `salv_allocated`, unlike Phase 7).
+  `solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status`
+  (note `epoch_id` now precedes `culler_allocated`, unlike Phase 7).
 - **UI (`/scan`, `/rewards`).** Both pages now show two fields in one
   form — "Solana wallet" (required) and "Robinhood wallet (optional)" —
-  with the exact required copy "Solana wallet required for $SALV
+  with the exact required copy "Solana wallet required for $CULLER
   rewards." and "Optional. Add your Robinhood wallet to scan both.", and
   exactly one "Scan wallet" submit button. No second Scan button for
   Robinhood, no Connect Wallet button anywhere. The existing Cyber Chrome
@@ -106,16 +106,16 @@ second allocation. "Robinhood only" is always rejected. See
   (20 static-structure checks across `/scan` and `/rewards`: no Connect
   Wallet language, both inputs present, Solana marked required, Robinhood
   marked optional, exactly one submit button, the exact required copy
-  present, and exactly one `/api/salv/scan` fetch call per submit).
-- `npm run build` — succeeds; `/api/salv/scan` and
-  `/api/dev/salv/rewards/export` both appear as server-rendered routes.
+  present, and exactly one `/api/culler/scan` fetch call per submit).
+- `npm run build` — succeeds; `/api/culler/scan` and
+  `/api/dev/culler/rewards/export` both appear as server-rendered routes.
 - Manual smoke test against a locally running dev server (embedded
   PGlite database), scenarios A-F:
   - **A. Solana only** → 200, one row created, `robinhoodWallet: null`.
   - **B. Solana + Robinhood** → 200, one row, `robinhoodWallet` recorded,
     `scan.robinhood.state: "NOT_IMPLEMENTED"`.
   - **C. Robinhood only** → 400, rejected with "A Solana wallet address
-    is required for $SALV rewards — a Robinhood address alone cannot be
+    is required for $CULLER rewards — a Robinhood address alone cannot be
     submitted."
   - **D. Repeated Solana+Robinhood (same epoch)** → 200, same row
     updated, ledger export still shows exactly one row for that Solana
@@ -126,11 +126,11 @@ second allocation. "Robinhood only" is always rejected. See
     separate row appears (dedup-by-epoch confirmed); export now shows
     exactly 2 rows total, one per epoch, each with the correct
     `robinhood_wallet` value for that scan.
-  - Confirmed via `GET /api/dev/salv/rewards/export` throughout: never
+  - Confirmed via `GET /api/dev/culler/rewards/export` throughout: never
     more than one row per `(solanaWallet, epoch)`, correct new CSV
     column order, no secret-shaped fields.
   - `/scan` and `/rewards` both returned 200 and rendered the required
-    copy ("Solana wallet required for $SALV rewards.", "Optional. Add
+    copy ("Solana wallet required for $CULLER rewards.", "Optional. Add
     your Robinhood wallet to scan both.") with no "Connect Wallet" text
     anywhere in the HTML.
 

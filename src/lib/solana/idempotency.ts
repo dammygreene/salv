@@ -1,5 +1,5 @@
 /**
- * The idempotency key that identifies a single salvage action. Must be
+ * The idempotency key that identifies a single cull action. Must be
  * built from facts that can never change for a given real transaction:
  * the signature (immutable once confirmed) plus the action type and the
  * specific account it targeted. Same signature + same account + same

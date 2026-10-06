@@ -1,4 +1,4 @@
-# SALVAGE - QA Checklist
+# CULLER - QA Checklist
 
 ## Functional
 - [ ] Wallet connection works.
@@ -10,7 +10,7 @@
 - [ ] Unknown values remain unknown.
 - [ ] Classification is deterministic.
 - [ ] Unsupported assets are not actionable.
-- [ ] Salvage bin updates correctly.
+- [ ] Cull bin updates correctly.
 - [ ] Review modal displays exact actions.
 - [ ] Transaction simulation is shown where available.
 - [ ] User confirmation is required.

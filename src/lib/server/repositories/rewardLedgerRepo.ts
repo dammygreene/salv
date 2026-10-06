@@ -1,6 +1,6 @@
 import "server-only";
 import { Db } from "../db/types";
-import { baseUnitsToSalvDecimalString } from "../../salv/tokenSpec";
+import { baseUnitsToCullerDecimalString } from "../../culler/tokenSpec";
 
 /** `NOT_APPLICABLE` existed in Phase 7 for a standalone EVM-only row; it
  * no longer applies now that every row's identity is always a Solana
@@ -18,7 +18,7 @@ export interface RewardLedgerEntry {
    * this row's identity, never a second reward. */
   robinhoodWallet: string | null;
   epochNumber: number | null;
-  salvAllocatedBaseUnits: bigint;
+  cullerAllocatedBaseUnits: bigint;
   status: RewardLedgerStatus;
   lastScanId: string;
   firstScannedAt: string;
@@ -61,7 +61,7 @@ function mapRow(row: RewardLedgerRow): RewardLedgerEntry {
     solanaWallet: row.solana_wallet,
     robinhoodWallet: row.robinhood_wallet,
     epochNumber: row.epoch_number,
-    salvAllocatedBaseUnits: parseBaseUnits(row.salv_allocated_base_units),
+    cullerAllocatedBaseUnits: parseBaseUnits(row.salv_allocated_base_units),
     status: row.status,
     lastScanId: row.last_scan_id,
     firstScannedAt: toIso(row.first_scanned_at),
@@ -85,7 +85,7 @@ export interface UpsertRewardLedgerEntryInput {
    * below for what that does to an already-linked address. */
   robinhoodWallet: string | null;
   epochNumber: number | null;
-  salvAllocatedBaseUnits: bigint;
+  cullerAllocatedBaseUnits: bigint;
   status: RewardLedgerStatus;
   scanId: string;
 }
@@ -103,7 +103,7 @@ export interface UpsertRewardLedgerEntryInput {
  * contend with each other at all.
  *
  * **Robinhood replacement policy** (documented here and in
- * docs/salv-reward-ledger.md): every upsert sets `robinhood_wallet` to
+ * docs/culler-reward-ledger.md): every upsert sets `robinhood_wallet` to
  * exactly what THIS scan submitted — a new address replaces whatever was
  * linked before, and submitting with no Robinhood address this time
  * clears any previously linked one. The row always reflects the most
@@ -115,16 +115,16 @@ export interface UpsertRewardLedgerEntryInput {
  * at a time, and the Solana wallet + epoch identity itself never changes
  * because of it.
  *
- * Never computes or guesses `salvAllocatedBaseUnits`/`status` itself —
+ * Never computes or guesses `cullerAllocatedBaseUnits`/`status` itself —
  * both must already have been derived from the authoritative reward
- * snapshot/claim system (src/lib/salv/claims.ts's `getClaimView`), keyed
+ * snapshot/claim system (src/lib/culler/claims.ts's `getClaimView`), keyed
  * strictly on the Solana wallet — by the caller. This function's only
  * job is to durably record that already-computed value, exactly once
  * per (solanaWallet, epoch).
  */
 export async function upsertRewardLedgerEntry(db: Db, input: UpsertRewardLedgerEntryInput): Promise<RewardLedgerEntry> {
-  if (input.salvAllocatedBaseUnits < 0n) {
-    throw new RewardLedgerError(`upsertRewardLedgerEntry: salvAllocatedBaseUnits must be >= 0, got ${input.salvAllocatedBaseUnits}.`);
+  if (input.cullerAllocatedBaseUnits < 0n) {
+    throw new RewardLedgerError(`upsertRewardLedgerEntry: cullerAllocatedBaseUnits must be >= 0, got ${input.cullerAllocatedBaseUnits}.`);
   }
   if (!input.solanaWallet.trim()) {
     throw new RewardLedgerError("upsertRewardLedgerEntry: solanaWallet is required.");
@@ -142,7 +142,7 @@ export async function upsertRewardLedgerEntry(db: Db, input: UpsertRewardLedgerE
        last_scan_id = EXCLUDED.last_scan_id,
        scanned_at = now()
      RETURNING *`,
-    [input.solanaWallet, input.robinhoodWallet, input.epochNumber, epochKey, input.salvAllocatedBaseUnits.toString(), input.status, input.scanId]
+    [input.solanaWallet, input.robinhoodWallet, input.epochNumber, epochKey, input.cullerAllocatedBaseUnits.toString(), input.status, input.scanId]
   );
   if (!result.rows[0]) {
     throw new RewardLedgerError("upsertRewardLedgerEntry: INSERT ... ON CONFLICT did not return a row.");
@@ -163,7 +163,7 @@ export async function getRewardLedgerEntry(db: Db, solanaWallet: string, epochNu
   return result.rows[0] ? mapRow(result.rows[0]) : null;
 }
 
-const CSV_HEADER = "solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status";
+const CSV_HEADER = "solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status";
 
 /** Escapes a single CSV field per RFC 4180: wraps in quotes and doubles
  * any embedded quote whenever the field contains a comma, quote, or
@@ -180,16 +180,16 @@ function csvField(value: string): string {
 /**
  * Serializes the full reward ledger to CSV text — human-readable, one
  * row per (Solana wallet, epoch), most-recently-scanned first. Column
- * order is `solana_wallet,robinhood_wallet,epoch_id,salv_allocated,
+ * order is `solana_wallet,robinhood_wallet,epoch_id,culler_allocated,
  * scanned_at,status`. `robinhood_wallet` is an empty field when no
  * address is currently linked — never a placeholder string.
  *
  * This is the ONLY place CSV text is ever produced; the table itself is
  * the durable, race-safe source of truth (see upsertRewardLedgerEntry's
  * own comment), and this function never does anything other than format
- * already-stored rows. $SALV amounts use the same deterministic,
+ * already-stored rows. $CULLER amounts use the same deterministic,
  * bigint-based decimal string as the rest of this codebase's precision-
- * sensitive paths (src/lib/salv/tokenSpec.ts's `baseUnitsToSalvDecimalString`)
+ * sensitive paths (src/lib/culler/tokenSpec.ts's `baseUnitsToCullerDecimalString`)
  * — never a floating-point `toFixed()`/`toLocaleString()`.
  */
 export function serializeRewardLedgerToCsv(entries: RewardLedgerEntry[]): string {
@@ -200,7 +200,7 @@ export function serializeRewardLedgerToCsv(entries: RewardLedgerEntry[]): string
         csvField(entry.solanaWallet),
         csvField(entry.robinhoodWallet ?? ""),
         csvField(entry.epochNumber === null ? "" : String(entry.epochNumber)),
-        csvField(baseUnitsToSalvDecimalString(entry.salvAllocatedBaseUnits)),
+        csvField(baseUnitsToCullerDecimalString(entry.cullerAllocatedBaseUnits)),
         csvField(entry.scannedAt),
         csvField(entry.status),
       ].join(",")

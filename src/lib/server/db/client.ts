@@ -23,7 +23,7 @@ import { runMigrations } from "./migrate";
  *
  * "Production" means `NODE_ENV === "production"`, which is what
  * `next build && next start` set automatically — not `next dev`. Set
- * `SALVAGE_ALLOW_PGLITE_IN_PRODUCTION=true` only for a throwaway staging
+ * `CULLER_ALLOW_PGLITE_IN_PRODUCTION=true` only for a throwaway staging
  * deploy that intentionally has no real database; this is not meant for
  * normal production use.
  *
@@ -118,12 +118,12 @@ async function createDb(): Promise<Db> {
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: databaseUrl, max: 5 });
     db = wrapPgPool(pool);
-  } else if (isProduction() && process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION?.trim() !== "true") {
+  } else if (isProduction() && process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION?.trim() !== "true") {
     throw new DatabaseConfigurationError(
       "DATABASE_URL is not set. Production (NODE_ENV=production) must use a real Postgres database — " +
-        "SALVAGE never silently falls back to the embedded PGlite engine in production, since that data " +
+        "CULLER never silently falls back to the embedded PGlite engine in production, since that data " +
         "does not survive a redeploy. Set DATABASE_URL to a real Postgres connection string, or, only for " +
-        "an intentionally throwaway staging deployment, set SALVAGE_ALLOW_PGLITE_IN_PRODUCTION=true."
+        "an intentionally throwaway staging deployment, set CULLER_ALLOW_PGLITE_IN_PRODUCTION=true."
     );
   } else {
     const { PGlite } = await import("@electric-sql/pglite");

@@ -5,7 +5,7 @@ export function StatModule({
   unit,
   caption,
 }: {
-  tone: "recover" | "salvage" | "watch" | "unknown";
+  tone: "recover" | "cull" | "watch" | "unknown";
   label: string;
   value: string;
   unit?: string;

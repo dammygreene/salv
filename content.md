@@ -1,7 +1,7 @@
-# SALVAGE - Product Copy
+# CULLER - Product Copy
 
 ## Brand statement
-`SALVAGE`
+`CULLER`
 
 `YOUR WALLET HAS LEFTOVERS.`
 
@@ -23,29 +23,29 @@
 `SCAN COMPLETE`
 
 ## Result labels
-`SALVAGEABLE`
+`CULLABLE`
 `WATCH`
 `REVIEW`
 `KEEP`
 
-## Salvage CTA
-`SALVAGE SELECTED`
+## Cull CTA
+`CULLER SELECTED`
 
 ## Confirmation
-`REVIEW SALVAGE`
-`CONFIRM SALVAGE`
+`REVIEW CULLER`
+`CONFIRM CULLER`
 
 ## Completion
-`SALVAGE COMPLETE`
+`CULLER COMPLETE`
 `PROOF VERIFIED`
-`$SALV EARNED`
+`$CULLER EARNED`
 
 ## Watch
 `WATCH THIS`
 `WE'LL KEEP AN EYE ON IT.`
 
 ## Reward copy
-`SALVAGE SCORE`
+`CULLER SCORE`
 `CURRENT EPOCH`
 `REWARD POOL`
 `YOUR SHARE`
@@ -56,4 +56,4 @@
 - Avoid excessive exclamation marks.
 - Never claim guaranteed profits.
 - Never call an asset worthless unless the statement is objectively scoped and sourced.
-- Never imply that `$SALV` must appreciate.
+- Never imply that `$CULLER` must appreciate.

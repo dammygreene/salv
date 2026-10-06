@@ -3,7 +3,7 @@ import { Db } from "../db/types";
 
 export interface TreasuryBurnRecord {
   id: string;
-  /** Integer $SALV base units (9 decimals), as a bigint -- same
+  /** Integer $CULLER base units (9 decimals), as a bigint -- same
    * convention as reward_claims.amount_base_units (see
    * src/lib/server/repositories/rewardClaimRepo.ts). */
   amountBaseUnits: bigint;
@@ -49,7 +49,7 @@ export interface RecordTreasuryBurnInput {
 }
 
 /**
- * Records one real, CONFIRMED on-chain burn of $SALV from the community
+ * Records one real, CONFIRMED on-chain burn of $CULLER from the community
  * treasury. This function does not burn anything itself -- it has no
  * network access and no signing key -- it only records a burn that a
  * human already executed via the 3-of-3 treasury multisig (Phase 6: "do

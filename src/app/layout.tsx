@@ -15,10 +15,11 @@ import "@fontsource/jetbrains-mono/500.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SALVAGE: wallet recovery layer",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://cullerlabs.xyz"),
+  title: "CULLER: wallet recovery layer",
   description: "Find the assets your wallet forgot. Recover what still matters. Get rewarded for cleaning up.",
   openGraph: {
-    title: "SALVAGE: your wallet has leftovers.",
+    title: "CULLER: your wallet has leftovers.",
     description: "Find the assets you forgot. Recover what still matters. Get rewarded for cleaning up.",
     type: "website",
   },

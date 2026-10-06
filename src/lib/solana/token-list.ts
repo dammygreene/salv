@@ -4,7 +4,7 @@ export interface TokenListEntry {
 }
 
 const TOKEN_LIST_URL = "https://token.jup.ag/strict";
-const CACHE_KEY = "salvage_token_list_v1";
+const CACHE_KEY = "cull_token_list_v1";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**

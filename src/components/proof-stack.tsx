@@ -17,15 +17,15 @@ export function ProofStack() {
           </span>
         </div>
         <div className="proof-flow">
-          <span>Salvage</span>
+          <span>Cull</span>
           <b>→</b>
           <span>Verify</span>
           <b>→</b>
           <span>Reward</span>
         </div>
         <div className="proof-confirm">
-          <strong>Valid salvage event</strong>
-          <b>+960 $SALV</b>
+          <strong>Valid cull event</strong>
+          <b>+960 $CULLER</b>
         </div>
       </article>
     </div>

@@ -5,22 +5,22 @@ export default function TokenPage() {
     <main className="token-page">
       <PageHeader
         title="One screen. No microsite."
-        support="SALV is the reward token for verified cleanup activity. The model stays simple on purpose."
+        support="CULLER is the reward token for verified cleanup activity. The model stays simple on purpose."
       />
 
       <div className="token-supply">
         <div className="token-supply-total">
           <span>Total supply</span>
           <strong>1,000,000,000</strong>
-          <small>$SALV, Solana</small>
+          <small>$CULLER, Solana</small>
         </div>
-        <div className="token-supply-bar" role="img" aria-label="30 percent community salvage rewards, 70 percent market allocation">
+        <div className="token-supply-bar" role="img" aria-label="30 percent community cull rewards, 70 percent market allocation">
           <span className="token-supply-fill-rewards" style={{ width: "30%" }} />
           <span className="token-supply-fill-market" style={{ width: "70%" }} />
         </div>
         <div className="token-supply-legend">
           <div>
-            <i className="legend-dot legend-rewards" /> Salvage rewards <strong>30%</strong>
+            <i className="legend-dot legend-rewards" /> Cull rewards <strong>30%</strong>
           </div>
           <div>
             <i className="legend-dot legend-market" /> Market <strong>70%</strong>
@@ -36,14 +36,14 @@ export default function TokenPage() {
         <article className="token-panel">
           <h3>Reward mechanism</h3>
           <p>
-            <code>Valid salvage → salvage score → $SALV</code>
+            <code>Valid cull → cull score → $CULLER</code>
           </p>
           <p>Community rewards are a finite pool released over fixed epochs. Each epoch has a fixed budget split across verified participants.</p>
         </article>
         <article className="token-panel">
           <h3>Treasury and buyback policy</h3>
           <p>
-            Protocol fees route to a transparent treasury. A published share goes to open-market $SALV purchases, recorded in a
+            Protocol fees route to a transparent treasury. A published share goes to open-market $CULLER purchases, recorded in a
             public ledger. No guaranteed price floor is implied.
           </p>
         </article>

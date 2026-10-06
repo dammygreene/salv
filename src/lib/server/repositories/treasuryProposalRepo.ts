@@ -6,12 +6,12 @@ export type TreasuryProposalType = "FUND_REWARD_VAULT" | "BURN" | "TRANSFER";
 export interface TreasuryProposalRecord {
   id: string;
   proposalType: TreasuryProposalType;
-  /** Integer $SALV base units (9 decimals), as a bigint. */
+  /** Integer $CULLER base units (9 decimals), as a bigint. */
   amountBaseUnits: bigint;
   destinationAddress: string;
   memo: string | null;
   /** The built, unsigned transaction, base64-encoded, if one was
-   * constructed (see src/lib/solana/salv/treasuryProposals.ts). May be
+   * constructed (see src/lib/solana/culler/treasuryProposals.ts). May be
    * null for a proposal recorded purely as a planning/audit record. */
   unsignedTransactionBase64: string | null;
   createdBy: string | null;
@@ -67,7 +67,7 @@ export interface RecordTreasuryProposalInput {
  * burn, or funding movement requires the 3-of-3 multisig members to
  * independently sign and submit it themselves, out-of-band, using the
  * unsigned transaction this function's caller constructed (see
- * src/lib/solana/salv/treasuryProposals.ts). This table exists purely
+ * src/lib/solana/culler/treasuryProposals.ts). This table exists purely
  * as a durable, append-only audit trail of "what was proposed, when, by
  * what admin action" -- the same "proposal creation does not equal
  * execution" guarantee the Phase 6 test matrix requires is true by

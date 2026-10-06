@@ -1,5 +1,5 @@
 import { Asset, AssetStatus, ScanState } from "@/lib/types";
-import { AssetClassification, dispositionToAssetStatus, getRegistryEntry } from "@/lib/salvage/registry";
+import { AssetClassification, dispositionToAssetStatus, getRegistryEntry } from "@/lib/cull/registry";
 import { isValidSolanaAddress } from "../base58";
 import { formatRecency, lamportsToSol, mapWithConcurrency, shortenAddress } from "../format";
 import { classifyTokenEligibility, evaluateCloseAccountEligibility } from "../validation/eligibility";
@@ -24,14 +24,14 @@ const ACTIVITY_LOOKUP_CONCURRENCY = 5;
 export class WalletScanError extends Error {}
 
 const STATUS_SORT_ORDER: Record<AssetStatus, number> = {
-  SALVAGEABLE: 0,
+  CULLABLE: 0,
   REVIEW: 1,
   WATCH: 2,
   KEEP: 3,
 };
 
 /** Display-only action labels per classification, read straight off the
- * SALVAGE REGISTRY so the UI can never drift from what the backend
+ * CULLER REGISTRY so the UI can never drift from what the backend
  * actually considers enabled. Disabled actions (burn paths) show a
  * label that makes clear nothing executes yet. */
 function actionLabel(classification: AssetClassification): string {
@@ -128,7 +128,7 @@ function classifyAccount(
       age,
       value: `${tokenAmount.uiAmountString} ${listed.symbol}`,
       valueKnown: true,
-      reason: "Active, verified balance. No salvage action suggested.",
+      reason: "Active, verified balance. No cull action suggested.",
       action: actionLabel(classification),
       tokenAccount: entry.pubkey,
       programId: entry.programId,
@@ -165,8 +165,8 @@ export interface ScanResult {
 
 /**
  * Reads real, public, read-only chain data for a wallet: every SPL /
- * Token-2022 token account it owns, classified against the SALVAGE
- * REGISTRY (src/lib/salvage/registry.ts) into the same salvageable /
+ * Token-2022 token account it owns, classified against the CULLER
+ * REGISTRY (src/lib/cull/registry.ts) into the same cullable /
  * watch / review / keep buckets the UI already expects. No signature is
  * ever requested and nothing is written on-chain. This only determines
  * what is POTENTIALLY actionable; the executor independently re-verifies

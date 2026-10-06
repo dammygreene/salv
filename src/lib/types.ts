@@ -1,4 +1,4 @@
-export type AssetStatus = "SALVAGEABLE" | "WATCH" | "REVIEW" | "KEEP";
+export type AssetStatus = "CULLABLE" | "WATCH" | "REVIEW" | "KEEP";
 
 export type ScanState =
   | "READY"
@@ -31,10 +31,10 @@ export type Asset = {
   mint?: string;
   /** Exact lamports held by the account, for ACCOUNT-kind assets. */
   lamports?: number;
-  /** SALVAGE REGISTRY classification this asset currently carries. See
-   * src/lib/salvage/registry.ts for the full classification -> action
+  /** CULLER REGISTRY classification this asset currently carries. See
+   * src/lib/cull/registry.ts for the full classification -> action
    * -> disposition mapping. */
-  classification?: import("./salvage/registry").AssetClassification;
+  classification?: import("./cull/registry").AssetClassification;
 };
 
 export type WatchItem = {
@@ -62,25 +62,25 @@ export type ProofEvent = {
 
 export type HistoryEvent = {
   id: string;
-  kind: "SCAN" | "SALVAGE" | "WATCH" | "REWARD";
+  kind: "SCAN" | "CULLER" | "WATCH" | "REWARD";
   label: string;
   detail: string;
   timestamp: string;
 };
 
-export type SalvageEventStatus = "PENDING" | "VERIFIED" | "FAILED" | "REVERSED";
+export type CullEventStatus = "PENDING" | "VERIFIED" | "FAILED" | "REVERSED";
 
-/** One row returned by the backend for a single verified-or-not salvage
+/** One row returned by the backend for a single verified-or-not cull
  * action. Mirrors a `salvage_actions` database row (see
  * src/lib/server/repositories). Only the backend can ever produce one
  * with status VERIFIED and a non-zero `points` value. */
-export type SalvageEvent = {
+export type CullEvent = {
   eventId: string;
   idempotencyKey: string;
   wallet: string;
   signature: string;
   slot: number;
-  action: import("./salvage/registry").SalvageActionType;
+  action: import("./cull/registry").CullActionType;
   chain: "solana";
   timestamp: string;
   tokenAccount: string;
@@ -88,7 +88,7 @@ export type SalvageEvent = {
   programId: string | null;
   expectedRecoveryLamports: number;
   actualRecoveryLamports: number | null;
-  status: SalvageEventStatus;
+  status: CullEventStatus;
   reason?: string;
   /** Points actually credited to the wallet's ledger for this action.
    * Always 0 unless status is VERIFIED and the action passed every

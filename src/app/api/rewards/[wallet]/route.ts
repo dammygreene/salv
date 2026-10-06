@@ -6,13 +6,13 @@ import { getDb } from "@/lib/server/db/client";
 import { getActiveEpoch, getEpochTotalPointsAwarded } from "@/lib/server/repositories/epochRepo";
 import { getWalletPointsForEpoch, getWalletStats } from "@/lib/server/repositories/pointsRepo";
 import { ensureWallet } from "@/lib/server/repositories/walletRepo";
-import { simulateWalletReward } from "@/lib/salvage/rewardSimulator";
+import { simulateWalletReward } from "@/lib/cull/rewardSimulator";
 
 /**
  * GET /api/rewards/:wallet — this wallet's lifetime verified stats plus
  * its standing in the currently ACTIVE epoch (if any). `estimatedReward`
- * is always a simulation (lib/salvage/rewardSimulator.ts), proportional
- * to the epoch's own configured `rewardPoolPoints` — never a real $SALV
+ * is always a simulation (lib/cull/rewardSimulator.ts), proportional
+ * to the epoch's own configured `rewardPoolPoints` — never a real $CULLER
  * balance, and nothing here ever moves or allocates a real token.
  */
 export async function GET(_req: NextRequest, context: { params: Promise<{ wallet: string }> }) {
@@ -41,7 +41,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ wallet
     wallet,
     points: stats.points,
     verifiedEvents: stats.verifiedEvents,
-    assetsSalvaged: stats.assetsSalvaged,
+    assetsCulld: stats.assetsCulld,
     actualRecovery: stats.actualRecoveryLamports / 1_000_000_000,
     actualRecoveryLamports: stats.actualRecoveryLamports,
     currentEpoch: activeEpoch

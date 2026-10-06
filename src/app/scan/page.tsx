@@ -2,16 +2,16 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
-import { SalvageMachine } from "@/components/salvage-machine";
+import { CullMachine } from "@/components/cull-machine";
 import { StatModule } from "@/components/stat-module";
 import { AssetCard } from "@/components/asset-card";
-import { SalvageBin } from "@/components/salvage-bin";
+import { CullBin } from "@/components/cull-bin";
 import { ReviewModal } from "@/components/review-modal";
 import { DEMO_ADDRESS, shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
 
-/** Response shape of POST /api/salv/scan — see that route for the full
+/** Response shape of POST /api/culler/scan — see that route for the full
  * contract. This is the authoritative, server-computed reward-ledger
  * result for a combined Solana(+optional Robinhood) submission; it is
  * never derived from anything on the client, and the Solana wallet is
@@ -23,7 +23,7 @@ interface LedgerScanResult {
     solana: { attempted: boolean; succeeded: boolean; reason?: string };
     robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
   };
-  reward: { salvAllocated: string; status: string; epochId: number | null };
+  reward: { cullerAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
   recordError?: string;
   scanId: string;
@@ -56,8 +56,8 @@ export default function ScanPage() {
   // One form, one "Scan wallet" click performs TWO independent things:
   // (1) the existing live, read-only Solana recovery scan (unchanged,
   // via `startScan`, Solana-only, drives the asset grid below), and
-  // (2) a combined Solana+Robinhood submission to the $SALV reward
-  // ledger (`/api/salv/scan`) — Solana is the sole reward identity in
+  // (2) a combined Solana+Robinhood submission to the $CULLER reward
+  // ledger (`/api/culler/scan`) — Solana is the sole reward identity in
   // both cases, and Robinhood (optional) never gets its own scan or its
   // own button.
   async function handleScanSubmit(event: FormEvent) {
@@ -73,14 +73,14 @@ export default function ScanPage() {
     setLedgerScanning(true);
     setLedgerResult(null);
     try {
-      const res = await fetch("/api/salv/scan", {
+      const res = await fetch("/api/culler/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ solanaWallet, robinhoodWallet }),
       });
       const data = (await res.json()) as LedgerScanResult & { error?: string };
       if (!res.ok) {
-        setLedgerError(data.error ?? "Could not record this scan for $SALV rewards.");
+        setLedgerError(data.error ?? "Could not record this scan for $CULLER rewards.");
         return;
       }
       setLedgerResult(data);
@@ -92,17 +92,17 @@ export default function ScanPage() {
   }
 
   const scanning = scanState !== "READY" && scanState !== "SCAN COMPLETE";
-  const salvageable = assets.filter((a) => a.status === "SALVAGEABLE");
+  const cullable = assets.filter((a) => a.status === "CULLABLE");
   const watch = assets.filter((a) => a.status === "WATCH");
   const review = assets.filter((a) => a.status === "REVIEW");
   const recoverableSol = useMemo(
     () =>
-      salvageable.reduce((total, asset) => {
+      cullable.reduce((total, asset) => {
         if (!asset.valueKnown || !asset.value.endsWith("SOL")) return total;
         const match = asset.value.match(/[\d.]+/);
         return match ? total + parseFloat(match[0]) : total;
       }, 0),
-    [salvageable]
+    [cullable]
   );
 
   return (
@@ -135,13 +135,13 @@ export default function ScanPage() {
 
       <div className="scan-console">
         <div className="scan-console-machine">
-          <SalvageMachine />
+          <CullMachine />
         </div>
         <div className="scan-console-controls">
           {!hasWallet && (
             <>
               <h2>Paste a wallet address to begin.</h2>
-              <p>SALVAGE never asks for a seed phrase or private key. Paste any public wallet address below — it is read-only.</p>
+              <p>CULLER never asks for a seed phrase or private key. Paste any public wallet address below — it is read-only.</p>
               <form className="wallet-form" onSubmit={handleScanSubmit}>
                 <div className="wallet-field">
                   <label className="wallet-field-label" htmlFor="scan-solana-wallet">
@@ -180,7 +180,7 @@ export default function ScanPage() {
                   {ledgerScanning ? "Scanning…" : "Scan wallet"}
                 </button>
               </form>
-              <small className="wallet-form-note">Solana wallet required for $SALV rewards.</small>
+              <small className="wallet-form-note">Solana wallet required for $CULLER rewards.</small>
               <small className="wallet-form-note">Optional. Add your Robinhood wallet to scan both.</small>
               {(addressError || ledgerError) && <small className="wallet-form-error">{ledgerError ?? addressError}</small>}
               <button type="button" className="text-link" onClick={() => startScan(DEMO_ADDRESS)}>
@@ -190,15 +190,15 @@ export default function ScanPage() {
 
               <p className="wallet-form-note">
                 Want to actually recover assets, not just preview them? You&rsquo;ll be asked for a wallet extension signature
-                only at the final confirm step — SALVAGE only ever requests a public key there, never a seed phrase or private
+                only at the final confirm step — CULLER only ever requests a public key there, never a seed phrase or private
                 key.
               </p>
 
               {ledgerResult && (
                 <div className="reward-card" style={{ marginTop: "0.5rem" }}>
-                  <span>$SALV reward ledger</span>
+                  <span>$CULLER reward ledger</span>
                   <strong>
-                    {ledgerResult.reward.salvAllocated} SALV <small>{ledgerResult.reward.status}</small>
+                    {ledgerResult.reward.cullerAllocated} CULLER <small>{ledgerResult.reward.status}</small>
                   </strong>
                   <small>Epoch {ledgerResult.reward.epochId ?? "none"}</small>
                   {ledgerResult.robinhoodWallet ? (
@@ -242,8 +242,8 @@ export default function ScanPage() {
               <h2>Scan complete.</h2>
               <p>
                 {accountsFound} token account{accountsFound === 1 ? "" : "s"} found
-                {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {salvageable.length} are allowlisted
-                for salvage right now.
+                {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {cullable.length} are allowlisted
+                for cull right now.
               </p>
               <button className="ghost-button" onClick={() => startScan()}>
                 Rescan wallet
@@ -257,7 +257,7 @@ export default function ScanPage() {
         <>
           <div className="result-compartments">
             <StatModule tone="recover" label="Recover" value={recoverableSol.toFixed(4)} unit="SOL" caption="Value detected" />
-            <StatModule tone="salvage" label="Salvage" value={String(salvageable.length).padStart(2, "0")} unit="assets" caption="Allowlisted" />
+            <StatModule tone="cull" label="Cull" value={String(cullable.length).padStart(2, "0")} unit="assets" caption="Allowlisted" />
             <StatModule tone="watch" label="Watch" value={String(watch.length).padStart(2, "0")} unit="assets" caption="Uncertain" />
             <StatModule tone="unknown" label="Review" value={String(review.length).padStart(2, "0")} unit="assets" caption="Needs analysis" />
           </div>
@@ -268,7 +268,7 @@ export default function ScanPage() {
                 <AssetCard key={asset.id} asset={asset} />
               ))}
             </div>
-            <SalvageBin onReview={() => setShowReview(true)} />
+            <CullBin onReview={() => setShowReview(true)} />
           </div>
         </>
       )}
@@ -285,7 +285,7 @@ export default function ScanPage() {
 
       {justCompleted && (
         <div className="toast-confirm" role="status">
-          <span>✓</span> Salvage confirmed. Proof verified, check your rewards.
+          <span>✓</span> Cull confirmed. Proof verified, check your rewards.
         </div>
       )}
     </main>

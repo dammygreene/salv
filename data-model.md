@@ -1,4 +1,4 @@
-# SALVAGE - Data Model
+# CULLER - Data Model
 
 ## users
 - id
@@ -51,7 +51,7 @@ Unique: chain_id + address
 - completed_at
 - provider_status
 - total_assets
-- salvageable_count
+- cullable_count
 - watch_count
 - review_count
 - recoverable_value nullable
@@ -65,7 +65,7 @@ Unique: chain_id + address
 - reason
 - confidence
 
-## salvage_events
+## cull_events
 - id
 - wallet_id
 - asset_id
@@ -94,7 +94,7 @@ Unique should include the immutable onchain event identity.
 - id
 - wallet_id
 - epoch_id
-- salvage_event_id nullable
+- cull_event_id nullable
 - score
 - reward_amount
 - status

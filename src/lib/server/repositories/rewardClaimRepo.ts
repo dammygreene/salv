@@ -8,9 +8,9 @@ export interface RewardClaimRecord {
   rewardSnapshotId: string;
   walletId: string;
   epochId: string;
-  /** Integer $SALV base units (9 decimals), as a bigint. Parsed from
+  /** Integer $CULLER base units (9 decimals), as a bigint. Parsed from
    * Postgres `numeric` text to avoid any floating-point precision loss
-   * at 1B-supply scale (see src/lib/salv/baseUnitAllocator.ts). */
+   * at 1B-supply scale (see src/lib/culler/baseUnitAllocator.ts). */
   amountBaseUnits: bigint;
   status: RewardClaimStatus;
   claimTransactionSignature: string | null;

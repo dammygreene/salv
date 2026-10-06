@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { SalvageMark } from "./salvage-mark";
+import { CullerMark } from "./culler-mark";
 
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-brand">
         <span className="site-footer-brand-mark">
-          <SalvageMark size={24} />
-          SALVAGE
+          <CullerMark size={24} />
+          CULLER
         </span>
         <p>Find the assets your wallet forgot, recover what still matters, and get rewarded for cleaning up.</p>
       </div>
@@ -17,7 +17,7 @@ export function SiteFooter() {
         <Link href="/scan">Scan</Link>
         <Link href="/watch">Watch</Link>
         <Link href="/rewards">Rewards</Link>
-        <Link href="/token">$SALV</Link>
+        <Link href="/token">$CULLER</Link>
       </nav>
 
       <nav className="site-footer-col" aria-label="Legal">

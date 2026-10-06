@@ -19,7 +19,7 @@ describe("getDb production safety", () => {
     vi.resetModules();
     (process.env as Record<string, string>).NODE_ENV = "production";
     delete process.env.DATABASE_URL;
-    delete process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION;
+    delete process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION;
 
     const { getDb, DatabaseConfigurationError } = await import("./client");
     await expect(getDb()).rejects.toBeInstanceOf(DatabaseConfigurationError);
@@ -30,7 +30,7 @@ describe("getDb production safety", () => {
     vi.resetModules();
     (process.env as Record<string, string>).NODE_ENV = "production";
     delete process.env.DATABASE_URL;
-    delete process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION;
+    delete process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION;
 
     const { getDb } = await import("./client");
     await expect(getDb()).rejects.toThrow(/never silently fall(s)? back/i);
@@ -40,7 +40,7 @@ describe("getDb production safety", () => {
     vi.resetModules();
     (process.env as Record<string, string>).NODE_ENV = "production";
     process.env.DATABASE_URL = "postgres://invalid-host-for-test:5432/db";
-    delete process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION;
+    delete process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION;
 
     const { getDb, DatabaseConfigurationError } = await import("./client");
     // This will eventually reject because the host doesn't exist -- that's
@@ -54,7 +54,7 @@ describe("getDb production safety", () => {
     vi.resetModules();
     (process.env as Record<string, string>).NODE_ENV = "test";
     delete process.env.DATABASE_URL;
-    delete process.env.SALVAGE_ALLOW_PGLITE_IN_PRODUCTION;
+    delete process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION;
 
     const { getDb } = await import("./client");
     const db = await getDb();

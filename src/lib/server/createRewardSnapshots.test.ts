@@ -5,7 +5,7 @@ import { createTestDb, resetTestDb } from "./db/testDb";
 import { activateEpoch, closeEpoch, createEpoch } from "./repositories/epochRepo";
 import { getSnapshotForWallet, listSnapshotsForEpoch } from "./repositories/rewardSnapshotRepo";
 import { createRewardSnapshotsForClosedEpoch, RewardSnapshotError } from "./createRewardSnapshots";
-import { verifyAndRecordSalvage } from "./verifyAndRecordSalvage";
+import { verifyAndRecordCull } from "./verifyAndRecordCull";
 import { ensureWallet } from "./repositories/walletRepo";
 
 function makeCloseTx(wallet: string, tokenAccount: string, preLamports = 2_039_280): ParsedTransactionWithMeta {
@@ -37,7 +37,7 @@ function makeCloseTx(wallet: string, tokenAccount: string, preLamports = 2_039_2
 
 async function verifiedClose(db: Db, wallet: string, tokenAccount: string, signature: string) {
   const tx = makeCloseTx(wallet, tokenAccount);
-  return verifyAndRecordSalvage(
+  return verifyAndRecordCull(
     db,
     { wallet, signature, actions: [{ type: "CLOSE_EMPTY_TOKEN_ACCOUNT", tokenAccount, mint: null, programId: null, expectedRecoveryLamports: 2_039_280 }] },
     async () => tx

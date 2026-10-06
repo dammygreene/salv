@@ -1,6 +1,6 @@
-# SALVAGE - Agent Spec Pack
+# CULLER - Agent Spec Pack
 
-This folder is the source-of-truth build specification for SALVAGE.
+This folder is the source-of-truth build specification for CULLER.
 
 ## Read first
 1. `build-prompt.md` - master implementation brief
@@ -27,16 +27,16 @@ This folder is the source-of-truth build specification for SALVAGE.
 - `qa.md`
 
 ## Current product definition
-SALVAGE is a recovery network for stranded digital assets.
+CULLER is a recovery network for stranded digital assets.
 
 Primary chain: Solana.
-Native token: `$SALV`.
+Native token: `$CULLER`.
 
 Token supply:
 - 70% market
-- 30% community salvage rewards
+- 30% community cull rewards
 
-The product scans supported wallets for abandoned, spammy, obsolete, zero-value, or potentially recoverable assets. It helps users safely recover value or dispose of supported assets and rewards verified Proof of Salvage activity with `$SALV`.
+The product scans supported wallets for abandoned, spammy, obsolete, zero-value, or potentially recoverable assets. It helps users safely recover value or dispose of supported assets and rewards verified Proof of Cull activity with `$CULLER`.
 
 ## Important build constraint
 Do not fake blockchain data, transaction verification, reward attribution, or unsupported recovery flows. When a capability is not supported yet, show an explicit unsupported state and keep the integration behind an adapter.
@@ -48,14 +48,14 @@ Cyber Chrome Y2K Utility. Think futuristic 2000s consumer hardware and utility s
 
 The vertical slice lives in `src/app` and uses Next.js (App Router), React, and TypeScript. It is structured as a real multi-page app rather than a single scrolling marketing page:
 
-- `/` — marketing home: hero machine, how-it-works, proof-of-salvage teaser, CTA into the app.
-- `/scan` — connect a wallet, run the scan sequence, review classified assets, and build a salvage bin.
-- `/watch` — unresolved assets SALVAGE is keeping an eye on.
-- `/rewards` — Proof of Salvage receipts and epoch/score summary.
-- `/history` — a timeline of scans, salvages, watch adds, and reward events.
-- `/token` — the one-screen `$SALV` supply/allocation/policy page.
+- `/` — marketing home: hero machine, how-it-works, proof-of-cull teaser, CTA into the app.
+- `/scan` — connect a wallet, run the scan sequence, review classified assets, and build a cull bin.
+- `/watch` — unresolved assets CULLER is keeping an eye on.
+- `/rewards` — Proof of Cull receipts and epoch/score summary.
+- `/history` — a timeline of scans, culls, watch adds, and reward events.
+- `/token` — the one-screen `$CULLER` supply/allocation/policy page.
 
-Session state (wallet connection, scan progress, classifications, salvage bin, reward score, proof events, history) lives in a single React context (`src/lib/app-state.tsx`) so it persists as you navigate between pages, the way a real app would.
+Session state (wallet connection, scan progress, classifications, cull bin, reward score, proof events, history) lives in a single React context (`src/lib/app-state.tsx`) so it persists as you navigate between pages, the way a real app would.
 
 ### Design system
 

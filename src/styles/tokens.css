@@ -35,7 +35,7 @@
   --accent-text-hover: #86a8ff;
 
   /* orange — the action color: every solid button fill (primary
-     CTAs, add-to-bin, salvage, connect) plus reward/value
+     CTAs, add-to-bin, cull, connect) plus reward/value
      callouts. Pairs with dark text, not white. */
   --secondary: #ff7a1a;
   --secondary-hover: #ff9142;

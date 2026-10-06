@@ -30,14 +30,14 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: null,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
     expect(entry.solanaWallet).toBe(SOLANA_A);
     expect(entry.robinhoodWallet).toBeNull();
     expect(entry.epochNumber).toBe(1);
-    expect(entry.salvAllocatedBaseUnits).toBe(1_000_000_000n);
+    expect(entry.cullerAllocatedBaseUnits).toBe(1_000_000_000n);
     expect(entry.status).toBe("ALLOCATED");
 
     expect(await listRewardLedgerEntries(db)).toHaveLength(1);
@@ -48,7 +48,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -65,7 +65,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: "   ",
         robinhoodWallet: null,
         epochNumber: 1,
-        salvAllocatedBaseUnits: 0n,
+        cullerAllocatedBaseUnits: 0n,
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       })
@@ -77,7 +77,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -85,13 +85,13 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 2_500_000_000n,
+      cullerAllocatedBaseUnits: 2_500_000_000n,
       status: "CLAIMED",
       scanId: crypto.randomUUID(),
     });
 
     expect(second.id).toBe(first.id); // same row, not a new one
-    expect(second.salvAllocatedBaseUnits).toBe(2_500_000_000n);
+    expect(second.cullerAllocatedBaseUnits).toBe(2_500_000_000n);
     expect(second.status).toBe("CLAIMED");
     expect(await listRewardLedgerEntries(db)).toHaveLength(1);
   });
@@ -101,7 +101,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -109,7 +109,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_2,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -124,7 +124,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -132,7 +132,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: null,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -146,7 +146,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 1,
-      salvAllocatedBaseUnits: 1_000_000_000n,
+      cullerAllocatedBaseUnits: 1_000_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -154,7 +154,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: ROBINHOOD_1,
       epochNumber: 2,
-      salvAllocatedBaseUnits: 500_000_000n,
+      cullerAllocatedBaseUnits: 500_000_000n,
       status: "ALLOCATED",
       scanId: crypto.randomUUID(),
     });
@@ -169,7 +169,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: null,
       epochNumber: null,
-      salvAllocatedBaseUnits: 0n,
+      cullerAllocatedBaseUnits: 0n,
       status: "NO_EPOCH",
       scanId: crypto.randomUUID(),
     });
@@ -177,7 +177,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       solanaWallet: SOLANA_A,
       robinhoodWallet: null,
       epochNumber: null,
-      salvAllocatedBaseUnits: 0n,
+      cullerAllocatedBaseUnits: 0n,
       status: "NO_EPOCH",
       scanId: crypto.randomUUID(),
     });
@@ -191,7 +191,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: null,
         epochNumber: 1,
-        salvAllocatedBaseUnits: 1_000_000_000n,
+        cullerAllocatedBaseUnits: 1_000_000_000n,
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       }),
@@ -199,7 +199,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_B,
         robinhoodWallet: ROBINHOOD_2,
         epochNumber: 1,
-        salvAllocatedBaseUnits: 9_000_000_000n,
+        cullerAllocatedBaseUnits: 9_000_000_000n,
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       }),
@@ -210,8 +210,8 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
 
     const rowA = await getRewardLedgerEntry(db, SOLANA_A, 1);
     const rowB = await getRewardLedgerEntry(db, SOLANA_B, 1);
-    expect(rowA?.salvAllocatedBaseUnits).toBe(1_000_000_000n);
-    expect(rowB?.salvAllocatedBaseUnits).toBe(9_000_000_000n);
+    expect(rowA?.cullerAllocatedBaseUnits).toBe(1_000_000_000n);
+    expect(rowB?.cullerAllocatedBaseUnits).toBe(9_000_000_000n);
     expect(await listRewardLedgerEntries(db)).toHaveLength(2);
   });
 
@@ -221,7 +221,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: i % 2 === 0 ? ROBINHOOD_1 : ROBINHOOD_2,
         epochNumber: 1,
-        salvAllocatedBaseUnits: BigInt(i + 1) * 1_000_000_000n,
+        cullerAllocatedBaseUnits: BigInt(i + 1) * 1_000_000_000n,
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       })
@@ -238,7 +238,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: null,
         epochNumber: 1,
-        salvAllocatedBaseUnits: -1n,
+        cullerAllocatedBaseUnits: -1n,
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       })
@@ -251,13 +251,13 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: ROBINHOOD_1,
         epochNumber: 12,
-        salvAllocatedBaseUnits: 1_250_000_000_000n, // 1250.00 SALV
+        cullerAllocatedBaseUnits: 1_250_000_000_000n, // 1250.00 CULLER
         status: "ALLOCATED",
         scanId: crypto.randomUUID(),
       });
       const csv = serializeRewardLedgerToCsv(await listRewardLedgerEntries(db));
       const lines = csv.trim().split("\n");
-      expect(lines[0]).toBe("solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status");
+      expect(lines[0]).toBe("solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status");
       expect(lines[1]).toMatch(
         new RegExp(`^${SOLANA_A},${ROBINHOOD_1},12,1250\\.000000000,\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z,ALLOCATED$`)
       );
@@ -268,7 +268,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: null,
         epochNumber: 1,
-        salvAllocatedBaseUnits: 0n,
+        cullerAllocatedBaseUnits: 0n,
         status: "NO_SNAPSHOT",
         scanId: crypto.randomUUID(),
       });
@@ -282,7 +282,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
         solanaWallet: SOLANA_A,
         robinhoodWallet: ROBINHOOD_1,
         epochNumber: null,
-        salvAllocatedBaseUnits: 0n,
+        cullerAllocatedBaseUnits: 0n,
         status: "NO_EPOCH",
         scanId: crypto.randomUUID(),
       });
@@ -291,7 +291,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
     });
 
     it("renders an empty ledger as just the header", () => {
-      expect(serializeRewardLedgerToCsv([])).toBe("solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status\n");
+      expect(serializeRewardLedgerToCsv([])).toBe("solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status\n");
     });
   });
 });

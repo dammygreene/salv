@@ -4,33 +4,33 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { shortAddress, useAppState } from "@/lib/app-state";
 import { fetchRewardsSummary, RewardsSummary } from "@/lib/solana/executor/verify";
-import { claimSalv, fetchSalvClaimView, fetchSalvVaultStatus, SalvClaimView, SalvVaultStatus } from "@/lib/solana/executor/salvClaims";
-import { COMMUNITY_ALLOCATION_SALV, TOTAL_SUPPLY_SALV } from "@/lib/salv/tokenSpec";
+import { claimCuller, fetchCullerClaimView, fetchCullerVaultStatus, CullerClaimView, CullerVaultStatus } from "@/lib/solana/executor/cullerClaims";
+import { COMMUNITY_ALLOCATION_CULLER, TOTAL_SUPPLY_CULLER } from "@/lib/culler/tokenSpec";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
 
-/** Phase 5 Section 17: a $SALV claim's state is always one of these four
+/** Phase 5 Section 17: a $CULLER claim's state is always one of these four
  * — never a bare "simulated" label that could be confused with a real
- * balance. NOT LIVE: no $SALV deployment reachable at all. DEVNET: $SALV
+ * balance. NOT LIVE: no $CULLER deployment reachable at all. DEVNET: $CULLER
  * is deployed (on Devnet, never silently mainnet) but this wallet has
  * nothing claimable right now. CLAIMABLE / CLAIMED come straight from
  * the backend's immutable snapshot + claim ledger. */
-type SalvBadgeStatus = "NOT LIVE" | "DEVNET" | "CLAIMABLE" | "CLAIMED";
+type CullerBadgeStatus = "NOT LIVE" | "DEVNET" | "CLAIMABLE" | "CLAIMED";
 
-function deriveSalvBadgeStatus(claimView: SalvClaimView | null): SalvBadgeStatus {
+function deriveCullerBadgeStatus(claimView: CullerClaimView | null): CullerBadgeStatus {
   if (!claimView || !claimView.configured) return "NOT LIVE";
   if (claimView.status === "CLAIMABLE") return "CLAIMABLE";
   if (claimView.status === "CLAIMED") return "CLAIMED";
   return "DEVNET"; // deployed and reachable, but NO_SNAPSHOT or FAILED for this wallet/epoch
 }
 
-const SALV_BADGE_CLASS: Record<SalvBadgeStatus, string> = {
+const CULLER_BADGE_CLASS: Record<CullerBadgeStatus, string> = {
   "NOT LIVE": "status-keep",
   DEVNET: "status-review",
-  CLAIMABLE: "status-salvageable",
+  CLAIMABLE: "status-cullable",
   CLAIMED: "status-watch",
 };
 
-/** Response shape of POST /api/salv/scan — see that route for the full
+/** Response shape of POST /api/culler/scan — see that route for the full
  * contract. This is the authoritative, server-computed reward-ledger
  * result for a combined Solana(+optional Robinhood) submission; it is
  * never derived from anything on the client. The Solana wallet is always
@@ -43,7 +43,7 @@ interface ScanApiResult {
     solana: { attempted: boolean; succeeded: boolean; reason?: string };
     robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
   };
-  reward: { salvAllocated: string; status: string; epochId: number | null };
+  reward: { cullerAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
   recordError?: string;
   scanId: string;
@@ -53,8 +53,8 @@ export default function RewardsPage() {
   const { proofEvents, walletAddress, setWalletAddress, clearWallet } = useAppState();
   const [summary, setSummary] = useState<RewardsSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [salvClaim, setSalvClaim] = useState<SalvClaimView | null>(null);
-  const [vaultStatus, setVaultStatus] = useState<SalvVaultStatus | null>(null);
+  const [cullerClaim, setCullerClaim] = useState<CullerClaimView | null>(null);
+  const [vaultStatus, setVaultStatus] = useState<CullerVaultStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimNotice, setClaimNotice] = useState<string | null>(null);
@@ -70,17 +70,17 @@ export default function RewardsPage() {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanApiResult | null>(null);
 
-  const refreshSalvClaim = useCallback((wallet: string) => {
-    fetchSalvClaimView(wallet)
-      .then((view) => setSalvClaim(view))
-      .catch(() => setSalvClaim(null)); // $SALV status is supplementary; never block the rest of the page on it
+  const refreshCullerClaim = useCallback((wallet: string) => {
+    fetchCullerClaimView(wallet)
+      .then((view) => setCullerClaim(view))
+      .catch(() => setCullerClaim(null)); // $CULLER status is supplementary; never block the rest of the page on it
   }, []);
 
   useEffect(() => {
     // The community treasury is a public, wallet-independent figure (it
     // is the same for every visitor), so it loads once on mount rather
     // than waiting for an address to be scanned.
-    fetchSalvVaultStatus()
+    fetchCullerVaultStatus()
       .then((status) => setVaultStatus(status))
       .catch(() => setVaultStatus(null)); // supplementary; never block the rest of the page on it
   }, []);
@@ -102,20 +102,20 @@ export default function RewardsPage() {
         // expected case.
         if (!cancelled) setLoadError(err instanceof Error ? err.message : null);
       });
-    refreshSalvClaim(walletAddress);
+    refreshCullerClaim(walletAddress);
     return () => {
       cancelled = true;
     };
     // Re-fetch whenever a new verified event lands so the dashboard
     // reflects the backend's authoritative ledger, not a local guess.
-  }, [walletAddress, proofEvents.length, refreshSalvClaim]);
+  }, [walletAddress, proofEvents.length, refreshCullerClaim]);
 
   // Only show stats for the currently scanned address — if it's
   // cleared, don't keep displaying a stale wallet's numbers.
   const effectiveSummary = walletAddress ? summary : null;
   const epoch = effectiveSummary?.currentEpoch ?? null;
-  const effectiveSalvClaim = walletAddress ? salvClaim : null;
-  const salvBadgeStatus = deriveSalvBadgeStatus(effectiveSalvClaim);
+  const effectiveCullerClaim = walletAddress ? cullerClaim : null;
+  const cullerBadgeStatus = deriveCullerBadgeStatus(effectiveCullerClaim);
 
   async function handleScanSubmit(event: FormEvent) {
     event.preventDefault();
@@ -128,7 +128,7 @@ export default function RewardsPage() {
     setScanning(true);
     setScanResult(null);
     try {
-      const res = await fetch("/api/salv/scan", {
+      const res = await fetch("/api/culler/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated.submission),
@@ -155,17 +155,17 @@ export default function RewardsPage() {
     setPasteError(null);
   }
 
-  async function handleClaimSalv() {
-    if (!walletAddress || !effectiveSalvClaim?.epoch) return;
+  async function handleClaimCuller() {
+    if (!walletAddress || !effectiveCullerClaim?.epoch) return;
     setClaiming(true);
     setClaimError(null);
     setClaimNotice(null);
     try {
-      const result = await claimSalv(walletAddress, effectiveSalvClaim.epoch);
+      const result = await claimCuller(walletAddress, effectiveCullerClaim.epoch);
       if (result.outcome === "CLAIMED") {
         setClaimNotice(`Claimed. Tx ${result.transactionSignature?.slice(0, 12)}…`);
       }
-      refreshSalvClaim(walletAddress);
+      refreshCullerClaim(walletAddress);
     } catch (err) {
       setClaimError(err instanceof Error ? err.message : "Claim failed.");
     } finally {
@@ -177,13 +177,13 @@ export default function RewardsPage() {
     <main className="rewards-page">
       <PageHeader
         title="Rewards need proof."
-        support="Every point traces back to an independently verified onchain event. EST. $SALV is a simulation for testing hypothetical reward-pool economics — there is no live $SALV token yet."
+        support="Every point traces back to an independently verified onchain event. EST. $CULLER is a simulation for testing hypothetical reward-pool economics — there is no live $CULLER token yet."
       />
 
       {!walletAddress ? (
         <div className="empty-state">
           <h2>Paste a wallet address to check your rewards.</h2>
-          <p>No wallet connection, signature, or private key required — SALVAGE only reads the public address(es) you paste.</p>
+          <p>No wallet connection, signature, or private key required — CULLER only reads the public address(es) you paste.</p>
           <form className="wallet-form" onSubmit={handleScanSubmit}>
             <div className="wallet-field">
               <label className="wallet-field-label" htmlFor="rewards-solana-wallet">
@@ -222,7 +222,7 @@ export default function RewardsPage() {
               {scanning ? "Scanning…" : "Scan wallet"}
             </button>
           </form>
-          <small className="wallet-form-note">Solana wallet required for $SALV rewards.</small>
+          <small className="wallet-form-note">Solana wallet required for $CULLER rewards.</small>
           <small className="wallet-form-note">Optional. Add your Robinhood wallet to scan both.</small>
           {pasteError && <small className="wallet-form-error">{pasteError}</small>}
         </div>
@@ -240,7 +240,7 @@ export default function RewardsPage() {
             <div className="reward-card" style={{ marginBottom: "1.5rem" }}>
               <span>Reward ledger record</span>
               <strong>
-                {scanResult.reward.salvAllocated} SALV <small>{scanResult.reward.status}</small>
+                {scanResult.reward.cullerAllocated} CULLER <small>{scanResult.reward.status}</small>
               </strong>
               <small>
                 Solana wallet · Epoch {scanResult.reward.epochId ?? "none"}
@@ -272,8 +272,8 @@ export default function RewardsPage() {
               <strong>{(effectiveSummary?.points ?? 0).toLocaleString()}</strong>
             </div>
             <div className="reward-card">
-              <span>Assets salvaged</span>
-              <strong>{(effectiveSummary?.assetsSalvaged ?? 0).toLocaleString()}</strong>
+              <span>Assets culld</span>
+              <strong>{(effectiveSummary?.assetsCulld ?? 0).toLocaleString()}</strong>
             </div>
             <div className="reward-card">
               <span>SOL recovered</span>
@@ -298,22 +298,22 @@ export default function RewardsPage() {
               <strong>{epoch ? (effectiveSummary?.rewardPool ?? 0).toLocaleString() : "—"} <small>simulated</small></strong>
             </div>
             <div className="reward-card">
-              <span>$SALV reward</span>
+              <span>$CULLER reward</span>
               <strong>
-                {salvBadgeStatus === "CLAIMABLE" || salvBadgeStatus === "CLAIMED"
-                  ? effectiveSalvClaim!.amountSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                {cullerBadgeStatus === "CLAIMABLE" || cullerBadgeStatus === "CLAIMED"
+                  ? effectiveCullerClaim!.amountCuller.toLocaleString(undefined, { maximumFractionDigits: 2 })
                   : epoch
                     ? `~${effectiveSummary!.estimatedReward.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                     : "—"}
               </strong>
-              <span className={`status-badge ${SALV_BADGE_CLASS[salvBadgeStatus]}`}>
+              <span className={`status-badge ${CULLER_BADGE_CLASS[cullerBadgeStatus]}`}>
                 <i />
-                {salvBadgeStatus}
+                {cullerBadgeStatus}
               </span>
-              {salvBadgeStatus === "CLAIMABLE" && (
+              {cullerBadgeStatus === "CLAIMABLE" && (
                 <>
-                  <button type="button" className="salvage-bin-cta" onClick={handleClaimSalv} disabled={claiming}>
-                    {claiming ? "CLAIMING…" : "CLAIM SALV"}
+                  <button type="button" className="cull-bin-cta" onClick={handleClaimCuller} disabled={claiming}>
+                    {claiming ? "CLAIMING…" : "CLAIM CULLER"}
                   </button>
                   <small>
                     Record-only today: claiming executes automatically server-side, with no signature required. A future
@@ -321,10 +321,10 @@ export default function RewardsPage() {
                   </small>
                 </>
               )}
-              {salvBadgeStatus === "CLAIMED" && effectiveSalvClaim?.claim?.claimTransactionSignature && (
-                <small>tx {effectiveSalvClaim.claim.claimTransactionSignature.slice(0, 12)}…</small>
+              {cullerBadgeStatus === "CLAIMED" && effectiveCullerClaim?.claim?.claimTransactionSignature && (
+                <small>tx {effectiveCullerClaim.claim.claimTransactionSignature.slice(0, 12)}…</small>
               )}
-              {(salvBadgeStatus === "NOT LIVE" || salvBadgeStatus === "DEVNET") && epoch && <small>SIMULATED · not $SALV</small>}
+              {(cullerBadgeStatus === "NOT LIVE" || cullerBadgeStatus === "DEVNET") && epoch && <small>SIMULATED · not $CULLER</small>}
               {claimNotice && <small>{claimNotice}</small>}
               {claimError && <small className="wallet-form-error">{claimError}</small>}
             </div>
@@ -343,18 +343,18 @@ export default function RewardsPage() {
       <div className="section-intro section-intro-tight">
         <h2>Community treasury.</h2>
         <p>
-          Community treasury: up to {(COMMUNITY_ALLOCATION_SALV / 1_000_000).toLocaleString()}M SALV. Controlled by a
+          Community treasury: up to {(COMMUNITY_ALLOCATION_CULLER / 1_000_000).toLocaleString()}M CULLER. Controlled by a
           3-of-3 team multisig — every rewards payout, giveaway, future incentive, or burn requires all three
           members to sign. Not permanently locked: it is a team-controlled pool for documented community uses,
-          capped at {(COMMUNITY_ALLOCATION_SALV / 1_000_000).toLocaleString()}M and never exceeded.
+          capped at {(COMMUNITY_ALLOCATION_CULLER / 1_000_000).toLocaleString()}M and never exceeded.
         </p>
       </div>
 
       {vaultStatus && (
         <div className="rewards-grid">
           <div className="reward-card">
-            <span>Current $SALV supply</span>
-            <strong>{TOTAL_SUPPLY_SALV.toLocaleString()}</strong>
+            <span>Current $CULLER supply</span>
+            <strong>{TOTAL_SUPPLY_CULLER.toLocaleString()}</strong>
             <span className={`status-badge ${vaultStatus.configured ? "status-review" : "status-keep"}`}>
               <i />
               {vaultStatus.configured ? (vaultStatus.network ?? "DEPLOYED") : "NOT LIVE"}
@@ -362,27 +362,27 @@ export default function RewardsPage() {
           </div>
           <div className="reward-card">
             <span>Community treasury cap</span>
-            <strong>{vaultStatus.allocationSalv.toLocaleString()}</strong>
+            <strong>{vaultStatus.allocationCuller.toLocaleString()}</strong>
             <small>hard cap · never exceeded</small>
           </div>
           <div className="reward-card">
             <span>Rewards allocated</span>
-            <strong>{vaultStatus.allocatedToRewardsSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <strong>{vaultStatus.allocatedToRewardsCuller.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             <small>claimable, not yet sent</small>
           </div>
           <div className="reward-card">
             <span>Rewards claimed</span>
-            <strong>{vaultStatus.distributedSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <strong>{vaultStatus.distributedCuller.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             <small>sent on-chain</small>
           </div>
           <div className="reward-card">
             <span>Burned</span>
-            <strong>{vaultStatus.burnedSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <strong>{vaultStatus.burnedCuller.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             <small>permanent · multisig-approved</small>
           </div>
           <div className="reward-card">
             <span>Treasury remaining</span>
-            <strong>{vaultStatus.remainingSalv.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
+            <strong>{vaultStatus.remainingCuller.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             <small>of the 300M cap</small>
           </div>
         </div>
@@ -395,7 +395,7 @@ export default function RewardsPage() {
       {proofEvents.length === 0 ? (
         <div className="empty-state">
           <h2>No verified events yet.</h2>
-          <p>Complete a salvage to generate your first Proof of Salvage receipt.</p>
+          <p>Complete a cull to generate your first Proof of Cull receipt.</p>
         </div>
       ) : (
         <div className="proof-list">
@@ -403,13 +403,13 @@ export default function RewardsPage() {
             <article key={event.id} className="proof-receipt">
               <div className="proof-receipt-top">
                 <span>{event.label}</span>
-                <span className="status-badge status-salvageable">
+                <span className="status-badge status-cullable">
                   <i />
                   {event.status}
                 </span>
               </div>
               <div className="proof-flow">
-                <span>Salvage</span>
+                <span>Cull</span>
                 <b>→</b>
                 <span>Verify</span>
                 <b>→</b>

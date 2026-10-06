@@ -8,14 +8,14 @@ export default function TermsPage() {
         <section>
           <h3>No custody, no guarantees</h3>
           <p>
-            SALVAGE never takes custody of assets. You approve every transaction with your own wallet. Recovered value belongs
+            CULLER never takes custody of assets. You approve every transaction with your own wallet. Recovered value belongs
             to you; reward tokens are tracked separately.
           </p>
         </section>
         <section>
-          <h3>$SALV is not an investment promise</h3>
+          <h3>$CULLER is not an investment promise</h3>
           <p>
-            $SALV rewards verified Proof of Salvage activity from a finite community pool. Nothing here implies guaranteed
+            $CULLER rewards verified Proof of Cull activity from a finite community pool. Nothing here implies guaranteed
             appreciation, a price floor, or investment returns.
           </p>
         </section>

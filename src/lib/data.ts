@@ -1,7 +1,7 @@
 import { AssetStatus, ScanState } from "./types";
 
 export const assetStatusLabel: Record<AssetStatus, string> = {
-  SALVAGEABLE: "Salvageable",
+  CULLABLE: "Cullable",
   WATCH: "Watch",
   REVIEW: "Review",
   KEEP: "Keep",
@@ -33,11 +33,11 @@ export const howItWorks = [
   {
     step: "Sort",
     title: "Every item gets a reason",
-    body: "Salvageable, watch, review or keep. No black-box scoring, you can see exactly why an asset landed where it did.",
+    body: "Cullable, watch, review or keep. No black-box scoring, you can see exactly why an asset landed where it did.",
   },
   {
     step: "Verify",
     title: "Rewards need proof",
-    body: "$SALV is credited only after an independent onchain check confirms the action actually happened.",
+    body: "$CULLER is credited only after an independent onchain check confirms the action actually happened.",
   },
 ];

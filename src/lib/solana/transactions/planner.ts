@@ -1,18 +1,18 @@
 import { Asset } from "@/lib/types";
-import { isActionEnabled } from "@/lib/salvage/registry";
-import { SalvageAction, SalvageTransactionPlan } from "./types";
+import { isActionEnabled } from "@/lib/cull/registry";
+import { CullAction, CullTransactionPlan } from "./types";
 
 export class PlanningError extends Error {}
 
 export interface BuildPlanParams {
   wallet: string;
-  network: SalvageTransactionPlan["network"];
+  network: CullTransactionPlan["network"];
   assets: Asset[];
   estimatedFeeLamports: number;
 }
 
 /**
- * Builds a deterministic SalvageTransactionPlan from user-selected
+ * Builds a deterministic CullTransactionPlan from user-selected
  * assets. "Deterministic" here means: given the same set of eligible
  * assets, the plan's action list is always produced in the same order
  * (sorted by token account address) regardless of the order the caller
@@ -25,22 +25,22 @@ export interface BuildPlanParams {
  * account rent recovery). Nothing else automatically enters a plan: NFTs
  * stay WATCH/REVIEW-only and no token is ever burned automatically.
  */
-export function buildSalvageTransactionPlan(params: BuildPlanParams): SalvageTransactionPlan {
+export function buildCullTransactionPlan(params: BuildPlanParams): CullTransactionPlan {
   const { wallet, network, assets, estimatedFeeLamports } = params;
 
   if (!assets.length) {
     throw new PlanningError("No assets selected.");
   }
 
-  const actions: SalvageAction[] = assets.map((asset) => {
-    if (asset.status !== "SALVAGEABLE" || asset.kind !== "ACCOUNT") {
+  const actions: CullAction[] = assets.map((asset) => {
+    if (asset.status !== "CULLABLE" || asset.kind !== "ACCOUNT") {
       throw new PlanningError(`Asset ${asset.id} is not eligible for an automatic close-account action.`);
     }
     if (!asset.tokenAccount || !asset.programId) {
       throw new PlanningError(`Asset ${asset.id} is missing on-chain identifiers required to build a transaction.`);
     }
     if (!isActionEnabled("CLOSE_EMPTY_TOKEN_ACCOUNT")) {
-      throw new PlanningError("CLOSE_EMPTY_TOKEN_ACCOUNT is not enabled in the salvage registry.");
+      throw new PlanningError("CLOSE_EMPTY_TOKEN_ACCOUNT is not enabled in the cull registry.");
     }
 
     return {

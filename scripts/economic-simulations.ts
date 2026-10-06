@@ -8,7 +8,7 @@
  */
 import { writeFileSync } from "fs";
 import { join } from "path";
-import { ALL_SCENARIOS, runEmissionReport, EmissionReport } from "../src/lib/salvage/economicSimulation";
+import { ALL_SCENARIOS, runEmissionReport, EmissionReport } from "../src/lib/cull/economicSimulation";
 
 const POPULATION_SIZES = [100, 1_000, 10_000, 100_000];
 const REWARD_POOL = 1_000_000; // a fixed hypothetical pool; only the relative shares matter here
@@ -27,7 +27,7 @@ function assertInvariants(report: EmissionReport) {
 function scenarioDescription(scenario: string): string {
   switch (scenario) {
     case "LOW_PARTICIPATION":
-      return "Only ~5% of the population salvages anything (1 action each).";
+      return "Only ~5% of the population culls anything (1 action each).";
     case "NORMAL_PARTICIPATION":
       return "~40% of the population participates, doing 1-3 real closes each.";
     case "HIGH_PARTICIPATION":
@@ -44,13 +44,13 @@ function scenarioDescription(scenario: string): string {
 }
 
 const lines: string[] = [];
-lines.push("# SALVAGE Phase 4 — Economic simulation report");
+lines.push("# CULLER Phase 4 — Economic simulation report");
 lines.push("");
 lines.push(
   "Deterministic, pure-function simulations of the points -> reward-pool formula " +
     "(`walletPoints / totalValidPoints * rewardPool`) across population sizes and " +
     "participation patterns. **Purpose: understand emission behavior, not optimize " +
-    "toward a desired price.** No real $SALV exists; `rewardPool` here is a fixed " +
+    "toward a desired price.** No real $CULLER exists; `rewardPool` here is a fixed " +
     "hypothetical value (1,000,000) used only so relative shares and concentration " +
     "are comparable across scenarios."
 );

@@ -51,7 +51,7 @@ export interface AddressDetectionResult {
  * input are all rejected here rather than passed any further down the
  * pipeline. Kept as a general-purpose single-address classifier (still
  * directly tested below); the combined Solana+Robinhood submission flow
- * (`POST /api/salv/scan`, `/scan`, `/rewards`) uses
+ * (`POST /api/culler/scan`, `/scan`, `/rewards`) uses
  * `validateCombinedWalletSubmission` instead, since that flow has two
  * separate fields with two different requirement levels (Solana
  * required, Robinhood optional) rather than one address to classify.
@@ -75,7 +75,7 @@ export function detectWalletAddress(input: string): AddressDetectionResult {
  * A single combined reward submission: a required Solana wallet (the
  * sole reward identity) plus an optional linked Robinhood/EVM wallet
  * (metadata on that submission, never a second identity). See
- * docs/salv-reward-ledger.md for the full product model.
+ * docs/culler-reward-ledger.md for the full product model.
  */
 export interface CombinedWalletSubmission {
   /** Trimmed, validated Solana address. Always present. */
@@ -100,7 +100,7 @@ export type CombinedWalletValidationResult =
  * required, so "Robinhood only" can never pass this check) -- there is
  * no separate "reject Robinhood-only" branch because the Solana
  * requirement alone already makes that shape impossible to satisfy.
- * Both client (`/scan`, `/rewards`) and server (`POST /api/salv/scan`)
+ * Both client (`/scan`, `/rewards`) and server (`POST /api/culler/scan`)
  * call this exact function, so they can never disagree about what a
  * valid submission looks like.
  */
@@ -112,7 +112,7 @@ export function validateCombinedWalletSubmission(input: {
   if (typeof rawSolana !== "string" || rawSolana.trim().length === 0) {
     return {
       valid: false,
-      error: "A Solana wallet address is required for $SALV rewards — a Robinhood address alone cannot be submitted.",
+      error: "A Solana wallet address is required for $CULLER rewards — a Robinhood address alone cannot be submitted.",
     };
   }
   const solanaWallet = rawSolana.trim();
