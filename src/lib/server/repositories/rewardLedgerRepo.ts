@@ -1,14 +1,22 @@
 import "server-only";
 import { Db } from "../db/types";
 import { baseUnitsToSalvDecimalString } from "../../salv/tokenSpec";
-import { WalletNetwork } from "../../walletAddress";
 
-export type RewardLedgerStatus = "NOT_APPLICABLE" | "NO_EPOCH" | "NO_SNAPSHOT" | "ALLOCATED" | "CLAIMED" | "FAILED";
+/** `NOT_APPLICABLE` existed in Phase 7 for a standalone EVM-only row; it
+ * no longer applies now that every row's identity is always a Solana
+ * wallet (Phase 8 forbids "Robinhood only" submissions entirely), so a
+ * row's reward status always flows from its Solana wallet's own claim
+ * view. */
+export type RewardLedgerStatus = "NO_EPOCH" | "NO_SNAPSHOT" | "ALLOCATED" | "CLAIMED" | "FAILED";
 
 export interface RewardLedgerEntry {
   id: string;
-  walletAddress: string;
-  network: WalletNetwork;
+  /** The sole reward identity. Always a validated Solana address. */
+  solanaWallet: string;
+  /** Optional linked Robinhood/EVM address for this same submission, or
+   * `null` if none is currently linked. Metadata only -- never part of
+   * this row's identity, never a second reward. */
+  robinhoodWallet: string | null;
   epochNumber: number | null;
   salvAllocatedBaseUnits: bigint;
   status: RewardLedgerStatus;
@@ -19,8 +27,8 @@ export interface RewardLedgerEntry {
 
 interface RewardLedgerRow {
   id: string;
-  wallet_address: string;
-  network: WalletNetwork;
+  solana_wallet: string;
+  robinhood_wallet: string | null;
   epoch_number: number | null;
   salv_allocated_base_units: string | number;
   status: RewardLedgerStatus;
@@ -50,8 +58,8 @@ function toIso(value: string | Date): string {
 function mapRow(row: RewardLedgerRow): RewardLedgerEntry {
   return {
     id: row.id,
-    walletAddress: row.wallet_address,
-    network: row.network,
+    solanaWallet: row.solana_wallet,
+    robinhoodWallet: row.robinhood_wallet,
     epochNumber: row.epoch_number,
     salvAllocatedBaseUnits: parseBaseUnits(row.salv_allocated_base_units),
     status: row.status,
@@ -64,15 +72,18 @@ function mapRow(row: RewardLedgerRow): RewardLedgerEntry {
 export class RewardLedgerError extends Error {}
 
 /** Stable, never-null dedup key: the epoch's own number when one exists,
- * or a fixed sentinel when it doesn't. See migration 0005's comment for
- * why this must never be a bare NULL. */
+ * or a fixed sentinel when it doesn't. See migration 0005/0006's comments
+ * for why this must never be a bare NULL. */
 function epochKeyFor(epochNumber: number | null): string {
   return epochNumber === null ? "NO_EPOCH" : String(epochNumber);
 }
 
 export interface UpsertRewardLedgerEntryInput {
-  walletAddress: string;
-  network: WalletNetwork;
+  solanaWallet: string;
+  /** `null` means this particular scan did not include a Robinhood
+   * address. See the replacement-policy note on `upsertRewardLedgerEntry`
+   * below for what that does to an already-linked address. */
+  robinhoodWallet: string | null;
   epochNumber: number | null;
   salvAllocatedBaseUnits: bigint;
   status: RewardLedgerStatus;
@@ -80,42 +91,58 @@ export interface UpsertRewardLedgerEntryInput {
 }
 
 /**
- * Inserts or updates exactly one row for (walletAddress, network, epoch)
- * — the literal "wallet + epoch = one row" requirement. Implemented as a
- * single atomic `INSERT ... ON CONFLICT ... DO UPDATE`, which Postgres
- * (and PGlite, the same engine used in tests) resolves with a per-row
- * lock: two concurrent upserts for the SAME (wallet, network, epoch) key
- * serialize safely (one applies, then the other applies on top — no lost
- * update), while upserts for DIFFERENT wallets never contend with each
- * other at all. This is a stronger, simpler guarantee than a hand-rolled
- * read-modify-write-CSV-file compare-and-swap loop would provide.
+ * Inserts or updates exactly one row for (solanaWallet, epoch) — the
+ * reward identity is the Solana wallet alone; a linked Robinhood address
+ * is metadata on that same row, never a second identity and never a
+ * second allocation. Implemented as a single atomic
+ * `INSERT ... ON CONFLICT ... DO UPDATE`, which Postgres (and PGlite, the
+ * same engine used in tests) resolves with a per-row lock: two
+ * concurrent upserts for the SAME (solanaWallet, epoch) key serialize
+ * safely (one applies, then the other applies on top — no lost update,
+ * no duplicate row), while upserts for DIFFERENT Solana wallets never
+ * contend with each other at all.
+ *
+ * **Robinhood replacement policy** (documented here and in
+ * docs/salv-reward-ledger.md): every upsert sets `robinhood_wallet` to
+ * exactly what THIS scan submitted — a new address replaces whatever was
+ * linked before, and submitting with no Robinhood address this time
+ * clears any previously linked one. The row always reflects the most
+ * recently submitted state for this Solana wallet + epoch, never an
+ * additive merge of every Robinhood address ever seen for it. This is
+ * the deterministic policy required when the same Solana wallet is
+ * rescanned with a different (or absent) Robinhood address in the same
+ * epoch — there is never more than one linked Robinhood address per row
+ * at a time, and the Solana wallet + epoch identity itself never changes
+ * because of it.
  *
  * Never computes or guesses `salvAllocatedBaseUnits`/`status` itself —
  * both must already have been derived from the authoritative reward
- * snapshot/claim system (src/lib/salv/claims.ts's `getClaimView`) by the
- * caller. This function's only job is to durably record that already-
- * computed value, exactly once per (wallet, network, epoch).
+ * snapshot/claim system (src/lib/salv/claims.ts's `getClaimView`), keyed
+ * strictly on the Solana wallet — by the caller. This function's only
+ * job is to durably record that already-computed value, exactly once
+ * per (solanaWallet, epoch).
  */
 export async function upsertRewardLedgerEntry(db: Db, input: UpsertRewardLedgerEntryInput): Promise<RewardLedgerEntry> {
   if (input.salvAllocatedBaseUnits < 0n) {
     throw new RewardLedgerError(`upsertRewardLedgerEntry: salvAllocatedBaseUnits must be >= 0, got ${input.salvAllocatedBaseUnits}.`);
   }
-  if (!input.walletAddress.trim()) {
-    throw new RewardLedgerError("upsertRewardLedgerEntry: walletAddress is required.");
+  if (!input.solanaWallet.trim()) {
+    throw new RewardLedgerError("upsertRewardLedgerEntry: solanaWallet is required.");
   }
 
   const epochKey = epochKeyFor(input.epochNumber);
   const result = await db.query<RewardLedgerRow>(
     `INSERT INTO reward_ledger_entries
-       (wallet_address, network, epoch_number, epoch_key, salv_allocated_base_units, status, last_scan_id, first_scanned_at, scanned_at)
+       (solana_wallet, robinhood_wallet, epoch_number, epoch_key, salv_allocated_base_units, status, last_scan_id, first_scanned_at, scanned_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
-     ON CONFLICT (wallet_address, network, epoch_key) DO UPDATE SET
+     ON CONFLICT (solana_wallet, epoch_key) DO UPDATE SET
+       robinhood_wallet = EXCLUDED.robinhood_wallet,
        salv_allocated_base_units = EXCLUDED.salv_allocated_base_units,
        status = EXCLUDED.status,
        last_scan_id = EXCLUDED.last_scan_id,
        scanned_at = now()
      RETURNING *`,
-    [input.walletAddress, input.network, input.epochNumber, epochKey, input.salvAllocatedBaseUnits.toString(), input.status, input.scanId]
+    [input.solanaWallet, input.robinhoodWallet, input.epochNumber, epochKey, input.salvAllocatedBaseUnits.toString(), input.status, input.scanId]
   );
   if (!result.rows[0]) {
     throw new RewardLedgerError("upsertRewardLedgerEntry: INSERT ... ON CONFLICT did not return a row.");
@@ -128,20 +155,15 @@ export async function listRewardLedgerEntries(db: Db): Promise<RewardLedgerEntry
   return result.rows.map(mapRow);
 }
 
-export async function getRewardLedgerEntry(
-  db: Db,
-  walletAddress: string,
-  network: WalletNetwork,
-  epochNumber: number | null
-): Promise<RewardLedgerEntry | null> {
-  const result = await db.query<RewardLedgerRow>(
-    "SELECT * FROM reward_ledger_entries WHERE wallet_address = $1 AND network = $2 AND epoch_key = $3",
-    [walletAddress, network, epochKeyFor(epochNumber)]
-  );
+export async function getRewardLedgerEntry(db: Db, solanaWallet: string, epochNumber: number | null): Promise<RewardLedgerEntry | null> {
+  const result = await db.query<RewardLedgerRow>("SELECT * FROM reward_ledger_entries WHERE solana_wallet = $1 AND epoch_key = $2", [
+    solanaWallet,
+    epochKeyFor(epochNumber),
+  ]);
   return result.rows[0] ? mapRow(result.rows[0]) : null;
 }
 
-const CSV_HEADER = "wallet_address,network,salv_allocated,epoch_id,scanned_at,status";
+const CSV_HEADER = "solana_wallet,robinhood_wallet,epoch_id,salv_allocated,scanned_at,status";
 
 /** Escapes a single CSV field per RFC 4180: wraps in quotes and doubles
  * any embedded quote whenever the field contains a comma, quote, or
@@ -157,10 +179,14 @@ function csvField(value: string): string {
 
 /**
  * Serializes the full reward ledger to CSV text — human-readable, one
- * row per (wallet, network, epoch), most-recently-scanned first. This is
- * the ONLY place CSV text is ever produced; the table itself is the
- * durable, race-safe source of truth (see upsertRewardLedgerEntry's own
- * comment), and this function never does anything other than format
+ * row per (Solana wallet, epoch), most-recently-scanned first. Column
+ * order is `solana_wallet,robinhood_wallet,epoch_id,salv_allocated,
+ * scanned_at,status`. `robinhood_wallet` is an empty field when no
+ * address is currently linked — never a placeholder string.
+ *
+ * This is the ONLY place CSV text is ever produced; the table itself is
+ * the durable, race-safe source of truth (see upsertRewardLedgerEntry's
+ * own comment), and this function never does anything other than format
  * already-stored rows. $SALV amounts use the same deterministic,
  * bigint-based decimal string as the rest of this codebase's precision-
  * sensitive paths (src/lib/salv/tokenSpec.ts's `baseUnitsToSalvDecimalString`)
@@ -171,10 +197,10 @@ export function serializeRewardLedgerToCsv(entries: RewardLedgerEntry[]): string
   for (const entry of entries) {
     lines.push(
       [
-        csvField(entry.walletAddress),
-        csvField(entry.network),
-        csvField(baseUnitsToSalvDecimalString(entry.salvAllocatedBaseUnits)),
+        csvField(entry.solanaWallet),
+        csvField(entry.robinhoodWallet ?? ""),
         csvField(entry.epochNumber === null ? "" : String(entry.epochNumber)),
+        csvField(baseUnitsToSalvDecimalString(entry.salvAllocatedBaseUnits)),
         csvField(entry.scannedAt),
         csvField(entry.status),
       ].join(",")
