@@ -311,6 +311,19 @@ main {
   background: var(--border-strong);
 }
 
+@media (max-width: 600px) {
+  .page-header-meta {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    white-space: normal;
+  }
+
+  .page-header-meta .meta-rule {
+    width: 14px;
+  }
+}
+
 .section-intro {
   display: flex;
   flex-direction: column;
