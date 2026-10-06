@@ -7,18 +7,15 @@ import { StatModule } from "@/components/stat-module";
 import { AssetCard } from "@/components/asset-card";
 import { SalvageBin } from "@/components/salvage-bin";
 import { ReviewModal } from "@/components/review-modal";
-import { shortAddress, useAppState } from "@/lib/app-state";
+import { DEMO_ADDRESS, shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 import { isValidSolanaAddress } from "@/lib/solana/base58";
 
 export default function ScanPage() {
   const {
-    connected,
     walletAddress,
-    connectError,
+    addressError,
     canSign,
-    availableWallets,
-    connectExtensionWallet,
     scanState,
     scanError,
     hasScanned,
@@ -26,18 +23,18 @@ export default function ScanPage() {
     accountsTruncated,
     assets,
     startScan,
-    connectWallet,
-    disconnectWallet,
+    clearWallet,
   } = useAppState();
   const [showReview, setShowReview] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [addressInput, setAddressInput] = useState("");
   const addressValid = isValidSolanaAddress(addressInput.trim());
+  const hasWallet = Boolean(walletAddress);
 
-  function handleConnectSubmit(event: FormEvent) {
+  function handleScanSubmit(event: FormEvent) {
     event.preventDefault();
     if (!addressValid) return;
-    connectWallet(addressInput.trim());
+    startScan(addressInput.trim());
   }
 
   const scanning = scanState !== "READY" && scanState !== "SCAN COMPLETE";
@@ -63,18 +60,18 @@ export default function ScanPage() {
             ? assets.length
               ? "Here's everything attached to this wallet, sorted with a reason for every call."
               : "This wallet has no SPL token accounts to show. Try another address."
-            : "Connect a wallet and run a scan. Nothing moves until you tell it to."
+            : "Paste a wallet address and run a scan. Nothing moves until you tell it to."
         }
         meta={
           <>
-            <span>{connected ? shortAddress(walletAddress) : "Not connected"}</span>
+            <span>{hasWallet ? shortAddress(walletAddress) : "No address entered"}</span>
             <span className="meta-rule" />
-            <span>{connected ? (canSign ? "Wallet signer" : "Read-only") : "Solana"}</span>
-            {connected && (
+            <span>{hasWallet ? (canSign ? "Wallet signer" : "Read-only") : "Solana"}</span>
+            {hasWallet && (
               <>
                 <span className="meta-rule" />
-                <button type="button" className="text-link" onClick={disconnectWallet}>
-                  Disconnect
+                <button type="button" className="text-link" onClick={clearWallet}>
+                  Scan a different address
                 </button>
               </>
             )}
@@ -87,11 +84,11 @@ export default function ScanPage() {
           <SalvageMachine />
         </div>
         <div className="scan-console-controls">
-          {!connected && (
+          {!hasWallet && (
             <>
-              <h2>Connect a wallet to begin.</h2>
-              <p>SALVAGE never asks for a seed phrase or private key. Paste any public wallet address below, it is read-only.</p>
-              <form className="wallet-form" onSubmit={handleConnectSubmit}>
+              <h2>Paste a wallet address to begin.</h2>
+              <p>SALVAGE never asks for a seed phrase or private key. Paste any public wallet address below — it is read-only.</p>
+              <form className="wallet-form" onSubmit={handleScanSubmit}>
                 <input
                   type="text"
                   className="wallet-input code"
@@ -103,62 +100,45 @@ export default function ScanPage() {
                   aria-label="Wallet address"
                 />
                 <button type="submit" className="primary-button" disabled={!addressValid}>
-                  Connect
+                  Scan wallet
                 </button>
               </form>
-              {connectError && <small className="wallet-form-error">{connectError}</small>}
-              <button type="button" className="text-link" onClick={() => connectWallet()}>
-                Or use a demo wallet →
+              {addressError && <small className="wallet-form-error">{addressError}</small>}
+              <button type="button" className="text-link" onClick={() => startScan(DEMO_ADDRESS)}>
+                Or scan a demo wallet →
               </button>
               <small className="wallet-form-note">Read-only: balances and token accounts are fetched live from Solana.</small>
 
               <p className="wallet-form-note">
-                Want to actually recover assets, not just preview them? Connect a wallet extension — SALVAGE only ever
-                requests its public key, never a seed phrase or private key.
+                Want to actually recover assets, not just preview them? You&rsquo;ll be asked for a wallet extension signature
+                only at the final confirm step — SALVAGE only ever requests a public key there, never a seed phrase or private
+                key.
               </p>
-              {availableWallets.length > 0 ? (
-                <div className="wallet-picker-list">
-                  {availableWallets.map((w) => (
-                    <button
-                      key={w.adapter.name}
-                      type="button"
-                      className="ghost-button"
-                      onClick={() => connectExtensionWallet(w.adapter.name)}
-                    >
-                      Connect {w.adapter.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <small className="wallet-form-note">
-                  No Solana wallet extension detected in this browser (Phantom, Solflare, Backpack, etc.).
-                </small>
-              )}
             </>
           )}
-          {connected && !hasScanned && scanError && (
+          {hasWallet && !hasScanned && scanError && (
             <>
               <h2>Scan failed.</h2>
               <p>{scanError}</p>
-              <button className="primary-button" onClick={startScan}>
+              <button className="primary-button" onClick={() => startScan()}>
                 Try again
               </button>
             </>
           )}
-          {connected && !hasScanned && !scanError && (
+          {hasWallet && !hasScanned && !scanError && (
             <>
-              <h2>{scanning ? scanStateLabel[scanState] : "Wallet connected. Ready to scan."}</h2>
+              <h2>{scanning ? scanStateLabel[scanState] : "Address entered. Ready to scan."}</h2>
               <p>
                 {scanning
                   ? "Reading balances and token accounts live from Solana. This takes a few seconds."
                   : "The scan only reads public onchain data. It never requests a signature."}
               </p>
-              <button className="primary-button" onClick={startScan} disabled={scanning}>
+              <button className="primary-button" onClick={() => startScan()} disabled={scanning}>
                 {scanning ? "Scanning" : "Scan my wallet"}
               </button>
             </>
           )}
-          {connected && hasScanned && (
+          {hasWallet && hasScanned && (
             <>
               <h2>Scan complete.</h2>
               <p>
@@ -166,7 +146,7 @@ export default function ScanPage() {
                 {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {salvageable.length} are allowlisted
                 for salvage right now.
               </p>
-              <button className="ghost-button" onClick={startScan}>
+              <button className="ghost-button" onClick={() => startScan()}>
                 Rescan wallet
               </button>
             </>

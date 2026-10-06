@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAppState } from "@/lib/app-state";
+import { shortAddress, useAppState } from "@/lib/app-state";
 import { SOLANA_NETWORK } from "@/lib/solana/constants";
 import { SALVAGE_REGISTRY } from "@/lib/salvage/registry";
 
@@ -19,7 +19,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onClose: () => void; onConfirmed: () => void }) {
-  const { assets, selected, confirmSalvage, canSign, salvageStatus, salvageError } = useAppState();
+  const { assets, selected, confirmSalvage, canSign, walletAddress, availableWallets, connectExtensionWallet, addressError, salvageStatus, salvageError } =
+    useAppState();
   const [submitting, setSubmitting] = useState(false);
   const chosen = useMemo(() => assets.filter((asset) => selected.includes(asset.id)), [assets, selected]);
   // Pre-verification estimate only: base points per the registry, times
@@ -89,10 +90,32 @@ export function ReviewModal({ open, onClose, onConfirmed }: { open: boolean; onC
             whatever the chain actually returns, verified independently after you sign.
           </p>
         ) : (
-          <p className="review-note">
-            This wallet is connected read-only (pasted address). Connect a real wallet from the scan screen to sign and
-            execute a real transaction.
-          </p>
+          <div className="review-signer">
+            <p className="review-note">
+              This is a preview of a pasted address. Executing this action for real requires a signature from the wallet
+              extension that holds {shortAddress(walletAddress)}&rsquo;s own key — SALVAGE only ever requests its public key
+              here, never a seed phrase or private key.
+            </p>
+            {availableWallets.length > 0 ? (
+              <div className="wallet-picker-list">
+                {availableWallets.map((w) => (
+                  <button
+                    key={w.adapter.name}
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => connectExtensionWallet(w.adapter.name)}
+                  >
+                    Use {w.adapter.name} to sign
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <small className="wallet-form-note">
+                No Solana wallet extension detected in this browser (Phantom, Solflare, Backpack, etc.).
+              </small>
+            )}
+            {addressError && <small className="wallet-form-error">{addressError}</small>}
+          </div>
         )}
         <div className="review-warning">
           <span>!</span> Account closure is permanent. Only proceed when you recognize every asset above.

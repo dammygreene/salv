@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SalvageMark } from "./salvage-mark";
-import { shortAddress, useAppState } from "@/lib/app-state";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -16,7 +15,6 @@ const LINKS = [
 
 export function NavCapsule() {
   const pathname = usePathname();
-  const { connected, walletAddress, connectWallet, disconnectWallet } = useAppState();
   const [open, setOpen] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Array<HTMLAnchorElement | null>>([]);
@@ -69,14 +67,6 @@ export function NavCapsule() {
             );
           })}
         </nav>
-
-        <button
-          className={`nav-wallet ${connected ? "is-connected" : ""}`}
-          onClick={() => (connected ? disconnectWallet() : connectWallet())}
-          aria-pressed={connected}
-        >
-          {connected ? shortAddress(walletAddress) : "Connect"}
-        </button>
 
         <button className="nav-burger" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation" aria-expanded={open}>
           <span />

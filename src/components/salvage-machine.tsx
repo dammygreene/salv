@@ -5,7 +5,8 @@ import { useAppState, shortAddress } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 
 export function SalvageMachine() {
-  const { scanState, scanProgress, hasScanned, connected, walletAddress, assets } = useAppState();
+  const { scanState, scanProgress, hasScanned, walletAddress, assets } = useAppState();
+  const hasWallet = Boolean(walletAddress);
   const active = scanState !== "READY";
   const label = scanStateLabel[scanState] ?? "Ready to scan";
 
@@ -26,11 +27,11 @@ export function SalvageMachine() {
     <div className="node-flow" role="status" aria-live="polite">
       <div className="node">
         <div className="node-head">
-          <span className={`node-dot ${connected ? "is-live" : ""}`} />
+          <span className={`node-dot ${hasWallet ? "is-live" : ""}`} />
           <span>Wallet</span>
         </div>
         <div className="node-body">
-          <span className="node-line code">{connected ? shortAddress(walletAddress) : "Not connected"}</span>
+          <span className="node-line code">{hasWallet ? shortAddress(walletAddress) : "No address entered"}</span>
         </div>
       </div>
 

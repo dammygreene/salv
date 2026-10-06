@@ -24,12 +24,22 @@ export type SalvageStatus =
   | "ERROR";
 
 type AppState = {
-  connected: boolean;
+  /** The wallet address currently being previewed/scanned — always a
+   * plain pasted (or demo) address string, never implies a wallet
+   * connection or a signature of any kind. Empty string means no address
+   * has been entered yet. */
   walletAddress: string;
-  connectError: string | null;
-  /** True only when walletAddress came from a real wallet-adapter
-   * connection (the wallet itself holds the key and can sign). Pasted or
-   * demo addresses are read-only previews and can never sign. */
+  setWalletAddress: (address: string) => void;
+  /** Clears the current address and every bit of scan/salvage state tied
+   * to it (and drops a real wallet-extension session, if one happened to
+   * be connected for signing). */
+  clearWallet: () => void;
+  addressError: string | null;
+  /** True only when a real wallet-adapter extension is connected AND its
+   * own public key matches `walletAddress` exactly — i.e. the wallet
+   * actually being previewed is the one that can sign for itself. A
+   * pasted address, a demo address, or an extension connected to a
+   * *different* key can never sign. */
   canSign: boolean;
   availableWallets: Wallet[];
   connectExtensionWallet: (walletName: string) => void;
@@ -47,9 +57,12 @@ type AppState = {
   rewardScore: number;
   salvageStatus: SalvageStatus;
   salvageError: string | null;
-  connectWallet: (address?: string) => void;
-  disconnectWallet: () => void;
-  startScan: () => void;
+  /** Runs the real, read-only Solana scan for an address. Pass an
+   * address to scan something other than the currently-set
+   * `walletAddress` (it becomes the new `walletAddress` as a side
+   * effect); omit it to (re)scan the current one. Never requires or
+   * implies a wallet connection — this only reads public onchain data. */
+  startScan: (address?: string) => void;
   toggleSelected: (id: string) => void;
   clearSelected: () => void;
   addToWatch: (assetId: string) => void;
@@ -62,7 +75,7 @@ const AppStateContext = createContext<AppState | null>(null);
 // treasury) used only as a one-click "try it" shortcut. It is scanned
 // through the same live, read-only RPC path as any pasted address. It is
 // always read-only: nobody here holds its private key.
-const DEMO_ADDRESS = "FAucetgjU1jYWsiL8BfdTrpLNt2U8kqdVfgvbnGqG5sG";
+export const DEMO_ADDRESS = "FAucetgjU1jYWsiL8BfdTrpLNt2U8kqdVfgvbnGqG5sG";
 
 function shortAddress(addr: string) {
   return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
@@ -76,11 +89,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const wallet = useWallet();
   const { publicKey, connected: extensionConnected, wallets, select, connect, disconnect, sendTransaction } = wallet;
 
-  // Read-only "preview" session, from a pasted address or the demo
-  // shortcut. Mutually exclusive in the UI with a real signer connection.
-  const [pastedConnected, setPastedConnected] = useState(false);
-  const [pastedAddress, setPastedAddress] = useState("");
-  const [connectError, setConnectError] = useState<string | null>(null);
+  const [walletAddress, setWalletAddressState] = useState("");
+  const [addressError, setAddressError] = useState<string | null>(null);
 
   const [scanState, setScanState] = useState<ScanState>("READY");
   const [scanError, setScanError] = useState<string | null>(null);
@@ -97,11 +107,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [salvageError, setSalvageError] = useState<string | null>(null);
   const connectingExtension = useRef(false);
 
-  // A real wallet-adapter connection always wins over a read-only pasted
-  // session, and is the only way canSign can ever be true.
-  const canSign = extensionConnected && Boolean(publicKey);
-  const connected = canSign || pastedConnected;
-  const walletAddress = canSign && publicKey ? publicKey.toBase58() : pastedAddress;
+  // A real wallet-adapter extension session can only ever sign for the
+  // address it actually holds the key for -- so it only counts as "can
+  // sign" when its own pubkey matches the address currently being
+  // previewed/scanned. Connecting a wallet that doesn't match the pasted
+  // address never grants signing power over that address.
+  const canSign = Boolean(extensionConnected && publicKey && publicKey.toBase58() === walletAddress);
 
   const pushHistory = useCallback((event: Omit<HistoryEvent, "id" | "timestamp">) => {
     setHistory((current) => [
@@ -110,36 +121,28 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, []);
 
-  const resetScanState = useCallback(() => {
-    setScanState("READY");
-    setScanError(null);
-    setHasScanned(false);
-    setAssets([]);
-    setAccountsFound(0);
-    setAccountsTruncated(false);
-    setSelected([]);
+  const setWalletAddress = useCallback((address: string) => {
+    setWalletAddressState(address.trim());
   }, []);
 
   // React-recommended "adjust state while rendering" pattern (see
-  // https://react.dev/learn/you-might-not-need-an-effect): this reacts to
-  // a change in the derived `canSign` value within the same render pass,
-  // instead of mirroring it into state from inside a useEffect.
+  // https://react.dev/learn/you-might-not-need-an-effect): logs a real
+  // extension connection becoming usable for signing, reacting to the
+  // derived `canSign` value within the same render pass rather than a
+  // useEffect. This never resets scan results -- a signer connecting or
+  // disconnecting has no bearing on already-fetched, read-only scan data.
   const [prevCanSign, setPrevCanSign] = useState(canSign);
   if (prevCanSign !== canSign) {
     setPrevCanSign(canSign);
     if (canSign && publicKey) {
-      pushHistory({ kind: "SCAN", label: "Wallet connected", detail: shortAddress(publicKey.toBase58()) });
-    } else {
-      // The extension-held session ended (disconnected from the wallet
-      // itself, or via disconnectWallet()). Always drop stale scan state.
-      resetScanState();
+      pushHistory({ kind: "SCAN", label: "Wallet connected for signing", detail: shortAddress(publicKey.toBase58()) });
     }
   }
 
   const connectExtensionWallet = useCallback(
     (walletName: string) => {
       connectingExtension.current = true;
-      setConnectError(null);
+      setAddressError(null);
       select(walletName as never);
     },
     [select]
@@ -153,35 +156,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     if (!wallet.wallet) return;
     connectingExtension.current = false;
     connect().catch((err: unknown) => {
-      setConnectError(err instanceof Error ? err.message : "Could not connect to that wallet.");
+      setAddressError(err instanceof Error ? err.message : "Could not connect to that wallet.");
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.wallet]);
 
-  const connectWallet = useCallback(
-    (address?: string) => {
-      const resolved = address?.trim() || DEMO_ADDRESS;
-      if (!isValidSolanaAddress(resolved)) {
-        setConnectError("That does not look like a valid Solana wallet address.");
-        return;
-      }
-      setConnectError(null);
-      setPastedConnected(true);
-      setPastedAddress(resolved);
-      pushHistory({ kind: "SCAN", label: "Wallet connected (read-only)", detail: shortAddress(resolved) });
-    },
-    [pushHistory]
-  );
-
-  const disconnectWallet = useCallback(() => {
-    if (canSign) {
+  const clearWallet = useCallback(() => {
+    if (extensionConnected) {
       disconnect().catch(() => undefined);
     }
-    setPastedConnected(false);
-    setPastedAddress("");
-    setConnectError(null);
-    resetScanState();
-  }, [canSign, disconnect, resetScanState]);
+    setWalletAddressState("");
+    setAddressError(null);
+    setScanState("READY");
+    setScanError(null);
+    setHasScanned(false);
+    setAssets([]);
+    setAccountsFound(0);
+    setAccountsTruncated(false);
+    setSelected([]);
+    setSalvageStatus("IDLE");
+    setSalvageError(null);
+  }, [extensionConnected, disconnect]);
 
   const scanProgress = useMemo(() => {
     if (scanState === "READY") return 0;
@@ -189,35 +184,45 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return ((scanSteps.indexOf(scanState) + 1) / scanSteps.length) * 100;
   }, [scanState]);
 
-  const startScan = useCallback(() => {
-    if (!connected) {
-      connectWallet();
-      return;
-    }
+  const startScan = useCallback(
+    (addressOverride?: string) => {
+      const target = (addressOverride ?? walletAddress).trim();
+      if (!target) return;
+      if (!isValidSolanaAddress(target)) {
+        setAddressError("That does not look like a valid Solana wallet address.");
+        return;
+      }
 
-    setSelected([]);
-    setScanError(null);
-    setSalvageStatus("IDLE");
-    setSalvageError(null);
-    setScanState("SCANNING WALLET");
-    const address = walletAddress || DEMO_ADDRESS;
-    pushHistory({ kind: "SCAN", label: "Scan started", detail: shortAddress(address) });
+      setAddressError(null);
+      setWalletAddressState(target);
+      setSelected([]);
+      setScanError(null);
+      setHasScanned(false);
+      setAssets([]);
+      setAccountsFound(0);
+      setAccountsTruncated(false);
+      setSalvageStatus("IDLE");
+      setSalvageError(null);
+      setScanState("SCANNING WALLET");
+      pushHistory({ kind: "SCAN", label: "Scan started", detail: shortAddress(target) });
 
-    scanWallet(address, (step) => setScanState(step))
-      .then((result) => {
-        setAssets(result.assets);
-        setAccountsFound(result.accountsFound);
-        setAccountsTruncated(result.truncated);
-        setHasScanned(true);
-        setScanState("SCAN COMPLETE");
-        pushHistory({ kind: "SCAN", label: "Scan complete", detail: `${result.assets.length} assets indexed` });
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof WalletScanError ? err.message : "Scan failed. Try again in a moment.";
-        setScanError(message);
-        setScanState("READY");
-      });
-  }, [connected, connectWallet, pushHistory, walletAddress]);
+      scanWallet(target, (step) => setScanState(step))
+        .then((result) => {
+          setAssets(result.assets);
+          setAccountsFound(result.accountsFound);
+          setAccountsTruncated(result.truncated);
+          setHasScanned(true);
+          setScanState("SCAN COMPLETE");
+          pushHistory({ kind: "SCAN", label: "Scan complete", detail: `${result.assets.length} assets indexed` });
+        })
+        .catch((err: unknown) => {
+          const message = err instanceof WalletScanError ? err.message : "Scan failed. Try again in a moment.";
+          setScanError(message);
+          setScanState("READY");
+        });
+    },
+    [pushHistory, walletAddress]
+  );
 
   const toggleSelected = useCallback((id: string) => {
     setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
@@ -262,7 +267,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     if (!canSign || !publicKey) {
       setSalvageStatus("ERROR");
-      setSalvageError("Connect a real wallet (not a pasted address) to sign a transaction.");
+      setSalvageError("Connect the wallet extension for this exact address to sign a transaction.");
       return null;
     }
 
@@ -354,9 +359,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppState>(
     () => ({
-      connected,
       walletAddress,
-      connectError,
+      setWalletAddress,
+      clearWallet,
+      addressError,
       canSign,
       availableWallets: wallets,
       connectExtensionWallet,
@@ -374,8 +380,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       rewardScore,
       salvageStatus,
       salvageError,
-      connectWallet,
-      disconnectWallet,
       startScan,
       toggleSelected,
       clearSelected,
@@ -383,9 +387,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       confirmSalvage,
     }),
     [
-      connected,
       walletAddress,
-      connectError,
+      setWalletAddress,
+      clearWallet,
+      addressError,
       canSign,
       wallets,
       connectExtensionWallet,
@@ -403,8 +408,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       rewardScore,
       salvageStatus,
       salvageError,
-      connectWallet,
-      disconnectWallet,
       startScan,
       toggleSelected,
       clearSelected,
