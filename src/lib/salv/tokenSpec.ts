@@ -46,6 +46,27 @@ export function salvToBaseUnits(amountSalv: number | bigint): bigint {
   return whole * BASE_UNIT_FACTOR;
 }
 
+/**
+ * The inverse of `salvToBaseUnits`, rendered as a fixed-point decimal
+ * STRING using only bigint arithmetic — never `Number()`/floating point
+ * anywhere in this function. This is the precision rule anything that
+ * needs to durably record (not just display) a $SALV amount should use
+ * (e.g. the reward allocation ledger's CSV export, docs/salv-reward-
+ * ledger.md) instead of the various `baseUnitsToSalvNumber` display-only
+ * helpers scattered across the API routes, which are a `number` and
+ * therefore unsafe once a value could ever approach 2^53 (never true for
+ * this codebase's own 300,000,000 SALV cap, but a ledger that mirrors
+ * raw base units from the database should not depend on that ceiling
+ * holding forever).
+ */
+export function baseUnitsToSalvDecimalString(amountBaseUnits: bigint): string {
+  const negative = amountBaseUnits < 0n;
+  const magnitude = negative ? -amountBaseUnits : amountBaseUnits;
+  const whole = magnitude / BASE_UNIT_FACTOR;
+  const fraction = (magnitude % BASE_UNIT_FACTOR).toString().padStart(TOKEN_DECIMALS, "0");
+  return `${negative ? "-" : ""}${whole.toString()}.${fraction}`;
+}
+
 export const TOTAL_SUPPLY_BASE_UNITS = salvToBaseUnits(TOTAL_SUPPLY_SALV);
 export const MARKET_ALLOCATION_BASE_UNITS = salvToBaseUnits(MARKET_ALLOCATION_SALV);
 export const COMMUNITY_ALLOCATION_BASE_UNITS = salvToBaseUnits(COMMUNITY_ALLOCATION_SALV);
