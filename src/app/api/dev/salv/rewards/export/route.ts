@@ -18,11 +18,14 @@ import { listRewardLedgerEntries, serializeRewardLedgerToCsv } from "@/lib/serve
  * it only serializes rows that upsertRewardLedgerEntry() already wrote
  * from the authoritative reward-snapshot/claim system.
  *
- * Columns, in order: wallet_address, network, salv_allocated, epoch_id,
- * scanned_at, status. Never includes private keys, seed phrases,
- * signatures, RPC URLs/credentials, or admin secrets -- the ledger table
- * itself has no columns for any of those, so there is nothing of that
- * shape to accidentally serialize here.
+ * Columns, in order: solana_wallet, robinhood_wallet, epoch_id,
+ * salv_allocated, scanned_at, status. One row per (Solana wallet, epoch)
+ * — Solana is the sole reward identity; robinhood_wallet is an optional
+ * linked address attached to that same row, left empty when none is
+ * currently linked, and never a row of its own. Never includes private
+ * keys, seed phrases, signatures, RPC URLs/credentials, or admin secrets
+ * -- the ledger table itself has no columns for any of those, so there
+ * is nothing of that shape to accidentally serialize here.
  */
 export async function GET(req: NextRequest) {
   try {
