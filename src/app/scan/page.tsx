@@ -9,7 +9,25 @@ import { SalvageBin } from "@/components/salvage-bin";
 import { ReviewModal } from "@/components/review-modal";
 import { DEMO_ADDRESS, shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
-import { isValidSolanaAddress } from "@/lib/solana/base58";
+import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
+
+/** Response shape of POST /api/salv/scan — see that route for the full
+ * contract. This is the authoritative, server-computed reward-ledger
+ * result for a combined Solana(+optional Robinhood) submission; it is
+ * never derived from anything on the client, and the Solana wallet is
+ * always its sole reward identity. */
+interface LedgerScanResult {
+  solanaWallet: string;
+  robinhoodWallet: string | null;
+  scan: {
+    solana: { attempted: boolean; succeeded: boolean; reason?: string };
+    robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
+  };
+  reward: { salvAllocated: string; status: string; epochId: number | null };
+  csvRecorded: boolean;
+  recordError?: string;
+  scanId: string;
+}
 
 export default function ScanPage() {
   const {
@@ -28,13 +46,49 @@ export default function ScanPage() {
   const [showReview, setShowReview] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
   const [addressInput, setAddressInput] = useState("");
-  const addressValid = isValidSolanaAddress(addressInput.trim());
+  const [robinhoodInput, setRobinhoodInput] = useState("");
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
+  const [ledgerResult, setLedgerResult] = useState<LedgerScanResult | null>(null);
+  const [ledgerScanning, setLedgerScanning] = useState(false);
+  const validation = validateCombinedWalletSubmission({ solanaWallet: addressInput, robinhoodWallet: robinhoodInput });
   const hasWallet = Boolean(walletAddress);
 
-  function handleScanSubmit(event: FormEvent) {
+  // One form, one "Scan wallet" click performs TWO independent things:
+  // (1) the existing live, read-only Solana recovery scan (unchanged,
+  // via `startScan`, Solana-only, drives the asset grid below), and
+  // (2) a combined Solana+Robinhood submission to the $SALV reward
+  // ledger (`/api/salv/scan`) — Solana is the sole reward identity in
+  // both cases, and Robinhood (optional) never gets its own scan or its
+  // own button.
+  async function handleScanSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!addressValid) return;
-    startScan(addressInput.trim());
+    if (!validation.valid) {
+      setLedgerError(validation.error);
+      return;
+    }
+    setLedgerError(null);
+    const { solanaWallet, robinhoodWallet } = validation.submission;
+    startScan(solanaWallet);
+
+    setLedgerScanning(true);
+    setLedgerResult(null);
+    try {
+      const res = await fetch("/api/salv/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ solanaWallet, robinhoodWallet }),
+      });
+      const data = (await res.json()) as LedgerScanResult & { error?: string };
+      if (!res.ok) {
+        setLedgerError(data.error ?? "Could not record this scan for $SALV rewards.");
+        return;
+      }
+      setLedgerResult(data);
+    } catch {
+      setLedgerError("Could not reach the reward ledger. Try again shortly.");
+    } finally {
+      setLedgerScanning(false);
+    }
   }
 
   const scanning = scanState !== "READY" && scanState !== "SCAN COMPLETE";
@@ -89,21 +143,46 @@ export default function ScanPage() {
               <h2>Paste a wallet address to begin.</h2>
               <p>SALVAGE never asks for a seed phrase or private key. Paste any public wallet address below — it is read-only.</p>
               <form className="wallet-form" onSubmit={handleScanSubmit}>
-                <input
-                  type="text"
-                  className="wallet-input code"
-                  placeholder="Paste a Solana wallet address"
-                  value={addressInput}
-                  onChange={(event) => setAddressInput(event.target.value)}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-label="Wallet address"
-                />
-                <button type="submit" className="primary-button" disabled={!addressValid}>
-                  Scan wallet
+                <div className="wallet-field">
+                  <label className="wallet-field-label" htmlFor="scan-solana-wallet">
+                    Solana wallet
+                  </label>
+                  <input
+                    id="scan-solana-wallet"
+                    type="text"
+                    className="wallet-input code"
+                    placeholder="Paste a Solana wallet address"
+                    value={addressInput}
+                    onChange={(event) => setAddressInput(event.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label="Solana wallet address"
+                    required
+                  />
+                </div>
+                <div className="wallet-field">
+                  <label className="wallet-field-label" htmlFor="scan-robinhood-wallet">
+                    Robinhood wallet (optional)
+                  </label>
+                  <input
+                    id="scan-robinhood-wallet"
+                    type="text"
+                    className="wallet-input code"
+                    placeholder="Optional: paste your Robinhood wallet address"
+                    value={robinhoodInput}
+                    onChange={(event) => setRobinhoodInput(event.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label="Robinhood wallet address (optional)"
+                  />
+                </div>
+                <button type="submit" className="primary-button" disabled={ledgerScanning || !validation.valid}>
+                  {ledgerScanning ? "Scanning…" : "Scan wallet"}
                 </button>
               </form>
-              {addressError && <small className="wallet-form-error">{addressError}</small>}
+              <small className="wallet-form-note">Solana wallet required for $SALV rewards.</small>
+              <small className="wallet-form-note">Optional. Add your Robinhood wallet to scan both.</small>
+              {(addressError || ledgerError) && <small className="wallet-form-error">{ledgerError ?? addressError}</small>}
               <button type="button" className="text-link" onClick={() => startScan(DEMO_ADDRESS)}>
                 Or scan a demo wallet →
               </button>
@@ -114,6 +193,26 @@ export default function ScanPage() {
                 only at the final confirm step — SALVAGE only ever requests a public key there, never a seed phrase or private
                 key.
               </p>
+
+              {ledgerResult && (
+                <div className="reward-card" style={{ marginTop: "0.5rem" }}>
+                  <span>$SALV reward ledger</span>
+                  <strong>
+                    {ledgerResult.reward.salvAllocated} SALV <small>{ledgerResult.reward.status}</small>
+                  </strong>
+                  <small>Epoch {ledgerResult.reward.epochId ?? "none"}</small>
+                  {ledgerResult.robinhoodWallet ? (
+                    <small>Robinhood linked · asset scanning not yet available ({ledgerResult.scan.robinhood.state})</small>
+                  ) : (
+                    <small>No Robinhood wallet linked for this scan.</small>
+                  )}
+                  {ledgerResult.csvRecorded ? (
+                    <small>✓ Recorded in the reward ledger.</small>
+                  ) : (
+                    <small className="wallet-form-error">Not recorded ({ledgerResult.recordError ?? "unknown error"}).</small>
+                  )}
+                </div>
+              )}
             </>
           )}
           {hasWallet && !hasScanned && scanError && (

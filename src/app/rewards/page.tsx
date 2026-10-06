@@ -6,7 +6,7 @@ import { shortAddress, useAppState } from "@/lib/app-state";
 import { fetchRewardsSummary, RewardsSummary } from "@/lib/solana/executor/verify";
 import { claimSalv, fetchSalvClaimView, fetchSalvVaultStatus, SalvClaimView, SalvVaultStatus } from "@/lib/solana/executor/salvClaims";
 import { COMMUNITY_ALLOCATION_SALV, TOTAL_SUPPLY_SALV } from "@/lib/salv/tokenSpec";
-import { detectWalletAddress } from "@/lib/walletAddress";
+import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
 
 /** Phase 5 Section 17: a $SALV claim's state is always one of these four
  * — never a bare "simulated" label that could be confused with a real
@@ -32,15 +32,18 @@ const SALV_BADGE_CLASS: Record<SalvBadgeStatus, string> = {
 
 /** Response shape of POST /api/salv/scan — see that route for the full
  * contract. This is the authoritative, server-computed reward-ledger
- * result for a pasted address; it is never derived from anything on the
- * client. */
+ * result for a combined Solana(+optional Robinhood) submission; it is
+ * never derived from anything on the client. The Solana wallet is always
+ * the sole reward identity — Robinhood, when present, is metadata on the
+ * same submission, never a second allocation. */
 interface ScanApiResult {
-  wallet: string;
-  network: "solana" | "evm";
-  scan: { attempted: boolean; succeeded: boolean; reason?: string };
-  salvAllocated: string;
-  status: string;
-  epochId: number | null;
+  solanaWallet: string;
+  robinhoodWallet: string | null;
+  scan: {
+    solana: { attempted: boolean; succeeded: boolean; reason?: string };
+    robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
+  };
+  reward: { salvAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
   recordError?: string;
   scanId: string;
@@ -58,8 +61,11 @@ export default function RewardsPage() {
 
   // The paste-address -> scan -> record flow. Entirely independent of
   // any wallet connection: this never asks for, and cannot accept, a
-  // signature or private key -- it only reads the string the user pastes.
+  // signature or private key -- it only reads the strings the user
+  // pastes. Solana is required; Robinhood is optional and attaches as
+  // metadata to the same submission (never a second reward account).
   const [pasteInput, setPasteInput] = useState("");
+  const [robinhoodInput, setRobinhoodInput] = useState("");
   const [pasteError, setPasteError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanApiResult | null>(null);
@@ -113,9 +119,9 @@ export default function RewardsPage() {
 
   async function handleScanSubmit(event: FormEvent) {
     event.preventDefault();
-    const detected = detectWalletAddress(pasteInput);
-    if (!detected.valid) {
-      setPasteError("That does not look like a valid Solana or EVM (e.g. Robinhood Wallet) address.");
+    const validated = validateCombinedWalletSubmission({ solanaWallet: pasteInput, robinhoodWallet: robinhoodInput });
+    if (!validated.valid) {
+      setPasteError(validated.error);
       return;
     }
     setPasteError(null);
@@ -125,7 +131,7 @@ export default function RewardsPage() {
       const res = await fetch("/api/salv/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: pasteInput.trim() }),
+        body: JSON.stringify(validated.submission),
       });
       const data = (await res.json()) as ScanApiResult & { error?: string };
       if (!res.ok) {
@@ -133,7 +139,7 @@ export default function RewardsPage() {
         return;
       }
       setScanResult(data);
-      setWalletAddress(data.wallet); // shared across pages for continuity only -- not a "connection"
+      setWalletAddress(data.solanaWallet); // shared across pages for continuity only -- not a "connection"
     } catch {
       setPasteError("Could not reach the scan service. Try again shortly.");
     } finally {
@@ -145,6 +151,7 @@ export default function RewardsPage() {
     clearWallet();
     setScanResult(null);
     setPasteInput("");
+    setRobinhoodInput("");
     setPasteError(null);
   }
 
@@ -176,25 +183,47 @@ export default function RewardsPage() {
       {!walletAddress ? (
         <div className="empty-state">
           <h2>Paste a wallet address to check your rewards.</h2>
-          <p>
-            No wallet connection, signature, or private key required — SALVAGE only reads the public address you
-            paste. Solana and EVM (e.g. Robinhood Wallet) addresses are both accepted.
-          </p>
+          <p>No wallet connection, signature, or private key required — SALVAGE only reads the public address(es) you paste.</p>
           <form className="wallet-form" onSubmit={handleScanSubmit}>
-            <input
-              type="text"
-              className="wallet-input code"
-              placeholder="Paste a Solana or EVM wallet address"
-              value={pasteInput}
-              onChange={(event) => setPasteInput(event.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              aria-label="Wallet address"
-            />
+            <div className="wallet-field">
+              <label className="wallet-field-label" htmlFor="rewards-solana-wallet">
+                Solana wallet
+              </label>
+              <input
+                id="rewards-solana-wallet"
+                type="text"
+                className="wallet-input code"
+                placeholder="Paste a Solana wallet address"
+                value={pasteInput}
+                onChange={(event) => setPasteInput(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                aria-label="Solana wallet address"
+                required
+              />
+            </div>
+            <div className="wallet-field">
+              <label className="wallet-field-label" htmlFor="rewards-robinhood-wallet">
+                Robinhood wallet (optional)
+              </label>
+              <input
+                id="rewards-robinhood-wallet"
+                type="text"
+                className="wallet-input code"
+                placeholder="Optional: paste your Robinhood wallet address"
+                value={robinhoodInput}
+                onChange={(event) => setRobinhoodInput(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                aria-label="Robinhood wallet address (optional)"
+              />
+            </div>
             <button type="submit" className="primary-button" disabled={scanning || !pasteInput.trim()}>
               {scanning ? "Scanning…" : "Scan wallet"}
             </button>
           </form>
+          <small className="wallet-form-note">Solana wallet required for $SALV rewards.</small>
+          <small className="wallet-form-note">Optional. Add your Robinhood wallet to scan both.</small>
           {pasteError && <small className="wallet-form-error">{pasteError}</small>}
         </div>
       ) : (
@@ -211,12 +240,21 @@ export default function RewardsPage() {
             <div className="reward-card" style={{ marginBottom: "1.5rem" }}>
               <span>Reward ledger record</span>
               <strong>
-                {scanResult.salvAllocated} SALV <small>{scanResult.status}</small>
+                {scanResult.reward.salvAllocated} SALV <small>{scanResult.reward.status}</small>
               </strong>
               <small>
-                Network {scanResult.network.toUpperCase()} · Epoch {scanResult.epochId ?? "none"}
-                {scanResult.scan.attempted ? (scanResult.scan.succeeded ? " · live scan OK" : ` · live scan failed (${scanResult.scan.reason ?? "unknown"})`) : ""}
+                Solana wallet · Epoch {scanResult.reward.epochId ?? "none"}
+                {scanResult.scan.solana.attempted
+                  ? scanResult.scan.solana.succeeded
+                    ? " · live scan OK"
+                    : ` · live scan failed (${scanResult.scan.solana.reason ?? "unknown"})`
+                  : ""}
               </small>
+              {scanResult.robinhoodWallet ? (
+                <small>Robinhood linked · asset scanning not yet available ({scanResult.scan.robinhood.state})</small>
+              ) : (
+                <small>No Robinhood wallet linked for this scan.</small>
+              )}
               {scanResult.csvRecorded ? (
                 <small>✓ Wallet recorded for rewards.</small>
               ) : (
