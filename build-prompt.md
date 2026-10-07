@@ -96,7 +96,7 @@ The app must represent chain support as data/config, not scattered hardcoded con
 - React.
 - Tailwind CSS or a strongly typed CSS system.
 - Solana wallet adapter or current recommended wallet tooling.
-- Helius or equivalent indexed Solana data source.
+- QuickNode or equivalent indexed Solana data source.
 - Solana RPC fallback.
 - EVM provider abstraction for supported EVM chains.
 - PostgreSQL.

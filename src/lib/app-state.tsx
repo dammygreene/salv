@@ -66,6 +66,7 @@ type AppState = {
   toggleSelected: (id: string) => void;
   clearSelected: () => void;
   addToWatch: (assetId: string) => void;
+  mergeAssetEnrichment: (assets: Asset[]) => void;
   confirmCull: () => Promise<ProofEvent | null>;
 };
 
@@ -105,6 +106,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [rewardScore, setRewardScore] = useState(0);
   const [cullStatus, setCullStatus] = useState<CullStatus>("IDLE");
   const [cullError, setCullError] = useState<string | null>(null);
+  const enrichmentRef = useRef<Asset[]>([]);
   const connectingExtension = useRef(false);
 
   // A real wallet-adapter extension session can only ever sign for the
@@ -176,6 +178,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setSelected([]);
     setCullStatus("IDLE");
     setCullError(null);
+    enrichmentRef.current = [];
   }, [extensionConnected, disconnect]);
 
   const scanProgress = useMemo(() => {
@@ -208,7 +211,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       scanWallet(target, (step) => setScanState(step))
         .then((result) => {
-          setAssets(result.assets);
+          const enrichedByKey = new Map(
+            enrichmentRef.current.map((asset) => [asset.tokenAccount ?? asset.mint ?? asset.id, asset])
+          );
+          setAssets(result.assets.map((asset) => enrichedByKey.get(asset.tokenAccount ?? asset.mint ?? asset.id) ?? asset));
           setAccountsFound(result.accountsFound);
           setAccountsTruncated(result.truncated);
           setHasScanned(true);
@@ -253,6 +259,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     },
     [assets, pushHistory]
   );
+
+  const mergeAssetEnrichment = useCallback((enrichedAssets: Asset[]) => {
+    enrichmentRef.current = enrichedAssets;
+    const enrichedByKey = new Map(enrichedAssets.map((asset) => [asset.tokenAccount ?? asset.mint ?? asset.id, asset]));
+    setAssets((current) => {
+      const currentKeys = new Set(current.map((asset) => asset.tokenAccount ?? asset.mint ?? asset.id));
+      const merged = current.map((asset) => enrichedByKey.get(asset.tokenAccount ?? asset.mint ?? asset.id) ?? asset);
+      return [...merged, ...enrichedAssets.filter((asset) => !currentKeys.has(asset.tokenAccount ?? asset.mint ?? asset.id))];
+    });
+  }, []);
 
   /**
    * The real end-to-end cull flow for CLOSE_EMPTY_TOKEN_ACCOUNT actions:
@@ -384,6 +400,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleSelected,
       clearSelected,
       addToWatch,
+      mergeAssetEnrichment,
       confirmCull,
     }),
     [
@@ -412,6 +429,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       toggleSelected,
       clearSelected,
       addToWatch,
+      mergeAssetEnrichment,
       confirmCull,
     ]
   );

@@ -33,6 +33,9 @@ export function AssetCard({ asset, variant = "default" }: { asset: Asset; varian
           Value <strong className={!asset.valueKnown ? "is-unknown" : ""}>{asset.value}</strong>
         </span>
       </div>
+      {asset.kind === "ACCOUNT" && asset.recoverableLamports !== undefined && (
+        <p>Recoverable rent: {(asset.recoverableLamports / 1_000_000_000).toFixed(6)} SOL</p>
+      )}
       <p>{asset.reason}</p>
       {asset.status === "CULLABLE" && <span className="asset-static">Eligible activity found</span>}
       {asset.status === "WATCH" && (

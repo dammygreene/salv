@@ -10,6 +10,7 @@ import { scanStateLabel } from "@/lib/data";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
 import { CullerShareModal } from "@/components/culler-share-modal";
 import { hasCullerAllocation } from "@/lib/culler/share";
+import type { Asset } from "@/lib/types";
 
 /** Response shape of POST /api/culler/scan — see that route for the full
  * contract. This is the authoritative, server-computed reward-ledger
@@ -20,13 +21,20 @@ interface LedgerScanResult {
   solanaWallet: string;
   robinhoodWallet: string | null;
   scan: {
-    solana: { attempted: boolean; succeeded: boolean; reason?: string };
+    solana: {
+      attempted: boolean;
+      succeeded: boolean;
+      reason?: string;
+      programStatus?: { splToken: "available" | "unavailable"; token2022: "available" | "unavailable" };
+    };
     robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
   };
   reward: { cullerAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
   recordError?: string;
   scanId: string;
+  assets: Asset[];
+  enrichment: { status: "AVAILABLE" | "UNAVAILABLE"; reason?: string };
 }
 
 export default function ScanPage() {
@@ -40,6 +48,7 @@ export default function ScanPage() {
     accountsTruncated,
     assets,
     startScan,
+    mergeAssetEnrichment,
     clearWallet,
   } = useAppState();
   const [addressInput, setAddressInput] = useState("");
@@ -93,6 +102,10 @@ export default function ScanPage() {
         return;
       }
       setLedgerResult(data);
+      mergeAssetEnrichment(data.assets);
+      if (data.assets.length) {
+        window.sessionStorage.setItem("culler-enriched-assets", JSON.stringify(data.assets));
+      }
       window.sessionStorage.setItem("culler-last-ledger-result", JSON.stringify(data));
     } catch {
       setLedgerError("Could not reach the reward ledger. Try again shortly.");
@@ -105,6 +118,11 @@ export default function ScanPage() {
   const cullable = assets.filter((a) => a.status === "CULLABLE");
   const watch = assets.filter((a) => a.status === "WATCH");
   const review = assets.filter((a) => a.status === "REVIEW");
+  const emptyAccounts = assets.filter((a) => a.kind === "ACCOUNT");
+  const rawAssets = assets.filter((a) => a.tokenAccount);
+  const nfts = rawAssets.filter((a) => a.kind === "NFT");
+  const fungible = rawAssets.filter((a) => a.kind === "TOKEN");
+  const dasOnlyAssets = assets.filter((a) => a.metadata?.source === "quicknode-das" && !a.tokenAccount);
   const recoverableSol = useMemo(
     () =>
       cullable.reduce((total, asset) => {
@@ -250,9 +268,11 @@ export default function ScanPage() {
             <>
               <h2>Scan complete.</h2>
               <p>
-                {accountsFound} token account{accountsFound === 1 ? "" : "s"} found
-                {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {cullable.length} match the current
-                allocation eligibility rules.
+                {accountsFound} asset account{accountsFound === 1 ? "" : "s"} discovered
+                {accountsTruncated ? `, ${assets.length} processed and ${accountsFound - assets.length} remaining` : ""}.{" "}
+                {emptyAccounts.length} empty, {fungible.length} fungible, and {nfts.length} NFT{nfts.length === 1 ? "" : "s"} detected.
+                {dasOnlyAssets.length ? ` ${dasOnlyAssets.length} additional DAS assets enriched.` : ""}{" "}
+                {cullable.length} match the current allocation eligibility rules.
               </p>
               <button className="ghost-button" onClick={() => startScan()}>
                 Rescan wallet

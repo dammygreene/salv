@@ -10,6 +10,43 @@ export type ScanState =
 
 export type AssetKind = "TOKEN" | "NFT" | "POSITION" | "ACCOUNT";
 
+export type AssetClassification =
+  | "EMPTY_ACCOUNT"
+  | "FUNGIBLE_UNKNOWN_VALUE"
+  | "FUNGIBLE_NO_MARKET"
+  | "FUNGIBLE_NO_LIQUIDITY"
+  | "FUNGIBLE_LOW_VALUE"
+  | "FUNGIBLE_NEGLIGIBLE_VALUE"
+  | "FUNGIBLE_VALUABLE"
+  | "NFT_UNKNOWN_VALUE"
+  | "NFT_NO_MARKET"
+  | "NFT_LOW_VALUE"
+  | "NFT_VALUABLE"
+  | "NFT_REVIEW";
+
+export type MarketDataStatus = "AVAILABLE" | "NO_MARKET" | "UNKNOWN" | "ERROR";
+
+export type TokenMarketData = {
+  priceUsd: number | null;
+  liquidityUsd: number | null;
+  marketAvailable: boolean | null;
+  status: MarketDataStatus;
+  source: string;
+};
+
+export type AssetMetadata = {
+  imageUrl: string | null;
+  collection: string | null;
+  collectionAddress: string | null;
+  verifiedCollection: boolean | null;
+  priceUsd: number | null;
+  valueUsd: number | null;
+  liquidityUsd?: number | null;
+  marketStatus: "AVAILABLE" | "NO_MARKET" | "UNKNOWN";
+  metadataStatus: "AVAILABLE" | "UNAVAILABLE";
+  source: string;
+};
+
 export type Asset = {
   id: string;
   name: string;
@@ -35,6 +72,13 @@ export type Asset = {
    * src/lib/cull/registry.ts for the full classification -> action
    * -> disposition mapping. */
   classification?: import("./cull/registry").AssetClassification;
+  /** Conservative market/value classification. Missing data is never
+   * treated as zero value. */
+  valueClassification?: AssetClassification;
+  rawBalance?: string;
+  decimals?: number;
+  recoverableLamports?: number;
+  metadata?: AssetMetadata;
 };
 
 export type WatchItem = {
@@ -95,4 +139,3 @@ export type CullEvent = {
    * anti-farming check. */
   points: number;
 };
-

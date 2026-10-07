@@ -10,7 +10,12 @@ interface ScanApiResult {
   solanaWallet: string;
   robinhoodWallet: string | null;
   scan: {
-    solana: { attempted: boolean; succeeded: boolean; reason?: string };
+    solana: {
+      attempted: boolean;
+      succeeded: boolean;
+      reason?: string;
+      programStatus?: { splToken: "available" | "unavailable"; token2022: "available" | "unavailable" };
+    };
     robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
   };
   reward: { cullerAllocated: string; status: string; epochId: number | null };

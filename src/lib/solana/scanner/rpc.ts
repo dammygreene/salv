@@ -4,9 +4,9 @@
  * raw fetch() keeps the client bundle small and avoids Node-polyfill
  * issues some Solana SDKs pull into the browser build.
  *
- * Point NEXT_PUBLIC_SOLANA_RPC_URL at a dedicated RPC provider (Helius,
- * QuickNode, Triton, etc.) for production use. The public default
- * endpoint is rate-limited and fine for light/demo traffic only.
+ * Point NEXT_PUBLIC_SOLANA_RPC_URL at the configured QuickNode endpoint
+ * for production use. The public default
+ * endpoint is rate-limited and should not be used for production load.
  */
 
 import { SOLANA_RPC_ENDPOINT } from "../connection";

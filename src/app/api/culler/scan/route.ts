@@ -10,6 +10,7 @@ import { upsertRewardLedgerEntry, RewardLedgerStatus } from "@/lib/server/reposi
 import { baseUnitsToCullerDecimalString } from "@/lib/culler/tokenSpec";
 import { scanWallet, WalletScanError } from "@/lib/solana/scanner/scan";
 import { scanRobinhoodWallet } from "@/lib/server/robinhoodScanner";
+import { enrichSolanaAssets, EnrichmentResult } from "@/lib/server/assetEnrichment";
 
 /**
  * POST /api/culler/scan — the combined, no-wallet-connect scan + reward-
@@ -62,10 +63,28 @@ export async function POST(req: NextRequest) {
   // Step 1: the real, existing on-chain scan -- Solana only. A scan
   // failure here never blocks or alters the reward figure below, which
   // is read from the database, not from this live call.
-  const solanaScan: { attempted: boolean; succeeded: boolean; reason?: string } = { attempted: true, succeeded: false };
+  let enrichedAssets: EnrichmentResult | null = null;
+  const solanaScan: {
+    attempted: boolean;
+    succeeded: boolean;
+    reason?: string;
+    programStatus?: { splToken: "available" | "unavailable"; token2022: "available" | "unavailable" };
+    accountsTotal?: number;
+    accountsProcessed?: number;
+    accountsRemaining?: number;
+    truncated?: boolean;
+    summary?: { empty: number; nonEmpty: number; fungible: number; nftShaped: number };
+  } = { attempted: true, succeeded: false };
   try {
-    await scanWallet(solanaWallet);
+    const result = await scanWallet(solanaWallet);
+    enrichedAssets = await enrichSolanaAssets(solanaWallet, result.assets);
     solanaScan.succeeded = true;
+    solanaScan.programStatus = result.programStatus;
+    solanaScan.accountsTotal = result.accountsTotal;
+    solanaScan.accountsProcessed = result.accountsProcessed;
+    solanaScan.accountsRemaining = result.accountsRemaining;
+    solanaScan.truncated = result.truncated;
+    solanaScan.summary = result.summary;
   } catch (err) {
     solanaScan.succeeded = false;
     solanaScan.reason = err instanceof WalletScanError ? err.message : "Could not complete the live wallet scan.";
@@ -139,6 +158,10 @@ export async function POST(req: NextRequest) {
     solanaWallet,
     robinhoodWallet,
     scan: { solana: solanaScan, robinhood: robinhoodScan },
+    assets: enrichedAssets?.assets ?? [],
+    enrichment: enrichedAssets
+      ? { status: enrichedAssets.status, ...(enrichedAssets.reason ? { reason: enrichedAssets.reason } : {}) }
+      : { status: "UNAVAILABLE", reason: "Solana scan did not complete." },
     reward: {
       cullerAllocated: baseUnitsToCullerDecimalString(cullerAllocatedBaseUnits),
       status: ledgerStatus,

@@ -17,7 +17,6 @@ export type ScanProgressStep = Exclude<ScanState, "READY">;
 
 /** Hard caps so a wallet with thousands of token accounts cannot hang the
  * scan or hammer a free-tier public RPC endpoint into rate-limiting us. */
-const MAX_ACCOUNTS_SCANNED = 60;
 const MAX_ACTIVITY_LOOKUPS = 24;
 const ACTIVITY_LOOKUP_CONCURRENCY = 5;
 
@@ -66,7 +65,7 @@ function classifyAccount(
     uiAmount: tokenAmount.uiAmount,
   });
 
-  if (closeEligibility.eligible) {
+  if (tokenAmount.amount === "0") {
     const classification: AssetClassification = "EMPTY_TOKEN_ACCOUNT";
     const registryEntry = getRegistryEntry(classification);
     return {
@@ -75,7 +74,7 @@ function classifyAccount(
       ticker: listed?.symbol ?? mint.slice(0, 4),
       kind: "ACCOUNT",
       address: shortAddr,
-      status: dispositionToAssetStatus(registryEntry.disposition),
+      status: closeEligibility.eligible ? dispositionToAssetStatus(registryEntry.disposition) : "REVIEW",
       age,
       value: `${lamportsToSol(lamports).toFixed(4)} SOL`,
       valueKnown: true,
@@ -85,6 +84,10 @@ function classifyAccount(
       programId: entry.programId,
       mint,
       lamports,
+      rawBalance: tokenAmount.amount,
+      decimals: tokenAmount.decimals,
+      recoverableLamports: closeEligibility.eligible ? lamports : undefined,
+      valueClassification: "EMPTY_ACCOUNT",
       classification,
     };
   }
@@ -108,6 +111,9 @@ function classifyAccount(
       age,
       value: "UNKNOWN",
       valueKnown: false,
+      rawBalance: tokenAmount.amount,
+      decimals: tokenAmount.decimals,
+      valueClassification: "NFT_UNKNOWN_VALUE",
       reason: "NFT detected. No burn/redemption signal exists yet, so it stays watch-only.",
       action: actionLabel(classification),
       tokenAccount: entry.pubkey,
@@ -128,6 +134,9 @@ function classifyAccount(
       age,
       value: `${tokenAmount.uiAmountString} ${listed.symbol}`,
       valueKnown: true,
+      rawBalance: tokenAmount.amount,
+      decimals: tokenAmount.decimals,
+      valueClassification: "FUNGIBLE_VALUABLE",
       reason: "Active, verified balance. No cull action suggested.",
       action: actionLabel(classification),
       tokenAccount: entry.pubkey,
@@ -147,6 +156,9 @@ function classifyAccount(
     age,
     value: "UNKNOWN",
     valueKnown: false,
+    rawBalance: tokenAmount.amount,
+    decimals: tokenAmount.decimals,
+    valueClassification: "FUNGIBLE_UNKNOWN_VALUE",
     reason: "Unverified token, not in the known token registry. A missing price never makes this spam on its own.",
     action: actionLabel("UNKNOWN_TOKEN"),
     tokenAccount: entry.pubkey,
@@ -159,21 +171,29 @@ function classifyAccount(
 export interface ScanResult {
   assets: Asset[];
   accountsFound: number;
+  accountsTotal: number;
   accountsScanned: number;
+  accountsProcessed: number;
+  accountsRemaining: number;
   truncated: boolean;
+  summary: {
+    empty: number;
+    nonEmpty: number;
+    fungible: number;
+    nftShaped: number;
+  };
+  programStatus: {
+    splToken: "available" | "unavailable";
+    token2022: "available" | "unavailable";
+  };
 }
 
 /**
- * Reads real, public, read-only chain data for a wallet: every SPL /
- * Token-2022 token account it owns, classified against the CULLER
- * REGISTRY (src/lib/cull/registry.ts) into the same cullable /
- * watch / review / keep buckets the UI already expects. No signature is
- * ever requested and nothing is written on-chain. This only determines
- * what is POTENTIALLY actionable; the executor independently re-verifies
- * everything against fresh on-chain state before it will build a real
- * transaction (see recovery/closeAccount.ts), and the backend
- * independently re-derives classification/points from chain truth, never
- * from this scan result.
+ * Reads real, public, read-only chain data for a wallet from both the
+ * classic SPL Token and Token-2022 programs. Every discovered account is
+ * surfaced and classified; unknown value is kept conservative rather than
+ * treated as worthless. No signature is requested and nothing is written
+ * on-chain.
  */
 export async function scanWallet(
   address: string,
@@ -199,12 +219,15 @@ export async function scanWallet(
     ...(legacy.status === "fulfilled" ? legacy.value.map((e) => ({ ...e, programId: TOKEN_PROGRAM_ID })) : []),
     ...(token2022.status === "fulfilled" ? token2022.value.map((e) => ({ ...e, programId: TOKEN_2022_PROGRAM_ID })) : []),
   ];
+  const uniqueAccounts = Array.from(
+    new Map(rawAccounts.map((entry) => [`${entry.programId}:${entry.pubkey}`, entry])).values()
+  );
 
   onProgress?.("MAPPING ASSETS");
   const tokenList = await getTokenList();
 
   onProgress?.("CHECKING RECOVERY PATHS");
-  const scanned = rawAccounts.slice(0, MAX_ACCOUNTS_SCANNED);
+  const scanned = uniqueAccounts;
   const lookupTargets = scanned.slice(0, MAX_ACTIVITY_LOOKUPS);
   const ages = await mapWithConcurrency(lookupTargets, ACTIVITY_LOOKUP_CONCURRENCY, async (entry) => {
     try {
@@ -224,8 +247,21 @@ export async function scanWallet(
 
   return {
     assets,
-    accountsFound: rawAccounts.length,
+    accountsFound: uniqueAccounts.length,
+    accountsTotal: uniqueAccounts.length,
     accountsScanned: scanned.length,
-    truncated: rawAccounts.length > scanned.length,
+    accountsProcessed: scanned.length,
+    accountsRemaining: 0,
+    truncated: false,
+    summary: {
+      empty: assets.filter((asset) => asset.valueClassification === "EMPTY_ACCOUNT").length,
+      nonEmpty: assets.filter((asset) => asset.valueClassification !== "EMPTY_ACCOUNT").length,
+      fungible: assets.filter((asset) => asset.kind === "TOKEN").length,
+      nftShaped: assets.filter((asset) => asset.kind === "NFT").length,
+    },
+    programStatus: {
+      splToken: legacy.status === "fulfilled" ? "available" : "unavailable",
+      token2022: token2022.status === "fulfilled" ? "available" : "unavailable",
+    },
   };
 }

@@ -7,6 +7,10 @@ export interface RobinhoodChainConfig {
   configurationError: string | null;
 }
 
+export interface SolanaEnrichmentConfig {
+  minTokenValueUsd: number;
+}
+
 const ROBINHOOD_CHAIN_ID = 4663;
 function readRpcUrl(value: string | undefined): { url: string | null; error: string | null } {
   const raw = value?.trim();
@@ -46,3 +50,20 @@ export function getRobinhoodChainConfig(): RobinhoodChainConfig {
 }
 
 export { ROBINHOOD_CHAIN_ID };
+
+export function getSolanaEnrichmentConfig(): SolanaEnrichmentConfig {
+  const rawThreshold = process.env.CULLER_MIN_TOKEN_VALUE_USD?.trim();
+  const parsedThreshold = rawThreshold === undefined || rawThreshold === "" ? 0.01 : Number(rawThreshold);
+  return {
+    minTokenValueUsd: Number.isFinite(parsedThreshold) && parsedThreshold >= 0 ? parsedThreshold : 0.01,
+  };
+}
+
+export function getSolanaRpcUrl(): string {
+  return (
+    process.env.SOLANA_RPC_URL?.trim() ||
+    process.env.SOLANA_RPC_SECRET_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL?.trim() ||
+    "https://api.mainnet-beta.solana.com"
+  );
+}

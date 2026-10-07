@@ -25,7 +25,13 @@ Rename the actual file to `.env.example` in the project.
 - NEXT_PUBLIC_SOLANA_NETWORK=devnet
 - NEXT_PUBLIC_SOLANA_RPC_URL=
 - SOLANA_RPC_URL=
-- HELIUS_API_KEY=
+- CULLER_MIN_TOKEN_VALUE_USD=0.01
+  Minimum reliable USD value used to distinguish valuable from low-value
+  fungible assets. It never removes an asset from scan results.
+  QuickNode's configured Solana endpoint is also queried for enhanced asset
+  metadata when its asset/NFT API is enabled. If that capability is not
+  available, raw RPC assets remain visible with conservative unknown-value
+  classifications; metadata and prices are never fabricated.
 
 ## Robinhood Chain
 - ROBINHOOD_RPC_URL=

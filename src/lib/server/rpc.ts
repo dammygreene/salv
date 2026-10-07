@@ -1,5 +1,6 @@
 import "server-only";
 import { Connection, ParsedTransactionWithMeta } from "@solana/web3.js";
+import { getSolanaRpcUrl } from "./config";
 
 /**
  * Server-only RPC endpoint. Deliberately reads a non-NEXT_PUBLIC_ env var:
@@ -8,11 +9,7 @@ import { Connection, ParsedTransactionWithMeta } from "@solana/web3.js";
  * live here safely. Falls back to the same public endpoint the client
  * uses if nothing is configured, so local/dev verification still works.
  */
-const SERVER_SOLANA_RPC_URL =
-  process.env.SOLANA_RPC_URL?.trim() ||
-  process.env.SOLANA_RPC_SECRET_URL?.trim() ||
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL?.trim() ||
-  "https://api.mainnet-beta.solana.com";
+const SERVER_SOLANA_RPC_URL = getSolanaRpcUrl();
 
 let connection: Connection | null = null;
 
