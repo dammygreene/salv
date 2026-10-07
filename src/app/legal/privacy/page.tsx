@@ -8,24 +8,22 @@ export default function PrivacyPage() {
         <section>
           <h3>What we read</h3>
           <p>
-            A scan reads public onchain data for the wallet address you provide: token accounts, balances, NFT metadata, and
-            known protocol positions. This is the same data anyone can see on a block explorer.
+            A scan reads public network data for the Solana wallet address you provide: token accounts, balances, NFT metadata,
+            and supported wallet activity. This is the same data anyone can see on a block explorer. You may optionally provide
+            a Robinhood wallet address for the same combined scan.
           </p>
         </section>
         <section>
           <h3>What we never ask for</h3>
-          <p>CULLER never asks for a seed phrase, private key, or custody of your funds. Every action is signed by your own wallet.</p>
+          <p>CULLER never asks for a seed phrase, private key, wallet connection, or custody of your funds. Scanning and allocation review are read-only.</p>
         </section>
         <section>
           <h3>What we store</h3>
           <p>
-            Scan results, cull events, and Proof of Cull receipts are stored against your wallet address so your history and
-            rewards persist across sessions. We do not sell wallet data to third parties.
+            Scan results, allocation and epoch information, and the Solana wallet address used for leaderboard identity are
+            stored in the application ledger. An optional Robinhood address may be stored as metadata on that same submission.
+            Allocation data can be exported by the team as CSV. We do not sell wallet data to third parties.
           </p>
-        </section>
-        <section>
-          <h3>This build</h3>
-          <p>This is a demo environment. No live indexer or signer is connected yet, so nothing here reflects real wallet data.</p>
         </section>
       </div>
     </main>

@@ -42,10 +42,11 @@ export default function TokenPage() {
           <p>Community rewards are a finite pool released over fixed epochs. Each epoch has a fixed budget split across verified participants.</p>
         </article>
         <article className="token-panel">
-          <h3>Treasury and buyback policy</h3>
+          <h3>Public token metadata</h3>
           <p>
-            Protocol fees route to a transparent treasury. A published share goes to open-market $CULLER purchases, recorded in a
-            public ledger. No guaranteed price floor is implied.
+            CULLER is deployed and managed outside this app. This page displays
+            public token metadata; the app does not custody, mint, distribute,
+            or buy back tokens.
           </p>
         </article>
         <article className="token-panel">

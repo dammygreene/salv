@@ -5,9 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { CullMachine } from "@/components/cull-machine";
 import { StatModule } from "@/components/stat-module";
 import { AssetCard } from "@/components/asset-card";
-import { CullBin } from "@/components/cull-bin";
-import { ReviewModal } from "@/components/review-modal";
-import { DEMO_ADDRESS, shortAddress, useAppState } from "@/lib/app-state";
+import { shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
 import { CullerShareModal } from "@/components/culler-share-modal";
@@ -35,7 +33,6 @@ export default function ScanPage() {
   const {
     walletAddress,
     addressError,
-    canSign,
     scanState,
     scanError,
     hasScanned,
@@ -45,8 +42,6 @@ export default function ScanPage() {
     startScan,
     clearWallet,
   } = useAppState();
-  const [showReview, setShowReview] = useState(false);
-  const [justCompleted, setJustCompleted] = useState(false);
   const [addressInput, setAddressInput] = useState("");
   const [robinhoodInput, setRobinhoodInput] = useState("");
   const [ledgerError, setLedgerError] = useState<string | null>(null);
@@ -129,13 +124,13 @@ export default function ScanPage() {
             ? assets.length
               ? "Here's everything attached to this wallet, sorted with a reason for every call."
               : "This wallet has no SPL token accounts to show. Try another address."
-            : "Paste a wallet address and run a scan. Nothing moves until you tell it to."
+            : "Paste a wallet address and run a scan. CULLER reads the addresses you provide and calculates your allocation."
         }
         meta={
           <>
             <span>{hasWallet ? shortAddress(walletAddress) : "No address entered"}</span>
             <span className="meta-rule" />
-            <span>{hasWallet ? (canSign ? "Wallet signer" : "Read-only") : "Solana"}</span>
+            <span>{hasWallet ? "Read-only scan" : "Solana"}</span>
             {hasWallet && (
               <>
                 <span className="meta-rule" />
@@ -198,16 +193,7 @@ export default function ScanPage() {
               <small className="wallet-form-note">Solana wallet required for $CULLER rewards.</small>
               <small className="wallet-form-note">Optional. Add your Robinhood wallet to scan both.</small>
               {(addressError || ledgerError) && <small className="wallet-form-error">{ledgerError ?? addressError}</small>}
-              <button type="button" className="text-link" onClick={() => startScan(DEMO_ADDRESS)}>
-                Or scan a demo wallet →
-              </button>
               <small className="wallet-form-note">Read-only: balances and token accounts are fetched live from Solana.</small>
-
-              <p className="wallet-form-note">
-                Want to actually recover assets, not just preview them? You&rsquo;ll be asked for a wallet extension signature
-                only at the final confirm step — CULLER only ever requests a public key there, never a seed phrase or private
-                key.
-              </p>
 
               {ledgerResult && (
                 <div className="reward-card" style={{ marginTop: "0.5rem" }}>
@@ -262,8 +248,8 @@ export default function ScanPage() {
               <h2>Scan complete.</h2>
               <p>
                 {accountsFound} token account{accountsFound === 1 ? "" : "s"} found
-                {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {cullable.length} are allowlisted
-                for cull right now.
+                {accountsTruncated ? `, first ${assets.length} indexed` : ""}. {cullable.length} match the current
+                allocation eligibility rules.
               </p>
               <button className="ghost-button" onClick={() => startScan()}>
                 Rescan wallet
@@ -276,8 +262,8 @@ export default function ScanPage() {
       {hasScanned && (
         <>
           <div className="result-compartments">
-            <StatModule tone="recover" label="Recover" value={recoverableSol.toFixed(4)} unit="SOL" caption="Value detected" />
-            <StatModule tone="cull" label="Cull" value={String(cullable.length).padStart(2, "0")} unit="assets" caption="Allowlisted" />
+            <StatModule tone="recover" label="Value" value={recoverableSol.toFixed(4)} unit="SOL" caption="Detected" />
+            <StatModule tone="cull" label="Eligible" value={String(cullable.length).padStart(2, "0")} unit="assets" caption="Counted" />
             <StatModule tone="watch" label="Watch" value={String(watch.length).padStart(2, "0")} unit="assets" caption="Uncertain" />
             <StatModule tone="unknown" label="Review" value={String(review.length).padStart(2, "0")} unit="assets" caption="Needs analysis" />
           </div>
@@ -288,20 +274,9 @@ export default function ScanPage() {
                 <AssetCard key={asset.id} asset={asset} />
               ))}
             </div>
-            <CullBin onReview={() => setShowReview(true)} />
           </div>
         </>
       )}
-
-      <ReviewModal
-        open={showReview}
-        onClose={() => setShowReview(false)}
-        onConfirmed={() => {
-          setShowReview(false);
-          setJustCompleted(true);
-          window.setTimeout(() => setJustCompleted(false), 4000);
-        }}
-      />
 
       {ledgerResult && hasCullerAllocation(ledgerResult.reward.cullerAllocated) && (
         <CullerShareModal
@@ -316,11 +291,6 @@ export default function ScanPage() {
         />
       )}
 
-      {justCompleted && (
-        <div className="toast-confirm" role="status">
-          <span>✓</span> Cull confirmed. Proof verified, check your rewards.
-        </div>
-      )}
     </main>
   );
 }

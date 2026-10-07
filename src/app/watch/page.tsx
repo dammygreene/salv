@@ -14,13 +14,13 @@ export default function WatchPage() {
     <main className="watch-page">
       <PageHeader
         title="Unresolved, not forgotten."
-        support="These assets aren't cullable yet. CULLER keeps checking for a verified recovery path and notifies you when one opens up."
+        support="Keep uncertain assets in one place while you review the result of your wallet scan."
       />
 
       {watchItems.length === 0 ? (
         <div className="empty-state">
           <h2>Nothing on watch yet.</h2>
-          <p>Run a scan and add uncertain assets to watch. CULLER will keep an eye on them.</p>
+          <p>Run a scan and add uncertain assets here for your own follow-up. CULLER does not monitor them in the background.</p>
           <Link href="/scan" className="primary-button">
             Go to scan
           </Link>

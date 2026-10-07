@@ -15,12 +15,12 @@ export default function HistoryPage() {
 
   return (
     <main className="history-page">
-      <PageHeader title="Everything, in order." support="Scans, culls, verifications and watch activity for this session." />
+      <PageHeader title="Your history." support="Recorded scans and CULLER allocation activity for this wallet." />
 
       {history.length === 0 ? (
         <div className="empty-state">
-          <h2>Nothing logged yet.</h2>
-          <p>Connect a wallet and run a scan to start building your history.</p>
+          <h2>No recorded activity yet.</h2>
+          <p>Scan a Solana wallet to begin building its CULLER history.</p>
         </div>
       ) : (
         <ol className="timeline">

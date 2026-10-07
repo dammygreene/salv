@@ -53,11 +53,11 @@ export function CullMachine() {
       <div className="node">
         <div className="node-head">
           <span className="node-dot" />
-          <span>Sort</span>
+          <span>Classify</span>
         </div>
         <div className="node-tally">
           <span>
-            <b className="num">{hasScanned ? cullable : "–"}</b> cullable
+            <b className="num">{hasScanned ? cullable : "–"}</b> eligible
           </span>
           <span>
             <b className="num">{hasScanned ? watch : "–"}</b> watch
@@ -73,11 +73,11 @@ export function CullMachine() {
       <div className="node node-output">
         <div className="node-head">
           <span className="node-dot is-accent" />
-          <span>Reward</span>
+          <span>Result</span>
         </div>
         <div className="node-body">
           <strong className="node-figure num">{recoverable.toFixed(4)} SOL</strong>
-          <span className="node-line">recoverable this scan</span>
+          <span className="node-line">SOL value detected</span>
         </div>
       </div>
     </div>

@@ -2,11 +2,10 @@ import "server-only";
 import { Db } from "./types";
 import { MIGRATION_0001_INIT } from "./migrations/0001_init";
 import { MIGRATION_0002_REWARD_SNAPSHOTS } from "./migrations/0002_reward_snapshots";
-import { MIGRATION_0003_SALV_TOKEN } from "./migrations/0003_salv_token";
-import { MIGRATION_0004_SALV_TREASURY } from "./migrations/0004_salv_treasury";
 import { MIGRATION_0005_REWARD_LEDGER } from "./migrations/0005_reward_ledger";
 import { MIGRATION_0006_COMBINED_REWARD_SUBMISSION } from "./migrations/0006_combined_reward_submission";
 import { MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD } from "./migrations/0008_remove_x_identity_leaderboard";
+import { MIGRATION_0009_REMOVE_LEGACY_TOKEN_INFRASTRUCTURE } from "./migrations/0009_remove_legacy_token_infrastructure";
 
 interface Migration {
   name: string;
@@ -18,11 +17,10 @@ interface Migration {
 const MIGRATIONS: Migration[] = [
   { name: "0001_init", sql: MIGRATION_0001_INIT },
   { name: "0002_reward_snapshots", sql: MIGRATION_0002_REWARD_SNAPSHOTS },
-  { name: "0003_salv_token", sql: MIGRATION_0003_SALV_TOKEN },
-  { name: "0004_salv_treasury", sql: MIGRATION_0004_SALV_TREASURY },
   { name: "0005_reward_ledger", sql: MIGRATION_0005_REWARD_LEDGER },
   { name: "0006_combined_reward_submission", sql: MIGRATION_0006_COMBINED_REWARD_SUBMISSION },
   { name: "0008_remove_x_identity_leaderboard", sql: MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD },
+  { name: "0009_remove_legacy_token_infrastructure", sql: MIGRATION_0009_REMOVE_LEGACY_TOKEN_INFRASTRUCTURE },
 ];
 
 /** Applies any migration not yet recorded in schema_migrations, in

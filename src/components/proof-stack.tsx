@@ -5,7 +5,7 @@ export function ProofStack() {
       <div className="receipt-card receipt-mid" />
       <article className="receipt-card receipt-top">
         <div className="receipt-top-row">
-          <span className="code">Event 0003184</span>
+          <span className="code">Allocation record</span>
           <span className="receipt-stamp">
             <span className="receipt-stamp-ring" />
             <svg viewBox="0 0 64 64" width="46" height="46" aria-hidden="true">
@@ -17,15 +17,15 @@ export function ProofStack() {
           </span>
         </div>
         <div className="proof-flow">
-          <span>Cull</span>
+          <span>Scan</span>
           <b>→</b>
-          <span>Verify</span>
+          <span>Calculate</span>
           <b>→</b>
-          <span>Reward</span>
+          <span>Record</span>
         </div>
         <div className="proof-confirm">
-          <strong>Valid cull event</strong>
-          <b>+960 $CULLER</b>
+          <strong>Verified allocation</strong>
+          <b>$CULLER</b>
         </div>
       </article>
     </div>

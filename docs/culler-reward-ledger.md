@@ -154,14 +154,13 @@ computed**, for manual team review — never the authority that creates
 them. The data flow is one-directional:
 
 ```
-verified scan/activity -> reward calc (reward_snapshots/reward_claims, Solana-only) -> ledger record -> CSV export
+verified scan/activity -> reward calc (reward_snapshots, Solana-only) -> ledger record -> CSV export
 ```
 
 Never the reverse: the ledger (or its CSV export) is never read back in
-to invent, approve, or pay out a claim. The existing claim system
-(`reward_claims`, `attemptClaim()`) remains the sole source of truth for
-what is actually claimable/claimed; this ledger only mirrors a snapshot
-of that truth, timestamped per scan, for team visibility.
+to invent, approve, or distribute tokens. The reward snapshot and
+allocation calculation are the sole source of truth; this ledger records
+that result for team visibility and downstream leaderboard/share views.
 
 **Storage**: a plain Postgres table, `reward_ledger_entries`, originally
 created in migration `0005_reward_ledger.ts` and altered in place by
@@ -215,8 +214,8 @@ row per scan.
   concurrent scans of the *same* Solana wallet+epoch serialize safely (no
   lost update, no duplicate row) without any hand-rolled locking code.
 - This table is **update-in-place**, not append-only — unlike
-  `reward_snapshots`/`reward_claims`/`treasury_burns` elsewhere in this
-  codebase, which must never be mutated once written. The ledger is
+  `reward_snapshots` elsewhere in this codebase, which must never be
+  mutated once written. The ledger is
   explicitly "a clean allocation table," not a historical log of every
   scan that ever happened.
 

@@ -103,7 +103,7 @@ Minimum:
 - cull_events
 - reward_ledger
 - reward_epochs
-- reward_claims
+- reward_snapshots
 - watch_items
 - protocol_integrations
 - risk_flags

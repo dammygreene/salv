@@ -15,8 +15,7 @@ export default function HomePage() {
             has leftovers.
           </h1>
           <p className="hero-support">
-            Find the accounts you forgot. Close the ones worth closing. Get rewarded for the cleanup, with every
-            step verified onchain.
+            Scan your wallet, see what can be counted, and get your authoritative CULLER allocation.
           </p>
           <div className="hero-actions">
             <Link href="/scan" className="primary-button">
@@ -27,7 +26,7 @@ export default function HomePage() {
             </a>
           </div>
           <div className="hero-notice">
-            <span>!</span> No seed phrases, no custody. Your wallet signs every action.
+            <span>!</span> No seed phrases, no custody. Public wallet data only.
           </div>
         </div>
 
@@ -39,13 +38,13 @@ export default function HomePage() {
       <div className="trust-strip" aria-hidden="true">
         <span>No seed phrases</span>
         <span>No custody</span>
-        <span>Your wallet signs everything</span>
-        <span>Rewards need proof</span>
+        <span>Public wallet data only</span>
+        <span>Allocations are recorded</span>
       </div>
 
       <section className="how-it-works" id="how-it-works">
         <div className="section-intro">
-          <h2>A machine that explains every decision it makes.</h2>
+          <h2>A clear path from wallet scan to allocation.</h2>
         </div>
         <div className="how-grid">
           {howItWorks.map((item, index) => (
@@ -60,8 +59,8 @@ export default function HomePage() {
 
       <section className="proof-teaser">
         <div className="proof-teaser-copy">
-          <h2>Every verified action becomes a receipt.</h2>
-          <p>The reward pool is finite. The rules stay visible. Nothing is credited without independent verification.</p>
+          <h2>Your allocation is recorded, not guessed.</h2>
+          <p>Verified wallet activity is used to calculate an allocation against the active epoch and record it for your history.</p>
           <Link href="/rewards" className="text-link">
             View reward rules
           </Link>
@@ -69,21 +68,21 @@ export default function HomePage() {
         <div className="verify-checklist">
           <div className="verify-row">
             <DrawCheck show size={14} />
-            Onchain state is re-read after the action completes
+            Public wallet data is read from the configured network
           </div>
           <div className="verify-row">
             <DrawCheck show size={14} />
-            An independent verifier has to agree with the result
+            The Solana wallet remains the primary identity
           </div>
           <div className="verify-row">
             <DrawCheck show size={14} />
-            The epoch still has reward budget remaining
+            The allocation is recorded in the reward ledger
           </div>
         </div>
       </section>
 
       <section className="closing-cta">
-        <h2>Your wallet is holding dead weight.</h2>
+        <h2>See what your wallet qualifies for.</h2>
         <Link href="/scan" className="primary-button primary-button-lg">
           Scan my wallet
         </Link>

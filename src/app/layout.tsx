@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { AppStateProvider } from "@/lib/app-state";
 import { SolanaWalletProvider } from "@/components/providers/wallet-provider";
 import { AmbientBackground } from "@/components/ambient-background";
-import { AnnouncementBar } from "@/components/announcement-bar";
 import { NavCapsule } from "@/components/nav-capsule";
 import { SiteFooter } from "@/components/footer";
 
@@ -16,11 +15,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://cullerlabs.xyz"),
-  title: "CULLER: wallet recovery layer",
-  description: "Find the assets your wallet forgot. Recover what still matters. Get rewarded for cleaning up.",
+  title: "CULLER: wallet allocation platform",
+  description: "Scan your Solana wallet, calculate your verified CULLER allocation, and share the result.",
   openGraph: {
     title: "CULLER: your wallet has leftovers.",
-    description: "Find the assets you forgot. Recover what still matters. Get rewarded for cleaning up.",
+    description: "Scan your wallet, calculate your CULLER allocation, and share the result.",
     type: "website",
     images: [
       {
@@ -43,7 +42,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SolanaWalletProvider>
           <AppStateProvider>
             <AmbientBackground />
-            <AnnouncementBar />
             <NavCapsule />
             <div id="main-content" className="page-shell">
               {children}

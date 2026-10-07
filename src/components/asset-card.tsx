@@ -3,7 +3,6 @@
 import { useAppState } from "@/lib/app-state";
 import { Asset } from "@/lib/types";
 import { StatusBadge } from "./status-badge";
-import { DrawCheck } from "./draw-check";
 
 const KIND_GLYPH: Record<Asset["kind"], string> = {
   TOKEN: "◈",
@@ -13,11 +12,10 @@ const KIND_GLYPH: Record<Asset["kind"], string> = {
 };
 
 export function AssetCard({ asset, variant = "default" }: { asset: Asset; variant?: "default" | "wide" }) {
-  const { selected, toggleSelected, addToWatch } = useAppState();
-  const isSelected = selected.includes(asset.id);
+  const { addToWatch } = useAppState();
 
   return (
-    <article className={`asset-card ${isSelected ? "is-selected" : ""} ${variant === "wide" ? "asset-card-wide" : ""}`}>
+    <article className={`asset-card ${variant === "wide" ? "asset-card-wide" : ""}`}>
       <div className="asset-card-top">
         <span className="asset-glyph">{KIND_GLYPH[asset.kind]}</span>
         <StatusBadge status={asset.status} />
@@ -36,18 +34,13 @@ export function AssetCard({ asset, variant = "default" }: { asset: Asset; varian
         </span>
       </div>
       <p>{asset.reason}</p>
-      {asset.status === "CULLABLE" && (
-        <button className="asset-action asset-action-primary" onClick={() => toggleSelected(asset.id)}>
-          <DrawCheck show={isSelected} size={13} />
-          {isSelected ? "In bin" : "Add to bin"}
-        </button>
-      )}
+      {asset.status === "CULLABLE" && <span className="asset-static">Eligible activity found</span>}
       {asset.status === "WATCH" && (
         <button className="asset-action" onClick={() => addToWatch(asset.id)}>
           Watch this
         </button>
       )}
-      {asset.status === "REVIEW" && <button className="asset-action">Open review</button>}
+      {asset.status === "REVIEW" && <span className="asset-static">Needs analysis</span>}
       {asset.status === "KEEP" && <span className="asset-static">No action needed</span>}
     </article>
   );

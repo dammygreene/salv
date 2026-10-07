@@ -24,13 +24,13 @@
  * unbounded number of distinct rows exist for the same wallet.
  *
  * This table is update-in-place (NOT append-only, unlike
- * reward_snapshots/reward_claims/treasury_burns/treasury_proposals) --
+ * reward_snapshots) --
  * that is the entire point of the dedup requirement: a repeat scan for
  * the same wallet+epoch updates the existing row's `salv_allocated_base_
  * units`/`status`/`scanned_at`/`last_scan_id`, it never inserts a
  * second row. The authoritative reward calculation this row's
  * `salv_allocated_base_units` reflects always comes from
- * reward_snapshots/reward_claims (via getClaimView) -- this table never
+ * reward_snapshots (via getClaimView) -- this table never
  * computes or invents a reward value itself, it only records one
  * already computed elsewhere.
  *

@@ -9,7 +9,7 @@ export function SiteFooter() {
         <span className="site-footer-brand-mark">
           <CullerLogo />
         </span>
-        <p>Find the assets your wallet forgot, recover what still matters, and get rewarded for cleaning up.</p>
+        <p>Scan public wallet data, see your verified CULLER allocation, and share the result.</p>
       </div>
 
       <nav className="site-footer-col" aria-label="Product">
@@ -28,7 +28,7 @@ export function SiteFooter() {
       </nav>
 
       <p className="site-footer-note">
-        No seed phrases. No custody. Your wallet signs every action. Demo environment, no live signer attached.
+        No seed phrases. No custody. Public wallet data only.
       </p>
     </footer>
   );

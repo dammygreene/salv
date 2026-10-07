@@ -27,17 +27,17 @@ export const scanStateLabel: Record<ScanState, string> = {
 export const howItWorks = [
   {
     step: "Scan",
-    title: "Map what's actually there",
-    body: "Balances, token accounts and known protocol positions get indexed. Anything unknown stays labeled unknown, not guessed.",
+    title: "Scan what is there",
+    body: "CULLER reads the public wallet data you provide. Anything unknown stays labeled unknown, not guessed.",
   },
   {
     step: "Sort",
-    title: "Every item gets a reason",
-    body: "Cullable, watch, review or keep. No black-box scoring, you can see exactly why an asset landed where it did.",
+    title: "Understand the result",
+    body: "Assets are classified with a visible reason, so you can see what was found and what remains uncertain.",
   },
   {
     step: "Verify",
-    title: "Rewards need proof",
-    body: "$CULLER is credited only after an independent onchain check confirms the action actually happened.",
+    title: "Record your allocation",
+    body: "Verified wallet activity is used to calculate your CULLER allocation and record it against your Solana wallet.",
   },
 ];

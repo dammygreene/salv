@@ -8,24 +8,20 @@ export default function TermsPage() {
         <section>
           <h3>No custody, no guarantees</h3>
           <p>
-            CULLER never takes custody of assets. You approve every transaction with your own wallet. Recovered value belongs
-            to you; reward tokens are tracked separately.
+            CULLER never takes custody of assets and does not execute wallet transactions. The app reads public wallet data,
+            calculates allocations, and records results. The token itself is deployed and managed separately from this app.
           </p>
         </section>
         <section>
           <h3>$CULLER is not an investment promise</h3>
           <p>
-            $CULLER rewards verified Proof of Cull activity from a finite community pool. Nothing here implies guaranteed
-            appreciation, a price floor, or investment returns.
+            $CULLER allocations are based on the configured eligibility and epoch rules. Nothing here implies guaranteed
+            appreciation, a price floor, token distribution timing, or investment returns.
           </p>
         </section>
         <section>
-          <h3>Destructive actions are irreversible</h3>
-          <p>Closing an account or burning a token cannot be undone. Review every transaction summary before confirming.</p>
-        </section>
-        <section>
-          <h3>This build</h3>
-          <p>This is a demo environment for evaluation purposes. No live signer or mainnet transaction is attached yet.</p>
+          <h3>Public data and availability</h3>
+          <p>You are responsible for the wallet addresses you submit. Results depend on available network data, configured snapshots, and service availability.</p>
         </section>
       </div>
     </main>

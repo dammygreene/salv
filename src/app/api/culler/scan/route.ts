@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Step 2: the authoritative reward figure, read fresh from the
-  // database (reward_snapshots / reward_claims via getClaimView) --
+  // database (reward snapshots via getClaimView) --
   // computed solely from the Solana wallet, never from Robinhood, never
   // from anything the client sent.
   let cullerAllocatedBaseUnits = 0n;
@@ -154,8 +154,7 @@ export async function POST(req: NextRequest) {
     reward: {
       cullerAllocated: baseUnitsToCullerDecimalString(cullerAllocatedBaseUnits),
       status: ledgerStatus,
-      // Human-facing epoch NUMBER (matches /api/culler/claims/:wallet's
-      // `epoch` field) -- NOT the internal database epoch uuid.
+      // Human-facing epoch number, not the internal database epoch UUID.
       epochId: epochNumber,
     },
     csvRecorded,
@@ -178,10 +177,6 @@ function mapClaimViewStatus(status: ClaimViewStatus): RewardLedgerStatus {
       return "NO_SNAPSHOT";
     case "CLAIMABLE":
       return "ALLOCATED";
-    case "CLAIMED":
-      return "CLAIMED";
-    case "FAILED":
-      return "FAILED";
     default:
       return "FAILED";
   }

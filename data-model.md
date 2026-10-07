@@ -100,7 +100,7 @@ Unique should include the immutable onchain event identity.
 - status
 - created_at
 
-## reward_claims
+## reward_snapshots
 - id
 - wallet_id
 - epoch_id
