@@ -8,13 +8,9 @@
  *  - Solana: a base58-encoded 32-byte public key (reuses the existing,
  *    already-tested `isValidSolanaAddress` from `solana/base58.ts` — no
  *    new Solana validation logic is introduced here).
- *  - EVM / Robinhood Wallet: a standard `0x`-prefixed, 40-hex-character
- *    address. Robinhood Wallet (and most EVM chains it supports --
- *    Ethereum, Polygon, Arbitrum, Base, etc.) all share this exact
- *    address format, so "supported Robinhood address" and "EVM address"
- *    are the same shape check here. This module never attempts to
- *    "connect to" Robinhood or any EVM chain -- it only accepts the
- *    address string the user chooses to paste, exactly like Solana.
+ *  - Robinhood Chain: a standard `0x`-prefixed, 40-hex-character
+ *    address. Address shape validation is followed by a chain-specific
+ *    RPC read in the server scanner; no other EVM network is supported.
  */
 
 import { isValidSolanaAddress } from "./solana/base58";
@@ -137,4 +133,3 @@ export function validateCombinedWalletSubmission(input: {
 
   return { valid: true, submission: { solanaWallet, robinhoodWallet: trimmedRobinhood } };
 }
-

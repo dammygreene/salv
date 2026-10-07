@@ -11,7 +11,7 @@ interface ScanApiResult {
   robinhoodWallet: string | null;
   scan: {
     solana: { attempted: boolean; succeeded: boolean; reason?: string };
-    robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
+    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
   };
   reward: { cullerAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
@@ -146,7 +146,7 @@ export default function RewardsPage() {
                 <strong>{shortAddress(scanResult.solanaWallet)}</strong>
                 <small>
                   {scanResult.robinhoodWallet
-                    ? "Robinhood included in the same scan; it does not create a second allocation."
+                    ? `Robinhood Chain included in the same scan (${scanResult.scan.robinhood.state.toLowerCase()}); it does not create a second allocation.`
                     : "Solana wallet is the primary leaderboard identity."}
                 </small>
                 {scanResult.recordError && <small className="wallet-form-error">{scanResult.recordError}</small>}

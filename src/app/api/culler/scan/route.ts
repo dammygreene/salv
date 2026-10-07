@@ -9,6 +9,7 @@ import { ensureWallet } from "@/lib/server/repositories/walletRepo";
 import { upsertRewardLedgerEntry, RewardLedgerStatus } from "@/lib/server/repositories/rewardLedgerRepo";
 import { baseUnitsToCullerDecimalString } from "@/lib/culler/tokenSpec";
 import { scanWallet, WalletScanError } from "@/lib/solana/scanner/scan";
+import { scanRobinhoodWallet } from "@/lib/server/robinhoodScanner";
 
 /**
  * POST /api/culler/scan — the combined, no-wallet-connect scan + reward-
@@ -36,15 +37,8 @@ import { scanWallet, WalletScanError } from "@/lib/solana/scanner/scan";
  * authoritative reward-snapshot/claim system `/api/culler/claims/:wallet`
  * already uses, computed solely from `solanaWallet`.
  *
- * Robinhood/EVM asset scanning is NOT implemented. This route never
- * fakes it: when a Robinhood address is present, `scan.robinhood.state`
- * is always `"NOT_IMPLEMENTED"` and `submitted` is `true` — the address
- * is stored as a linked wallet (via `ensureWallet`, bookkeeping only) but
- * never contributes to the reward figure, and no "assets found" result
- * is ever synthesized for it. This is intentionally architected so real
- * Robinhood scanning can be added later (by filling in `scanRobinhood`-
- * shaped logic here) without changing the Solana-primary reward identity
- * model at all.
+ * Robinhood Chain scanning is independent and read-only. It can be
+ * unavailable without preventing the Solana scan or allocation record.
  */
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -77,13 +71,7 @@ export async function POST(req: NextRequest) {
     solanaScan.reason = err instanceof WalletScanError ? err.message : "Could not complete the live wallet scan.";
   }
 
-  // Robinhood/EVM scanning is not implemented. Never faked: this is
-  // either "no Robinhood address was submitted" or "one was submitted,
-  // but no scan was attempted/available for it" -- never a synthesized
-  // success.
-  const robinhoodScan = robinhoodWallet
-    ? ({ submitted: true, state: "NOT_IMPLEMENTED" as const } as const)
-    : ({ submitted: false, state: "NOT_LINKED" as const } as const);
+  const robinhoodScan = await scanRobinhoodWallet(robinhoodWallet);
 
   let db;
   try {

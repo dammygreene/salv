@@ -21,7 +21,7 @@ interface LedgerScanResult {
   robinhoodWallet: string | null;
   scan: {
     solana: { attempted: boolean; succeeded: boolean; reason?: string };
-    robinhood: { submitted: boolean; state: "NOT_IMPLEMENTED" | "NOT_LINKED" };
+    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
   };
   reward: { cullerAllocated: string; status: string; epochId: number | null };
   csvRecorded: boolean;
@@ -203,7 +203,10 @@ export default function ScanPage() {
                   </strong>
                   <small>Epoch {ledgerResult.reward.epochId ?? "none"}</small>
                   {ledgerResult.robinhoodWallet ? (
-                    <small>Robinhood linked · asset scanning not yet available ({ledgerResult.scan.robinhood.state})</small>
+                    <small>
+                      Robinhood Chain · {ledgerResult.scan.robinhood.state.toLowerCase()}
+                      {ledgerResult.scan.robinhood.reason ? ` · ${ledgerResult.scan.robinhood.reason}` : ""}
+                    </small>
                   ) : (
                     <small>No Robinhood wallet linked for this scan.</small>
                   )}

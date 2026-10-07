@@ -27,6 +27,16 @@ Rename the actual file to `.env.example` in the project.
 - SOLANA_RPC_URL=
 - HELIUS_API_KEY=
 
+## Robinhood Chain
+- ROBINHOOD_RPC_URL=
+  Server-side JSON-RPC endpoint for the optional Robinhood wallet scan.
+  Production may use `https://rpc.mainnet.chain.robinhood.com`, but a
+  dedicated provider URL is recommended. If unset, Robinhood scanning reports
+  unavailable while Solana scanning remains usable. Do not expose this as
+  `NEXT_PUBLIC_*`.
+- ROBINHOOD_CHAIN_ID=4663
+  The only supported Robinhood network is Robinhood Chain mainnet.
+
 To run CULLER against Devnet (for manual testing, see
 `docs/devnet-e2e-checklist.md`): set `NEXT_PUBLIC_SOLANA_NETWORK=devnet`,
 and point both `NEXT_PUBLIC_SOLANA_RPC_URL` and `SOLANA_RPC_URL` at a
