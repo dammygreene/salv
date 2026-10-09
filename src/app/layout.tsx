@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { AppStateProvider } from "@/lib/app-state";
 import { SolanaWalletProvider } from "@/components/providers/wallet-provider";
 import { AmbientBackground } from "@/components/ambient-background";
@@ -13,8 +14,7 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://cullerlabs.xyz"),
+const baseMetadata: Metadata = {
   title: "CULLER: wallet allocation platform",
   description: "Scan your Solana wallet, calculate your verified CULLER allocation, and share the result.",
   openGraph: {
@@ -28,6 +28,22 @@ export const metadata: Metadata = {
     description: "Scan your wallet, calculate your CULLER allocation, and share the result.",
   },
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host");
+  const protocol = requestHeaders.get("x-forwarded-proto") || "https";
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+    "https://cullerlabs.xyz";
+
+  return {
+    ...baseMetadata,
+    metadataBase: new URL(host ? `${protocol}://${host}` : configuredUrl),
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
