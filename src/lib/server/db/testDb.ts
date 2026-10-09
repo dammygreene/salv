@@ -20,7 +20,8 @@ export async function createTestDb(): Promise<Db> {
 
 /** Wipes all app data between tests while keeping the schema, so a
  * single booted instance can be reused across many test cases without
- * paying PGlite's one-time WASM startup cost each time. */
+ * paying PGlite's one-time WASM startup cost each time. Call `db.close?.()`
+ * from afterAll to release the WASM instance. */
 export async function resetTestDb(db: Db): Promise<void> {
   await db.query(`
     TRUNCATE TABLE
@@ -30,6 +31,7 @@ export async function resetTestDb(db: Db): Promise<void> {
       salvage_events,
       asset_classifications,
       assets,
+      scan_allocations,
       epochs,
       wallets,
       users,

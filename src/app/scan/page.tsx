@@ -1,15 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { CullMachine } from "@/components/cull-machine";
-import { StatModule } from "@/components/stat-module";
 import { AssetCard } from "@/components/asset-card";
 import { shortAddress, useAppState } from "@/lib/app-state";
 import { scanStateLabel } from "@/lib/data";
 import { validateCombinedWalletSubmission } from "@/lib/walletAddress";
-import { CullerShareModal } from "@/components/culler-share-modal";
-import { hasCullerAllocation } from "@/lib/culler/share";
+import { CullerShareCardPreview, CullerShareModal } from "@/components/culler-share-modal";
+import { formatCullerAllocation, generateCullerShareCard } from "@/lib/culler/share";
 import type { Asset } from "@/lib/types";
 
 /** Response shape of POST /api/culler/scan — see that route for the full
@@ -27,13 +26,34 @@ interface LedgerScanResult {
       reason?: string;
       programStatus?: { splToken: "available" | "unavailable"; token2022: "available" | "unavailable" };
     };
-    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
+    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; discovery?: "COMPLETE" | "PARTIAL" | "EMPTY" | "UNAVAILABLE"; nativeBalanceWei: string | null; assetCounts?: { native: number; erc20: number; erc721: number; erc1155: number }; reason?: string };
   };
-  reward: { cullerAllocated: string; status: string; epochId: number | null };
+  reward: { cullerAllocated: string; status: string; epochId: number | null; allocationState: "YOUR CULLER ALLOCATION" | "CURRENT ALLOCATION" | "FINAL ALLOCATION" | "NO ALLOCATION" };
+  allocation: {
+    points: number;
+    contributions: Array<{ classification: string; category: string; points: number }>;
+  };
   csvRecorded: boolean;
   recordError?: string;
   scanId: string;
   assets: Asset[];
+  eligibility: {
+    eligible: number;
+    candidates: number;
+    notEligible: number;
+    unknown: number;
+    valuable: number;
+    noLiquidity: number;
+    empty: number;
+  };
+  digitalAssets: {
+    total: number;
+    nft: number;
+    compressedNft: number;
+    fungible: number;
+    other: number;
+    unknown: number;
+  };
   enrichment: { status: "AVAILABLE" | "UNAVAILABLE"; reason?: string };
 }
 
@@ -57,19 +77,9 @@ export default function ScanPage() {
   const [ledgerResult, setLedgerResult] = useState<LedgerScanResult | null>(null);
   const [ledgerScanning, setLedgerScanning] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showAssets, setShowAssets] = useState(false);
   const validation = validateCombinedWalletSubmission({ solanaWallet: addressInput, robinhoodWallet: robinhoodInput });
   const hasWallet = Boolean(walletAddress);
-
-  useEffect(() => {
-    const saved = window.sessionStorage.getItem("culler-last-ledger-result");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as LedgerScanResult;
-      window.setTimeout(() => setLedgerResult(parsed), 0);
-    } catch {
-      window.sessionStorage.removeItem("culler-last-ledger-result");
-    }
-  }, []);
 
   // One form, one "Scan wallet" click performs TWO independent things:
   // (1) the existing live, read-only Solana recovery scan (unchanged,
@@ -106,7 +116,6 @@ export default function ScanPage() {
       if (data.assets.length) {
         window.sessionStorage.setItem("culler-enriched-assets", JSON.stringify(data.assets));
       }
-      window.sessionStorage.setItem("culler-last-ledger-result", JSON.stringify(data));
     } catch {
       setLedgerError("Could not reach the reward ledger. Try again shortly.");
     } finally {
@@ -115,33 +124,80 @@ export default function ScanPage() {
   }
 
   const scanning = scanState !== "READY" && scanState !== "SCAN COMPLETE";
-  const cullable = assets.filter((a) => a.status === "CULLABLE");
-  const watch = assets.filter((a) => a.status === "WATCH");
-  const review = assets.filter((a) => a.status === "REVIEW");
+  const eligible = assets.filter((a) => a.eligibility === "ELIGIBLE");
   const emptyAccounts = assets.filter((a) => a.kind === "ACCOUNT");
-  const rawAssets = assets.filter((a) => a.tokenAccount);
-  const nfts = rawAssets.filter((a) => a.kind === "NFT");
-  const fungible = rawAssets.filter((a) => a.kind === "TOKEN");
+  const nfts = assets.filter((a) => a.kind === "NFT");
+  const fungible = assets.filter((a) => a.kind === "TOKEN");
   const dasOnlyAssets = assets.filter((a) => a.metadata?.source === "quicknode-das" && !a.tokenAccount);
-  const recoverableSol = useMemo(
-    () =>
-      cullable.reduce((total, asset) => {
-        if (!asset.valueKnown || !asset.value.endsWith("SOL")) return total;
-        const match = asset.value.match(/[\d.]+/);
-        return match ? total + parseFloat(match[0]) : total;
-      }, 0),
-    [cullable]
-  );
+  const nftGroups = useMemo(() => {
+    const groups = new Map<string, { label: string; assets: Asset[] }>();
+    for (const asset of nfts) {
+      const label = asset.metadata?.collection?.trim() || "Other NFTs";
+      const key = asset.metadata?.collectionAddress?.trim() || label;
+      const group = groups.get(key);
+      if (group) {
+        group.assets.push(asset);
+      } else {
+        groups.set(key, { label, assets: [asset] });
+      }
+    }
+    return [...groups.values()];
+  }, [nfts]);
+  const shareData = ledgerResult && ledgerResult.reward.allocationState !== "NO ALLOCATION"
+    ? {
+        allocation: ledgerResult.reward.cullerAllocated,
+        walletAddress: ledgerResult.solanaWallet,
+        epochId: ledgerResult.reward.epochId,
+        verified: ledgerResult.csvRecorded,
+        allocationState: ledgerResult.reward.allocationState === "FINAL ALLOCATION" ? "FINAL ALLOCATION" as const : ledgerResult.reward.allocationState === "YOUR CULLER ALLOCATION" ? "YOUR CULLER ALLOCATION" as const : "CURRENT ALLOCATION" as const,
+      }
+    : null;
+  const contributionSummary = useMemo(() => {
+    const summary = new Map<string, { count: number; points: number }>();
+    for (const contribution of ledgerResult?.allocation.contributions ?? []) {
+      const label =
+        contribution.classification === "EMPTY_ACCOUNT" ? "Empty accounts" :
+        contribution.classification === "FUNGIBLE_NO_LIQUIDITY" ? "No-liquidity tokens" :
+        contribution.classification === "FUNGIBLE_LOW_VALUE" ? "Low-value tokens" :
+        contribution.classification === "FUNGIBLE_UNKNOWN_VALUE" ? "Unknown tokens" :
+        contribution.classification === "NFT_NO_MARKET" ? "NFTs with no market" :
+        contribution.classification === "NFT_LOW_VALUE" ? "Low-value NFTs" :
+        contribution.classification === "NFT_UNKNOWN_VALUE" || contribution.classification === "NFT_REVIEW" ? "Unknown NFTs" :
+        contribution.classification;
+      const existing = summary.get(label) ?? { count: 0, points: 0 };
+      summary.set(label, { count: existing.count + 1, points: existing.points + contribution.points });
+    }
+    return [...summary.entries()];
+  }, [ledgerResult]);
 
+  async function downloadShareCard() {
+    if (!shareData) return;
+    const blob = await generateCullerShareCard(shareData);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "culler-allocation.png";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyAllocation() {
+    if (!ledgerResult || ledgerResult.reward.allocationState === "NO ALLOCATION") return;
+    await navigator.clipboard.writeText(`${formatCullerAllocation(ledgerResult.reward.cullerAllocated)} $CULLER`);
+  }
+  const checkingAssets = ledgerScanning || (hasWallet && !hasScanned && scanState !== "READY");
+  const assetCountLabel = assets.length ? `${assets.length} assets found.` : "No assets found.";
   return (
     <main className="scan-page">
       <PageHeader
-        title={hasScanned ? (assets.length ? `${assets.length} assets found.` : "No token accounts found.") : "Open the machine bay."}
+        title={checkingAssets ? "Checking assets…" : hasScanned ? assetCountLabel : "Open the machine bay."}
         support={
-          hasScanned
+          checkingAssets
+            ? "Checking both wallets and organizing tokens, NFTs, and allocation evidence."
+            : hasScanned
             ? assets.length
-              ? "Here's everything attached to this wallet, sorted with a reason for every call."
-              : "This wallet has no SPL token accounts to show. Try another address."
+              ? "Here's everything attached to both wallets, sorted with a reason for every call."
+              : "No discoverable assets were found in the submitted wallets."
             : "Paste a wallet address and run a scan. CULLER reads the addresses you provide and calculates your allocation."
         }
         meta={
@@ -161,7 +217,7 @@ export default function ScanPage() {
         }
       />
 
-      <div className="scan-console">
+      {!hasScanned && <div className="scan-console">
         <div className="scan-console-machine">
           <CullMachine />
         </div>
@@ -213,33 +269,6 @@ export default function ScanPage() {
               {(addressError || ledgerError) && <small className="wallet-form-error">{ledgerError ?? addressError}</small>}
               <small className="wallet-form-note">Read-only: balances and token accounts are fetched live from Solana.</small>
 
-              {ledgerResult && (
-                <div className="reward-card" style={{ marginTop: "0.5rem" }}>
-                  <span>$CULLER reward ledger</span>
-                  <strong>
-                    {ledgerResult.reward.cullerAllocated} CULLER <small>{ledgerResult.reward.status}</small>
-                  </strong>
-                  <small>Epoch {ledgerResult.reward.epochId ?? "none"}</small>
-                  {ledgerResult.robinhoodWallet ? (
-                    <small>
-                      Robinhood Chain · {ledgerResult.scan.robinhood.state.toLowerCase()}
-                      {ledgerResult.scan.robinhood.reason ? ` · ${ledgerResult.scan.robinhood.reason}` : ""}
-                    </small>
-                  ) : (
-                    <small>No Robinhood wallet linked for this scan.</small>
-                  )}
-                  {ledgerResult.csvRecorded ? (
-                    <small>✓ Recorded in the reward ledger.</small>
-                  ) : (
-                    <small className="wallet-form-error">Not recorded ({ledgerResult.recordError ?? "unknown error"}).</small>
-                  )}
-                  {hasCullerAllocation(ledgerResult.reward.cullerAllocated) && (
-                    <button type="button" className="primary-button share-allocation-button" onClick={() => setShowShare(true)}>
-                      Share on X
-                    </button>
-                  )}
-                </div>
-              )}
             </>
           )}
           {hasWallet && !hasScanned && scanError && (
@@ -264,15 +293,11 @@ export default function ScanPage() {
               </button>
             </>
           )}
-          {hasWallet && hasScanned && (
+          {hasWallet && hasScanned && !ledgerScanning && !ledgerResult && (
             <>
               <h2>Scan complete.</h2>
               <p>
-                {accountsFound} asset account{accountsFound === 1 ? "" : "s"} discovered
-                {accountsTruncated ? `, ${assets.length} processed and ${accountsFound - assets.length} remaining` : ""}.{" "}
-                {emptyAccounts.length} empty, {fungible.length} fungible, and {nfts.length} NFT{nfts.length === 1 ? "" : "s"} detected.
-                {dasOnlyAssets.length ? ` ${dasOnlyAssets.length} additional DAS assets enriched.` : ""}{" "}
-                {cullable.length} match the current allocation eligibility rules.
+                Your wallet has been scanned. Your CULLER allocation is shown below.
               </p>
               <button className="ghost-button" onClick={() => startScan()}>
                 Rescan wallet
@@ -280,28 +305,127 @@ export default function ScanPage() {
             </>
           )}
         </div>
-      </div>
+      </div>}
 
-      {hasScanned && (
+      {hasScanned && (ledgerScanning || ledgerResult) && (
         <>
-          <div className="result-compartments">
-            <StatModule tone="recover" label="Value" value={recoverableSol.toFixed(4)} unit="SOL" caption="Detected" />
-            <StatModule tone="cull" label="Eligible" value={String(cullable.length).padStart(2, "0")} unit="assets" caption="Counted" />
-            <StatModule tone="watch" label="Watch" value={String(watch.length).padStart(2, "0")} unit="assets" caption="Uncertain" />
-            <StatModule tone="unknown" label="Review" value={String(review.length).padStart(2, "0")} unit="assets" caption="Needs analysis" />
-          </div>
+          {ledgerScanning ? (
+            <section className="allocation-result allocation-result-pending" aria-live="polite">
+              <div className="allocation-result-copy">
+                <span className="eyebrow">Scan complete</span>
+                <h2>Your CULLER allocation</h2>
+                <strong className="allocation-result-amount">Calculating…</strong>
+                <span className="allocation-result-state">CURRENT ALLOCATION</span>
+                <p>We are finalizing your allocation and generating your share card.</p>
+              </div>
+            </section>
+          ) : ledgerResult && (
+            <section className="allocation-result">
+              <div className="allocation-result-copy">
+                <span className="eyebrow">Scan complete</span>
+                <h2>Your CULLER allocation</h2>
+                {ledgerResult.reward.allocationState === "NO ALLOCATION" ? (
+                  <>
+                    <strong className="allocation-result-amount">NO ALLOCATION</strong>
+                    <p>No active or closed epoch is available yet. Your scan was still recorded.</p>
+                  </>
+                ) : (
+                  <>
+                    <strong className="allocation-result-amount">+{formatCullerAllocation(ledgerResult.reward.cullerAllocated)} $CULLER</strong>
+                    <span className="allocation-result-state">{ledgerResult.reward.allocationState}</span>
+                    <p>Based on your scanned wallet and current CULLER allocation rules.</p>
+                    <div className="allocation-result-actions">
+                      <button type="button" className="primary-button" onClick={() => setShowShare(true)}>Share on X</button>
+                      <button type="button" className="ghost-button" onClick={() => void downloadShareCard()}>Download card</button>
+                      <button type="button" className="ghost-button" onClick={() => void copyAllocation()}>Copy allocation</button>
+                    </div>
+                    <p className="allocation-result-note">Some assets couldn&apos;t be confidently valued. CULLER still gives them a baseline allocation.</p>
+                  </>
+                )}
+              </div>
+              {shareData && <CullerShareCardPreview data={shareData} />}
+            </section>
+          )}
+          <section className="scan-summary">
+            <span className="eyebrow">Scan summary</span>
+            <p>{accountsFound} token accounts scanned · {assets.length} digital assets analyzed</p>
+            <p>
+              {eligible.length} eligible ·{" "}
+              {assets.filter((asset) => asset.valueClassification?.includes("UNKNOWN")).length} unknown ·{" "}
+              {assets.filter((asset) => asset.valueClassification?.includes("VALUABLE")).length} valuable
+            </p>
+            <details className="scan-diagnostics">
+              <summary>View scan diagnostics</summary>
+              <p>
+                {emptyAccounts.length} empty · {fungible.length} fungible · {nfts.length} NFTs ·{" "}
+                {ledgerResult?.eligibility.candidates ?? 0} candidates ·{" "}
+                {ledgerResult?.eligibility.notEligible ?? 0} not eligible
+              </p>
+              <p>
+                {accountsTruncated ? "The account scan was truncated by the configured scan limit. " : ""}
+                Enrichment: {ledgerResult?.enrichment.status.toLowerCase() ?? "pending"}.
+                {dasOnlyAssets.length ? ` ${dasOnlyAssets.length} DAS-only assets included.` : ""}
+              </p>
+              {ledgerResult?.robinhoodWallet && (
+                <p>
+                  Robinhood Chain: {ledgerResult.scan.robinhood.discovery?.toLowerCase() ?? ledgerResult.scan.robinhood.state.toLowerCase()}.
+                  {ledgerResult.scan.robinhood.assetCounts
+                    ? ` ${ledgerResult.scan.robinhood.assetCounts.native} native · ${ledgerResult.scan.robinhood.assetCounts.erc20} ERC-20 · ${ledgerResult.scan.robinhood.assetCounts.erc721} ERC-721 · ${ledgerResult.scan.robinhood.assetCounts.erc1155} ERC-1155.`
+                    : ""}
+                  {ledgerResult.scan.robinhood.reason ? ` ${ledgerResult.scan.robinhood.reason}` : ""}
+                </p>
+              )}
+            </details>
+          </section>
 
-          <div className="scan-results-layout">
-            <div className="asset-grid">
-              {assets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
+          {ledgerResult && ledgerResult.allocation.points > 0 && (
+            <section className="allocation-evidence">
+              <span className="eyebrow">How your allocation was built</span>
+              <strong>{ledgerResult.allocation.points} points</strong>
+              {contributionSummary.map(([label, value]) => (
+                <span key={label}>{label} · {value.count} × {Math.round(value.points / value.count)} · {value.points} points</span>
               ))}
+            </section>
+          )}
+
+          <section className="asset-inventory">
+            <div className="asset-inventory-heading">
+              <div>
+                <span className="eyebrow">Asset breakdown</span>
+                <strong>{assets.length} assets</strong>
+              </div>
+              <button type="button" className="ghost-button" onClick={() => setShowAssets((open) => !open)}>
+                {showAssets ? "Hide all assets" : "View all assets"}
+              </button>
             </div>
-          </div>
+            {showAssets && <div className="scan-results-layout">
+              <div className="asset-results">
+              <div className="asset-grid">
+                {assets.filter((asset) => asset.kind !== "NFT").map((asset) => (
+                  <AssetCard key={asset.id} asset={asset} />
+                ))}
+              </div>
+              {nftGroups.map((group) => (
+                <section className="asset-category" key={group.label}>
+                  <div className="asset-category-heading">
+                    <h2>{group.label}</h2>
+                    <span>{group.assets.length} NFT{group.assets.length === 1 ? "" : "s"}</span>
+                  </div>
+                  <div className="asset-grid">
+                    {group.assets.map((asset) => (
+                      <AssetCard key={asset.id} asset={asset} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+              </div>
+            </div>
+            }
+          </section>
         </>
       )}
 
-      {ledgerResult && hasCullerAllocation(ledgerResult.reward.cullerAllocated) && (
+      {ledgerResult && shareData && (
         <CullerShareModal
           open={showShare}
           onClose={() => setShowShare(false)}
@@ -310,6 +434,9 @@ export default function ScanPage() {
             walletAddress: ledgerResult.solanaWallet,
             epochId: ledgerResult.reward.epochId,
             verified: ledgerResult.csvRecorded,
+            ...(ledgerResult.reward.allocationState !== "NO ALLOCATION"
+              ? { allocationState: ledgerResult.reward.allocationState }
+              : {}),
           }}
         />
       )}

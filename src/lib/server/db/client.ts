@@ -63,6 +63,7 @@ function wrapPgPool(pool: PgPool): Db {
         client.release();
       }
     },
+    close: () => pool.end(),
   };
 }
 
@@ -103,6 +104,7 @@ export function wrapPglite(pglite: PGlite): Db {
         return fn(txDb);
       });
     },
+    close: () => pglite.close(),
   };
 }
 
@@ -112,12 +114,14 @@ function isProduction(): boolean {
 
 async function createDb(): Promise<Db> {
   const databaseUrl = process.env.DATABASE_URL?.trim();
+  let closeOnFailure: (() => Promise<void>) | null = null;
 
   let db: Db;
   if (databaseUrl) {
     const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: databaseUrl, max: 5 });
+    const pool = new Pool({ connectionString: databaseUrl, max: 5, connectionTimeoutMillis: 5_000 });
     db = wrapPgPool(pool);
+    closeOnFailure = () => pool.end();
   } else if (isProduction() && process.env.CULLER_ALLOW_PGLITE_IN_PRODUCTION?.trim() !== "true") {
     throw new DatabaseConfigurationError(
       "DATABASE_URL is not set. Production (NODE_ENV=production) must use a real Postgres database — " +
@@ -127,14 +131,22 @@ async function createDb(): Promise<Db> {
     );
   } else {
     const { PGlite } = await import("@electric-sql/pglite");
-    const dataDir = path.join(process.cwd(), ".data", "pglite");
-    fs.mkdirSync(dataDir, { recursive: true });
-    const pglite = await PGlite.create(dataDir);
+    // Tests must use an isolated in-memory database. Reusing the development
+    // data directory can leave a stale postmaster lock and abort the WASM
+    // engine before the configuration test can run.
+    const dataDir = process.env.NODE_ENV === "test" ? undefined : path.join(process.cwd(), ".data", "pglite");
+    if (dataDir) fs.mkdirSync(dataDir, { recursive: true });
+    const pglite = dataDir ? await PGlite.create(dataDir) : new PGlite();
     db = wrapPglite(pglite);
   }
 
-  await runMigrations(db);
-  return db;
+  try {
+    await runMigrations(db);
+    return db;
+  } catch (error) {
+    await closeOnFailure?.();
+    throw error;
+  }
 }
 
 /** Lazily creates and migrates the shared app database connection. Safe

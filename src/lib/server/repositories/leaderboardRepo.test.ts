@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, resetTestDb } from "../db/testDb";
 import { upsertRewardLedgerEntry } from "./rewardLedgerRepo";
 import { getLeaderboardRank, listLeaderboard } from "./leaderboardRepo";
@@ -16,6 +16,10 @@ describe("leaderboardRepo", () => {
 
   beforeEach(async () => {
     await resetTestDb(db);
+  });
+
+  afterAll(async () => {
+    await db.close?.();
   });
 
   it("aggregates verified wallet allocations across epochs and excludes zero totals", async () => {

@@ -12,6 +12,7 @@ import {
   TokenAccountEntry,
 } from "./rpc";
 import { getTokenList, TokenListEntry } from "../token-list";
+import { evaluateAssetEligibility } from "@/lib/eligibility";
 
 export type ScanProgressStep = Exclude<ScanState, "READY">;
 
@@ -238,7 +239,39 @@ export async function scanWallet(
     }
   });
 
-  const assets = scanned.map((entry, index) => classifyAccount(entry, trimmed, tokenList, ages[index] ?? "\u2014"));
+  const assets: Asset[] = scanned.map((entry, index) => {
+    const asset = classifyAccount(entry, trimmed, tokenList, ages[index] ?? "\u2014");
+    const classification = asset.valueClassification;
+    return classification
+      ? {
+          ...asset,
+          eligibility: evaluateAssetEligibility(classification),
+          eligibilityEvidence: {
+            assetType: classification === "EMPTY_ACCOUNT"
+              ? "EMPTY_ACCOUNT"
+              : classification.startsWith("NFT_")
+                ? "NFT"
+                : "FUNGIBLE",
+            classification,
+            eligibility: evaluateAssetEligibility(classification),
+            confidence: "UNKNOWN",
+            priceUsd: null,
+            estimatedValueUsd: asset.valueClassification === "EMPTY_ACCOUNT" ? null : null,
+            liquidityUsd: null,
+            priceSource: null,
+            liquiditySource: null,
+            routeStatus: null,
+            priceImpactBps: null,
+            marketplace: null,
+            floorUsd: null,
+            bestListingUsd: null,
+            bestOfferUsd: null,
+            evidenceSources: [],
+            checkedAt: null,
+          },
+        }
+      : asset;
+  });
 
   onProgress?.("SORTING");
   assets.sort((a, b) => STATUS_SORT_ORDER[a.status] - STATUS_SORT_ORDER[b.status]);

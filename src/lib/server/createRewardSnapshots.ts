@@ -4,6 +4,8 @@ import { Db } from "./db/types";
 import { EpochError, getEpochByNumber, listEpochs } from "./repositories/epochRepo";
 import { listWalletPointsForEpoch } from "./repositories/pointsRepo";
 import { createRewardSnapshot, listSnapshotsForEpoch, RewardSnapshotRecord } from "./repositories/rewardSnapshotRepo";
+import { calculateFixedAllocationBaseUnits } from "@/lib/cull/fixedAllocation";
+import { BASE_UNIT_FACTOR } from "@/lib/culler/tokenSpec";
 
 export class RewardSnapshotError extends Error {}
 
@@ -38,24 +40,26 @@ export async function createRewardSnapshotsForClosedEpoch(db: Db, epochId: strin
   }
 
   const walletPoints = await listWalletPointsForEpoch(db, epochId);
-  const simulation = simulateEpochRewards(
-    epoch.rewardPoolPoints,
-    walletPoints.map((w) => ({ wallet: w.walletId, points: w.points }))
-  );
+  const simulation = epoch.conversionRate === null
+    ? simulateEpochRewards(epoch.rewardPoolPoints, walletPoints.map((w) => ({ wallet: w.walletId, points: w.points })))
+    : null;
 
   const addressByWalletId = new Map(walletPoints.map((w) => [w.walletId, w.walletAddress]));
 
   const snapshots: RewardSnapshotWithAddress[] = [];
-  for (const allocation of simulation.allocations) {
+  for (const wallet of walletPoints) {
+    const allocatedReward = epoch.conversionRate === null
+      ? simulation!.allocations.find((item) => item.wallet === wallet.walletId)?.estimatedReward ?? 0
+      : Number(calculateFixedAllocationBaseUnits(wallet.points, epoch.conversionRate)) / Number(BASE_UNIT_FACTOR);
     const { snapshot } = await createRewardSnapshot(db, {
       epochId,
-      walletId: allocation.wallet,
-      points: allocation.points,
-      totalPoints: simulation.totalValidPoints,
-      rewardPool: simulation.rewardPool,
-      allocatedReward: allocation.estimatedReward,
+      walletId: wallet.walletId,
+      points: wallet.points,
+      totalPoints: simulation?.totalValidPoints ?? walletPoints.reduce((sum, item) => sum + item.points, 0),
+      rewardPool: epoch.rewardPoolPoints,
+      allocatedReward,
     });
-    snapshots.push({ ...snapshot, walletAddress: addressByWalletId.get(allocation.wallet) ?? "" });
+    snapshots.push({ ...snapshot, walletAddress: addressByWalletId.get(wallet.walletId) ?? "" });
   }
   return snapshots;
 }

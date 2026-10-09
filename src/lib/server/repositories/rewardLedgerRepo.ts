@@ -19,6 +19,8 @@ export interface RewardLedgerEntry {
   robinhoodWallet: string | null;
   epochNumber: number | null;
   cullerAllocatedBaseUnits: bigint;
+  points?: number;
+  conversionRate?: bigint | null;
   status: RewardLedgerStatus;
   lastScanId: string;
   firstScannedAt: string;
@@ -31,6 +33,8 @@ interface RewardLedgerRow {
   robinhood_wallet: string | null;
   epoch_number: number | null;
   salv_allocated_base_units: string | number;
+  points: number;
+  conversion_rate: string | number | null;
   status: RewardLedgerStatus;
   last_scan_id: string;
   first_scanned_at: string | Date;
@@ -62,6 +66,8 @@ function mapRow(row: RewardLedgerRow): RewardLedgerEntry {
     robinhoodWallet: row.robinhood_wallet,
     epochNumber: row.epoch_number,
     cullerAllocatedBaseUnits: parseBaseUnits(row.salv_allocated_base_units),
+    points: row.points,
+    conversionRate: row.conversion_rate === null ? null : BigInt(String(row.conversion_rate)),
     status: row.status,
     lastScanId: row.last_scan_id,
     firstScannedAt: toIso(row.first_scanned_at),
@@ -86,6 +92,8 @@ export interface UpsertRewardLedgerEntryInput {
   robinhoodWallet: string | null;
   epochNumber: number | null;
   cullerAllocatedBaseUnits: bigint;
+  points?: number;
+  conversionRate?: bigint | null;
   status: RewardLedgerStatus;
   scanId: string;
 }
@@ -133,16 +141,18 @@ export async function upsertRewardLedgerEntry(db: Db, input: UpsertRewardLedgerE
   const epochKey = epochKeyFor(input.epochNumber);
   const result = await db.query<RewardLedgerRow>(
     `INSERT INTO reward_ledger_entries
-       (solana_wallet, robinhood_wallet, epoch_number, epoch_key, salv_allocated_base_units, status, last_scan_id, first_scanned_at, scanned_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now())
+       (solana_wallet, robinhood_wallet, epoch_number, epoch_key, salv_allocated_base_units, points, conversion_rate, status, last_scan_id, first_scanned_at, scanned_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
      ON CONFLICT (solana_wallet, epoch_key) DO UPDATE SET
        robinhood_wallet = EXCLUDED.robinhood_wallet,
        salv_allocated_base_units = EXCLUDED.salv_allocated_base_units,
+       points = EXCLUDED.points,
+       conversion_rate = EXCLUDED.conversion_rate,
        status = EXCLUDED.status,
        last_scan_id = EXCLUDED.last_scan_id,
        scanned_at = now()
      RETURNING *`,
-    [input.solanaWallet, input.robinhoodWallet, input.epochNumber, epochKey, input.cullerAllocatedBaseUnits.toString(), input.status, input.scanId]
+    [input.solanaWallet, input.robinhoodWallet, input.epochNumber, epochKey, input.cullerAllocatedBaseUnits.toString(), input.points ?? 0, input.conversionRate?.toString() ?? null, input.status, input.scanId]
   );
   if (!result.rows[0]) {
     throw new RewardLedgerError("upsertRewardLedgerEntry: INSERT ... ON CONFLICT did not return a row.");
@@ -163,7 +173,7 @@ export async function getRewardLedgerEntry(db: Db, solanaWallet: string, epochNu
   return result.rows[0] ? mapRow(result.rows[0]) : null;
 }
 
-const CSV_HEADER = "solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status";
+const CSV_HEADER = "solana_wallet,robinhood_wallet,epoch_id,points,culler_allocated,conversion_rate,status,scanned_at";
 
 /** Escapes a single CSV field per RFC 4180: wraps in quotes and doubles
  * any embedded quote whenever the field contains a comma, quote, or
@@ -181,7 +191,7 @@ function csvField(value: string): string {
  * Serializes the full reward ledger to CSV text — human-readable, one
  * row per (Solana wallet, epoch), most-recently-scanned first. Column
  * order is `solana_wallet,robinhood_wallet,epoch_id,culler_allocated,
- * scanned_at,status`. `robinhood_wallet` is an empty field when no
+ * points,conversion_rate,status,scanned_at`. `robinhood_wallet` is an empty field when no
  * address is currently linked — never a placeholder string.
  *
  * This is the ONLY place CSV text is ever produced; the table itself is
@@ -200,7 +210,9 @@ export function serializeRewardLedgerToCsv(entries: RewardLedgerEntry[]): string
         csvField(entry.solanaWallet),
         csvField(entry.robinhoodWallet ?? ""),
         csvField(entry.epochNumber === null ? "" : String(entry.epochNumber)),
+        csvField(String(entry.points ?? 0)),
         csvField(baseUnitsToCullerDecimalString(entry.cullerAllocatedBaseUnits)),
+        csvField(entry.conversionRate?.toString() ?? ""),
         csvField(entry.scannedAt),
         csvField(entry.status),
       ].join(",")

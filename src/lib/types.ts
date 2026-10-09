@@ -24,17 +24,72 @@ export type AssetClassification =
   | "NFT_VALUABLE"
   | "NFT_REVIEW";
 
+export type AssetEligibility = "ELIGIBLE" | "CANDIDATE" | "NOT_ELIGIBLE";
+
+export type EligibilityEvidence = {
+  assetType: "EMPTY_ACCOUNT" | "FUNGIBLE" | "NFT" | "COMPRESSED_NFT" | "OTHER" | "UNKNOWN";
+  classification: AssetClassification;
+  eligibility: AssetEligibility;
+  confidence: MarketConfidence;
+  priceUsd: number | null;
+  estimatedValueUsd: number | null;
+  liquidityUsd: number | null;
+  priceSource: string | null;
+  liquiditySource: string | null;
+  routeStatus: TokenMarketData["routeStatus"] | null;
+  priceImpactBps: number | null;
+  marketplace: string | null;
+  floorUsd: number | null;
+  bestListingUsd: number | null;
+  bestOfferUsd: number | null;
+  evidenceSources: string[];
+  checkedAt: string | null;
+};
+
 export type MarketDataStatus = "AVAILABLE" | "NO_MARKET" | "UNKNOWN" | "ERROR";
 
 export type TokenMarketData = {
   priceUsd: number | null;
+  priceStatus: "AVAILABLE" | "NOT_FOUND" | "UNAVAILABLE";
+  routeStatus: "ROUTE_AVAILABLE" | "NO_ROUTE" | "PROVIDER_UNAVAILABLE" | "RATE_LIMITED" | "UNKNOWN";
   liquidityUsd: number | null;
+  volume24h: number | null;
+  marketExists: boolean | null;
   marketAvailable: boolean | null;
   status: MarketDataStatus;
+  priceImpactBps: number | null;
   source: string;
+  checkedAt: string;
+  confidence: MarketConfidence;
+};
+
+export type MarketConfidence = "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
+
+export type NftMarketData = {
+  floorPrice: number | null;
+  floorPriceUsd: number | null;
+  bestListing: number | null;
+  bestOffer: number | null;
+  recentSale: number | null;
+  volume24h: number | null;
+  marketExists: boolean | null;
+  status: "AVAILABLE" | "NO_MARKET" | "UNKNOWN" | "PROVIDER_UNAVAILABLE";
+  source: string;
+  collectionSlug: string | null;
+  checkedAt: string;
+  confidence: MarketConfidence;
+  marketplaceSources?: string[];
+  activityCount?: number | null;
+  floorPriceNative?: number | null;
+  bestListingNative?: number | null;
+  bestOfferNative?: number | null;
+  recentSaleNative?: number | null;
+  nativeCurrency?: string | null;
+  providerMode?: "KEYLESS" | "AUTHENTICATED";
 };
 
 export type AssetMetadata = {
+  assetType?: "FUNGIBLE" | "NFT" | "COMPRESSED_NFT" | "OTHER" | "UNKNOWN";
   imageUrl: string | null;
   collection: string | null;
   collectionAddress: string | null;
@@ -42,7 +97,9 @@ export type AssetMetadata = {
   priceUsd: number | null;
   valueUsd: number | null;
   liquidityUsd?: number | null;
-  marketStatus: "AVAILABLE" | "NO_MARKET" | "UNKNOWN";
+  marketStatus: "AVAILABLE" | "NO_MARKET" | "UNKNOWN" | "ERROR";
+  marketData?: TokenMarketData;
+  nftMarketData?: NftMarketData;
   metadataStatus: "AVAILABLE" | "UNAVAILABLE";
   source: string;
 };
@@ -75,10 +132,14 @@ export type Asset = {
   /** Conservative market/value classification. Missing data is never
    * treated as zero value. */
   valueClassification?: AssetClassification;
+  eligibility?: AssetEligibility;
+  eligibilityEvidence?: EligibilityEvidence;
   rawBalance?: string;
   decimals?: number;
   recoverableLamports?: number;
   metadata?: AssetMetadata;
+  network?: "solana" | "robinhood";
+  tokenStandard?: "NATIVE" | "ERC-20" | "ERC-721" | "ERC-1155";
 };
 
 export type WatchItem = {

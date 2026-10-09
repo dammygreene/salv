@@ -12,15 +12,7 @@ import {
 
 type Props = { open: boolean; data: CullerShareData; onClose: () => void };
 
-export function CullerShareModal({ open, data, onClose }: Props) {
-  if (!open) return null;
-  return <CullerShareModalContent key={`${data.allocation}-${data.walletAddress ?? ""}`} data={data} onClose={onClose} />;
-}
-
-function CullerShareModalContent({ data, onClose }: Omit<Props, "open">) {
-  const [postText, setPostText] = useState(() => buildCullerPostText(data));
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+export function CullerShareCardPreview({ data }: { data: CullerShareData }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,14 +22,42 @@ function CullerShareModalContent({ data, onClose }: Omit<Props, "open">) {
         objectUrl = URL.createObjectURL(blob);
         setPreviewUrl(objectUrl);
       })
-      .catch(() => setMessage("Card assets could not be loaded. Please try again."));
-    const handleKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    document.addEventListener("keydown", handleKey);
+      .catch(() => setPreviewUrl(null));
     return () => {
-      document.removeEventListener("keydown", handleKey);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [data, onClose]);
+  }, [data]);
+
+  if (!previewUrl) {
+    return <div className="culler-share-preview culler-share-preview-loading" role="status">Preparing card preview…</div>;
+  }
+
+  return (
+    <Image
+      className="culler-share-preview"
+      src={previewUrl}
+      alt="Culler allocation share card preview"
+      width={1200}
+      height={675}
+      unoptimized
+    />
+  );
+}
+
+export function CullerShareModal({ open, data, onClose }: Props) {
+  if (!open) return null;
+  return <CullerShareModalContent key={`${data.allocation}-${data.walletAddress ?? ""}`} data={data} onClose={onClose} />;
+}
+
+function CullerShareModalContent({ data, onClose }: Omit<Props, "open">) {
+  const [postText, setPostText] = useState(() => buildCullerPostText(data));
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
 
   async function downloadCard(blob?: Blob) {
     const card = blob ?? (await generateCullerShareCard(data));
@@ -79,22 +99,9 @@ function CullerShareModalContent({ data, onClose }: Omit<Props, "open">) {
           <h2 id="culler-share-title">Share your allocation</h2>
           <p>Show the timeline what you found.</p>
         </div>
-        {previewUrl ? (
-          <Image
-            className="culler-share-preview"
-            src={previewUrl}
-            alt="Culler allocation share card preview"
-            width={1200}
-            height={675}
-            unoptimized
-          />
-        ) : (
-          <div className="culler-share-preview culler-share-preview-loading" role="status">
-            Preparing card preview…
-          </div>
-        )}
+        <CullerShareCardPreview data={data} />
         <div className="culler-share-allocation">
-          <span>Your allocation</span>
+          <span>{data.allocationState ?? "YOUR CULLER ALLOCATION"}</span>
           <strong>+{formatCullerAllocation(data.allocation)} $CULLER</strong>
         </div>
         <label className="culler-share-label" htmlFor="culler-share-post">X post</label>

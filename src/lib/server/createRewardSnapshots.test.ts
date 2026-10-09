@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { ParsedTransactionWithMeta } from "@solana/web3.js";
 import { Db } from "./db/types";
 import { createTestDb, resetTestDb } from "./db/testDb";
@@ -53,6 +53,10 @@ describe("createRewardSnapshotsForClosedEpoch", () => {
 
   beforeEach(async () => {
     await resetTestDb(db);
+  });
+
+  afterAll(async () => {
+    await db.close?.();
   });
 
   it("refuses to snapshot an epoch that is not CLOSED", async () => {

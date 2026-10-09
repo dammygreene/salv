@@ -494,6 +494,124 @@
   align-content: start;
 }
 
+.asset-results {
+  display: grid;
+  gap: 28px;
+}
+
+.allocation-result {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(320px, 1.15fr);
+  gap: 28px;
+  align-items: center;
+  padding: 28px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+}
+
+.allocation-result-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.allocation-result-copy h2 {
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
+}
+
+.allocation-result-amount {
+  color: var(--secondary);
+  font-size: clamp(2rem, 5vw, 3.8rem);
+  line-height: 1;
+}
+
+.allocation-result-state {
+  font-size: var(--fs-small);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.allocation-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.allocation-result-note,
+.scan-summary p,
+.allocation-evidence span {
+  color: var(--text-secondary);
+  font-size: var(--fs-small);
+}
+
+.scan-summary,
+.allocation-evidence,
+.asset-inventory {
+  display: grid;
+  gap: 10px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+
+.scan-summary p {
+  margin: 0;
+}
+
+.scan-diagnostics {
+  color: var(--text-secondary);
+  font-size: var(--fs-small);
+}
+
+.scan-diagnostics summary {
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.scan-diagnostics p {
+  margin-top: 8px;
+}
+
+.allocation-evidence strong {
+  font-size: 1.4rem;
+}
+
+.asset-inventory-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.asset-inventory-heading > div {
+  display: grid;
+  gap: 5px;
+}
+
+.asset-category {
+  display: grid;
+  gap: 12px;
+}
+
+.asset-category-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.asset-category-heading h2 {
+  font-size: 1.1rem;
+}
+
+.asset-category-heading span {
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
 .asset-card {
   position: relative;
   display: flex;
@@ -517,9 +635,17 @@
   justify-content: space-between;
 }
 
-.asset-glyph {
-  font-size: 1.2rem;
+.asset-kind-icon {
   color: var(--text-muted);
+}
+
+.asset-nft-image {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  background: var(--surface-raised);
 }
 
 .asset-card h3 {
@@ -560,6 +686,71 @@
 .asset-card p {
   font-size: 0.88rem;
   flex: 1;
+}
+
+@media (max-width: 600px) {
+  .allocation-result {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .allocation-result .culler-share-preview {
+    order: -1;
+  }
+
+  .asset-inventory-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .asset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .asset-card {
+    min-width: 0;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .asset-card h3 {
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+  }
+
+  .asset-address {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.62rem;
+  }
+
+  .asset-address .meta-rule {
+    display: none;
+  }
+
+  .asset-detail {
+    display: block;
+    font-size: 0.7rem;
+  }
+
+  .asset-detail > span + span {
+    margin-top: 4px;
+  }
+
+  .asset-detail strong {
+    font-size: 0.78rem;
+  }
+
+  .asset-card p {
+    font-size: 0.76rem;
+  }
+
+  .asset-category-heading h2 {
+    font-size: 0.95rem;
+  }
 }
 
 .asset-action {

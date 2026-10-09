@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TOKEN_2022_PROGRAM_ID_STR, TOKEN_PROGRAM_ID_STR } from "../constants";
 import { classifyTokenEligibility, evaluateCloseAccountEligibility } from "./eligibility";
+import { evaluateAssetEligibility } from "@/lib/eligibility";
 
 const WALLET = "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T";
 
@@ -94,6 +95,23 @@ describe("classifyTokenEligibility", () => {
       expect(result).not.toBe("KNOWN_SPAM_TOKEN");
       expect(result).not.toBe("KNOWN_SPAM_NFT");
     }
+  });
+
+  describe("evaluateAssetEligibility", () => {
+    it.each([
+      ["EMPTY_ACCOUNT", "ELIGIBLE"],
+      ["FUNGIBLE_NO_LIQUIDITY", "CANDIDATE"],
+      ["FUNGIBLE_LOW_VALUE", "CANDIDATE"],
+      ["NFT_NO_MARKET", "CANDIDATE"],
+      ["NFT_LOW_VALUE", "CANDIDATE"],
+      ["FUNGIBLE_VALUABLE", "NOT_ELIGIBLE"],
+      ["FUNGIBLE_UNKNOWN_VALUE", "CANDIDATE"],
+      ["NFT_VALUABLE", "NOT_ELIGIBLE"],
+      ["NFT_UNKNOWN_VALUE", "CANDIDATE"],
+      ["NFT_REVIEW", "CANDIDATE"],
+    ] as const)("maps %s to %s", (classification, expected) => {
+      expect(evaluateAssetEligibility(classification)).toBe(expected);
+    });
   });
 
   it("classifies a verified, listed token as ACTIVE_TOKEN", () => {

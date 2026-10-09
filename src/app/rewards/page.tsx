@@ -16,9 +16,9 @@ interface ScanApiResult {
       reason?: string;
       programStatus?: { splToken: "available" | "unavailable"; token2022: "available" | "unavailable" };
     };
-    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; nativeBalanceWei: string | null; reason?: string };
+    robinhood: { submitted: boolean; state: "AVAILABLE" | "UNAVAILABLE" | "NOT_LINKED"; discovery?: "COMPLETE" | "PARTIAL" | "EMPTY" | "UNAVAILABLE"; nativeBalanceWei: string | null; reason?: string };
   };
-  reward: { cullerAllocated: string; status: string; epochId: number | null };
+  reward: { cullerAllocated: string; status: string; epochId: number | null; allocationState: "YOUR CULLER ALLOCATION" | "CURRENT ALLOCATION" | "FINAL ALLOCATION" | "NO ALLOCATION" };
   csvRecorded: boolean;
   recordError?: string;
 }
@@ -130,7 +130,7 @@ export default function RewardsPage() {
             <>
               <div className="rewards-grid">
                 <div className="reward-card">
-                  <span>Allocation</span>
+                  <span>{scanResult.reward.allocationState}</span>
                   <strong>{scanResult.reward.cullerAllocated} CULLER</strong>
                 </div>
                 <div className="reward-card">
@@ -151,7 +151,7 @@ export default function RewardsPage() {
                 <strong>{shortAddress(scanResult.solanaWallet)}</strong>
                 <small>
                   {scanResult.robinhoodWallet
-                    ? `Robinhood Chain included in the same scan (${scanResult.scan.robinhood.state.toLowerCase()}); it does not create a second allocation.`
+                    ? `Robinhood Chain included in the same scan (${scanResult.scan.robinhood.discovery?.toLowerCase() ?? scanResult.scan.robinhood.state.toLowerCase()}); it does not create a second allocation.${scanResult.scan.robinhood.reason ? ` ${scanResult.scan.robinhood.reason}` : ""}`
                     : "Solana wallet is the primary leaderboard identity."}
                 </small>
                 {scanResult.recordError && <small className="wallet-form-error">{scanResult.recordError}</small>}

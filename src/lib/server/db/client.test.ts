@@ -50,6 +50,9 @@ describe("getDb production safety", () => {
     await expect(getDb()).rejects.not.toBeInstanceOf(DatabaseConfigurationError);
   }, 15_000);
 
+  // PGlite startup competes with the other database-backed files when Vitest
+  // runs all workers in parallel; this still bounds a genuinely slow engine
+  // start without hiding a hung query or migration.
   it("does not require DATABASE_URL outside production (falls back to the embedded PGlite engine)", async () => {
     vi.resetModules();
     (process.env as Record<string, string>).NODE_ENV = "test";
@@ -58,7 +61,11 @@ describe("getDb production safety", () => {
 
     const { getDb } = await import("./client");
     const db = await getDb();
-    const result = await db.query<{ one: number }>("SELECT 1 AS one");
-    expect(Number(result.rows[0].one)).toBe(1);
-  }, 15_000);
+    try {
+      const result = await db.query<{ one: number }>("SELECT 1 AS one");
+      expect(Number(result.rows[0].one)).toBe(1);
+    } finally {
+      await db.close?.();
+    }
+  }, 30_000);
 });

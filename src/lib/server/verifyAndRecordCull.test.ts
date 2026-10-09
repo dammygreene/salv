@@ -80,7 +80,7 @@ describe("verifyAndRecordCull (full pipeline against a real Postgres/PGlite inst
   });
 
   afterAll(async () => {
-    // PGlite has no explicit close needed for in-memory instances used only in tests.
+    await db.close?.();
   });
 
   it("awards deterministic points for a verified CLOSE_EMPTY_TOKEN_ACCOUNT action", async () => {

@@ -1,9 +1,36 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Asset } from "../types";
 import { enrichSolanaAssets } from "./assetEnrichment";
-import { getAssetsByOwner } from "./quicknodeProvider";
+import { getAssetsByMints, getAssetsByOwner } from "./quicknodeProvider";
 
-vi.mock("./quicknodeProvider", () => ({ getAssetsByOwner: vi.fn() }));
+vi.mock("./quicknodeProvider", () => ({ getAssetsByMints: vi.fn(), getAssetsByOwner: vi.fn() }));
+vi.mock("./marketData", () => ({
+  getBatchTokenPrices: vi.fn().mockResolvedValue(new Map()),
+  getTokenMarketData: vi.fn().mockResolvedValue({
+    priceUsd: null,
+    priceStatus: "UNAVAILABLE",
+    routeStatus: "UNKNOWN",
+    liquidityUsd: null,
+    volume24h: null,
+    marketExists: null,
+    confidence: "UNKNOWN",
+    marketAvailable: null,
+    status: "UNKNOWN",
+    priceImpactBps: null,
+    source: "test",
+    checkedAt: "2026-01-01T00:00:00.000Z",
+  }),
+}));
+vi.mock("./openSeaProvider", () => ({
+  classifyNftMarket: vi.fn((market: { status: string }) => ({
+    classification: market.status === "AVAILABLE" ? "NFT_LOW_VALUE" : "NFT_UNKNOWN_VALUE",
+    valueUsd: null,
+  })),
+  getNftMarketDataBatch: vi.fn().mockResolvedValue(new Map()),
+}));
+vi.mock("./magicEdenProvider", () => ({
+  getMagicEdenMarketDataBatch: vi.fn().mockResolvedValue(new Map()),
+}));
 
 const rawAsset: Asset = {
   id: "token-account",
@@ -27,6 +54,46 @@ const rawAsset: Asset = {
 };
 
 describe("Solana asset enrichment", () => {
+  beforeEach(() => {
+    vi.mocked(getAssetsByMints).mockResolvedValue({ assets: [], status: "AVAILABLE" });
+  });
+  it("keeps Token-2022 identity while enriching a fungible mint", async () => {
+    vi.mocked(getAssetsByOwner).mockResolvedValue({
+      assets: [],
+      status: "AVAILABLE",
+    });
+    vi.mocked(getAssetsByMints).mockResolvedValue({
+      status: "AVAILABLE",
+      assets: [
+        {
+          assetId: "mint-1",
+          mint: "mint-1",
+          name: "Example",
+          symbol: "EX",
+          imageUrl: null,
+          collection: null,
+          collectionAddress: null,
+          verifiedCollection: null,
+          priceUsd: null,
+          valueUsd: null,
+          marketStatus: "UNKNOWN",
+          liquidityStatus: "UNKNOWN",
+          metadataStatus: "AVAILABLE",
+          assetType: "FUNGIBLE",
+          source: "quicknode-das",
+        },
+      ],
+    });
+
+    const result = await enrichSolanaAssets("wallet", [{ ...rawAsset, programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1P" }]);
+
+    expect(result.assets[0]).toMatchObject({
+      programId: "TokenzQdBNbLqP5VEhdkAS6EPFLC1P",
+      valueClassification: "FUNGIBLE_UNKNOWN_VALUE",
+      ticker: "EX",
+    });
+  });
+
   it("keeps raw assets when QuickNode DAS is unavailable", async () => {
     vi.mocked(getAssetsByOwner).mockResolvedValue({
       assets: [],
@@ -37,7 +104,8 @@ describe("Solana asset enrichment", () => {
     const result = await enrichSolanaAssets("wallet", [rawAsset]);
 
     expect(result.status).toBe("UNAVAILABLE");
-    expect(result.assets).toEqual([rawAsset]);
+    expect(result.assets[0]).toMatchObject(rawAsset);
+    expect(result.assets[0].eligibility).toBe("CANDIDATE");
   });
 
   it("enriches by mint without adding a second asset", async () => {
@@ -101,5 +169,32 @@ describe("Solana asset enrichment", () => {
     const result = await enrichSolanaAssets("wallet", [rawAsset]);
 
     expect(result.assets[0].valueClassification).toBe("FUNGIBLE_LOW_VALUE");
+  });
+
+  it("keeps deferred NFT candidates unknown instead of dereferencing missing market data", async () => {
+    const assets = Array.from({ length: 25 }, (_, index) => ({
+      assetId: `compressed-${index}`,
+      mint: `compressed-${index}`,
+      name: `NFT ${index}`,
+      symbol: null,
+      imageUrl: null,
+      collection: null,
+      collectionAddress: null,
+      verifiedCollection: null,
+      priceUsd: null,
+      valueUsd: null,
+      marketStatus: "UNKNOWN" as const,
+      liquidityStatus: "UNKNOWN" as const,
+      metadataStatus: "AVAILABLE" as const,
+      assetType: "COMPRESSED_NFT" as const,
+      source: "quicknode-das" as const,
+    }));
+    vi.mocked(getAssetsByOwner).mockResolvedValue({ status: "AVAILABLE", assets });
+
+    const result = await enrichSolanaAssets("wallet", []);
+
+    expect(result.assets).toHaveLength(25);
+    expect(result.assets[24].valueClassification).toBe("NFT_UNKNOWN_VALUE");
+    expect(result.assets[24].eligibility).toBe("CANDIDATE");
   });
 });

@@ -1,4 +1,5 @@
 import { AssetClassification } from "@/lib/cull/registry";
+export { evaluateAssetEligibility } from "@/lib/eligibility";
 import { TOKEN_2022_PROGRAM_ID_STR, TOKEN_PROGRAM_ID_STR } from "../constants";
 
 const KNOWN_TOKEN_PROGRAMS = new Set([TOKEN_PROGRAM_ID_STR, TOKEN_2022_PROGRAM_ID_STR]);
@@ -15,6 +16,7 @@ export interface EligibilityResult {
   eligible: boolean;
   reason: string;
 }
+
 
 /**
  * Decides whether a token account can enter the automatic "close empty

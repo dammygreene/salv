@@ -8,6 +8,7 @@ export type CullerShareData = {
   walletAddress?: string;
   epochId?: number | null;
   verified: boolean;
+  allocationState?: "YOUR CULLER ALLOCATION" | "CURRENT ALLOCATION" | "FINAL ALLOCATION";
   siteUrl?: string;
 };
 
@@ -41,7 +42,7 @@ export function hasCullerAllocation(value: string): boolean {
 
 export function buildCullerPostText(data: CullerShareData): string {
   return [
-    "Just checked my wallet with CULLER.",
+    "Just checked my wallet with @cullerlabs and found some dead weight I didn't need.",
     "",
     `Found an allocation of +${formatCullerAllocation(data.allocation)} $CULLER.`,
     "",

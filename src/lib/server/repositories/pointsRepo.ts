@@ -92,7 +92,8 @@ export async function getWalletStats(db: Db, walletId: string): Promise<WalletSt
 
 export async function getWalletPointsForEpoch(db: Db, walletId: string, epochId: string): Promise<number> {
   const result = await db.query<{ total: string | null }>(
-    "SELECT SUM(points) AS total FROM points_ledger WHERE wallet_id = $1 AND epoch_id = $2",
+    `SELECT COALESCE((SELECT SUM(points) FROM points_ledger WHERE wallet_id = $1 AND epoch_id = $2), 0)
+      + COALESCE((SELECT points FROM scan_allocations WHERE wallet_id = $1 AND epoch_id = $2), 0) AS total`,
     [walletId, epochId]
   );
   return Number(result.rows[0]?.total ?? 0);
@@ -111,12 +112,18 @@ export interface WalletEpochPoints {
  * same as a zero-point one). */
 export async function listWalletPointsForEpoch(db: Db, epochId: string): Promise<WalletEpochPoints[]> {
   const result = await db.query<{ wallet_id: string; address: string; total: string }>(
-    `SELECT pl.wallet_id, w.address, SUM(pl.points) AS total
-     FROM points_ledger pl
-     JOIN wallets w ON w.id = pl.wallet_id
-     WHERE pl.epoch_id = $1
-     GROUP BY pl.wallet_id, w.address
-     HAVING SUM(pl.points) > 0`,
+    `SELECT wallet_id, address, SUM(points) AS total
+     FROM (
+       SELECT pl.wallet_id, w.address, pl.points
+       FROM points_ledger pl JOIN wallets w ON w.id = pl.wallet_id
+       WHERE pl.epoch_id = $1
+       UNION ALL
+       SELECT sa.wallet_id, w.address, sa.points
+       FROM scan_allocations sa JOIN wallets w ON w.id = sa.wallet_id
+       WHERE sa.epoch_id = $1
+     ) combined
+     GROUP BY wallet_id, address
+     HAVING SUM(points) > 0`,
     [epochId]
   );
   return result.rows.map((row) => ({ walletId: row.wallet_id, walletAddress: row.address, points: Number(row.total) }));

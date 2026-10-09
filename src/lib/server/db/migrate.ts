@@ -6,6 +6,10 @@ import { MIGRATION_0005_REWARD_LEDGER } from "./migrations/0005_reward_ledger";
 import { MIGRATION_0006_COMBINED_REWARD_SUBMISSION } from "./migrations/0006_combined_reward_submission";
 import { MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD } from "./migrations/0008_remove_x_identity_leaderboard";
 import { MIGRATION_0009_REMOVE_LEGACY_TOKEN_INFRASTRUCTURE } from "./migrations/0009_remove_legacy_token_infrastructure";
+import { MIGRATION_0010_ASSET_KNOWLEDGE } from "./migrations/0010_asset_knowledge";
+import { MIGRATION_0011_ASSET_KNOWLEDGE_COVERAGE } from "./migrations/0011_asset_knowledge_coverage";
+import { MIGRATION_0012_SCAN_ALLOCATIONS } from "./migrations/0012_scan_allocations";
+import { MIGRATION_0013_FIXED_ALLOCATIONS } from "./migrations/0013_fixed_allocations";
 
 interface Migration {
   name: string;
@@ -21,6 +25,10 @@ const MIGRATIONS: Migration[] = [
   { name: "0006_combined_reward_submission", sql: MIGRATION_0006_COMBINED_REWARD_SUBMISSION },
   { name: "0008_remove_x_identity_leaderboard", sql: MIGRATION_0008_REMOVE_X_IDENTITY_LEADERBOARD },
   { name: "0009_remove_legacy_token_infrastructure", sql: MIGRATION_0009_REMOVE_LEGACY_TOKEN_INFRASTRUCTURE },
+  { name: "0010_asset_knowledge", sql: MIGRATION_0010_ASSET_KNOWLEDGE },
+  { name: "0011_asset_knowledge_coverage", sql: MIGRATION_0011_ASSET_KNOWLEDGE_COVERAGE },
+  { name: "0012_scan_allocations", sql: MIGRATION_0012_SCAN_ALLOCATIONS },
+  { name: "0013_fixed_allocations", sql: MIGRATION_0013_FIXED_ALLOCATIONS },
 ];
 
 /** Applies any migration not yet recorded in schema_migrations, in

@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Db } from "../db/types";
 import { createTestDb, resetTestDb } from "../db/testDb";
 import { ensureCullEvent, insertCullAction, listVerifiedActionsForWallet } from "./cullRepo";
@@ -13,6 +13,10 @@ describe("listVerifiedActionsForWallet pagination", () => {
 
   beforeEach(async () => {
     await resetTestDb(db);
+  });
+
+  afterAll(async () => {
+    await db.close?.();
   });
 
   it("paginates a wallet's VERIFIED actions, newest first, and reports total/hasMore correctly", async () => {

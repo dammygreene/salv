@@ -15,6 +15,8 @@ import { TOKEN_2022_PROGRAM_ID_STR, TOKEN_PROGRAM_ID_STR } from "../constants";
 export { SOLANA_RPC_ENDPOINT };
 export const TOKEN_PROGRAM_ID = TOKEN_PROGRAM_ID_STR;
 export const TOKEN_2022_PROGRAM_ID = TOKEN_2022_PROGRAM_ID_STR;
+const SERVER_RPC_ENDPOINT =
+  typeof window === "undefined" ? process.env.SOLANA_RPC_URL?.trim() || SOLANA_RPC_ENDPOINT : SOLANA_RPC_ENDPOINT;
 
 export class SolanaRpcError extends Error {}
 
@@ -26,7 +28,7 @@ async function rpcCall<T>(method: string, params: unknown[], timeoutMs = 15000):
   requestId += 1;
 
   try {
-    const res = await fetch(SOLANA_RPC_ENDPOINT, {
+    const res = await fetch(SERVER_RPC_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: requestId, method, params }),

@@ -14,6 +14,28 @@ for the treasury/claim system this ledger reads from but never alters.
 > rewrite replaces, not supplements, Phase 7's old `network`-keyed
 > model.
 
+## Fixed allocation model
+
+New epochs snapshot an immutable whole-token conversion rate
+(`culler_tokens_per_point`). The approved rate for the next campaign is
+**100 CULLER per point**. A fixed epoch calculates each wallet's allocation
+as `wallet points × conversion rate`, using bigint base-unit arithmetic.
+The persisted epoch snapshot, not the environment, is authoritative after
+activation; changing `CULLER_TOKENS_PER_POINT` cannot rewrite prior epochs.
+Other wallets can change leaderboard rank, but cannot dilute or reduce an
+existing allocation.
+
+The epoch reward pool is informational metadata for fixed epochs; it does not
+cap or dilute wallet allocations. The approved reference budget is
+**300,000,000 CULLER**, but fixed allocations continue even when cumulative
+recorded allocations exceed that value. At 100 CULLER per point and the
+1,000-point wallet cap, one maximum wallet receives 100,000 CULLER. The
+wallet, empty-account, fungible, NFT, and per-asset caps remain unchanged.
+
+Epochs without a conversion snapshot are retained as historical legacy
+epochs and do not accept new allocations. Their historical records remain
+readable and are not mutated retroactively.
+
 ## 1. No-connect model
 
 Nothing in the primary CULLER flow ever asks a user to connect a wallet
@@ -36,16 +58,9 @@ it:
 - `/rewards` — the primary home of the new scan → allocation → ledger
   flow described below.
 
-**Signing is a separate, later, clearly-labeled step.** Actually
-executing an on-chain recovery transaction still requires a real
-signature from the wallet that holds the funds — that is a genuine
-cryptographic requirement this project cannot and does not try to work
-around. That one unavoidable "connect a wallet extension to sign" control
-is confined to `src/components/review-modal.tsx`, shown only at the
-moment a transaction is actually about to be signed (after a user has
-already selected specific assets to recover), never on the paste/scan
-screen itself. `$CULLER` claiming today requires no signature at all (see
-§7) — it is explicitly labeled as such on `/rewards`.
+On-chain recovery remains a separate, explicitly signed flow. The scan and
+allocation flow never creates, signs, submits, or executes a token claim or
+transfer.
 
 ## 2. Solana required, Robinhood optional — the combined submission
 
@@ -101,15 +116,11 @@ needs.
    is ever implemented later, it plugs into this same step without
    changing the identity model in step 4-6 at all.
 4. **Compute the $CULLER allocation strictly server-side, from the Solana
-   wallet alone**, via the **existing, authoritative reward-snapshot/
-   claim system** (`getClaimView()` in `src/lib/culler/claims.ts` — the
-   same function `GET /api/culler/claims/:wallet` already uses), never
-   from the live scan in step 2, never from Robinhood, and never from
-   anything the client sent. There is no `amount` field anywhere in the
-   request body this route accepts; a client cannot supply or influence
-   the recorded allocation in any way. This resolves to the most
-   recently **closed** epoch (same default as the claims route) and
-   reads the Solana wallet's frozen snapshot/claim row for it.
+   wallet alone.** An active epoch uses its immutable policy, persisted scan
+   allocation, and epoch-wide points total for a deterministic preview. A
+   closed epoch uses its immutable reward snapshot. There is no `amount`
+   field anywhere in the request body, and this endpoint performs no claim or
+   token-transfer operation.
 5. **Upsert exactly one row** into the reward ledger (§4) for this
    `(solanaWallet, epoch)` — never two rows, never a row keyed on
    Robinhood.
@@ -266,11 +277,11 @@ server at all. Never public.
 
 | Status | Meaning |
 |---|---|
-| `NO_EPOCH` | No closed epoch exists yet for this environment at all. |
+| `NO_EPOCH` | No active or closed epoch exists yet for this environment at all. |
 | `NO_SNAPSHOT` | A closed epoch exists, but this Solana wallet has no reward snapshot for it (no activity recorded, or snapshots not yet generated). |
-| `ALLOCATED` | A real, computed allocation exists and has not been claimed yet. |
-| `CLAIMED` | This Solana wallet's allocation for this epoch has already been claimed on-chain. |
-| `FAILED` | A previous claim attempt's on-chain transaction did not confirm (not a terminal state — eligible for retry via the existing claim flow). |
+| `ALLOCATED` | A real, computed allocation has been recorded by the app. |
+| `CLAIMED` | Reserved for historical ledger compatibility; this app does not execute claims. |
+| `FAILED` | The allocation could not be computed or recorded. |
 
 Phase 7's `NOT_APPLICABLE` status is **removed** in Phase 8: it only ever
 meant "this row's network isn't Solana," a case that can no longer exist
@@ -292,16 +303,9 @@ now that every row's identity is always a Solana wallet.
   a fabricated Robinhood balance, asset list, or "scan complete" state
   for it.
 
-## 8. Claiming — record-only today, explicitly labeled
+## 8. Claims and distribution
 
-Claiming a $CULLER allocation (`POST /api/culler/claims/:wallet/claim`) is
-unchanged by Phase 7/8 and was never gated by a wallet-adapter connection
-in the first place — it only ever needed the Solana address string, and
-executes server-side from the distributor key (see
-`docs/culler-architecture.md` §6). Removing wallet-connect from the
-scan/preview flow does not weaken this in any way. `/rewards` now states
-this explicitly next to the CLAIM button: claiming today executes
-automatically with no signature required; a future version is expected
-to require an external wallet-signing step before it executes, and that
-step will be implemented the same way signing already is for recovery
-transactions (§1) — never faked, never auto-connected.
+No public claim or distributor endpoint is part of the application. The
+reward ledger, snapshots, exports, leaderboard, and share cards are
+record-only accounting surfaces. Any future on-chain distribution must be
+implemented as a separate, explicitly authorized and signed workflow.

@@ -10,9 +10,9 @@ export function CullMachine() {
   const active = scanState !== "READY";
   const label = scanStateLabel[scanState] ?? "Ready to scan";
 
-  const cullable = useMemo(() => assets.filter((asset) => asset.status === "CULLABLE").length, [assets]);
-  const watch = useMemo(() => assets.filter((asset) => asset.status === "WATCH").length, [assets]);
-  const keep = useMemo(() => assets.filter((asset) => asset.status === "KEEP" || asset.status === "REVIEW").length, [assets]);
+  const cullable = useMemo(() => assets.filter((asset) => asset.eligibility === "ELIGIBLE").length, [assets]);
+  const candidates = useMemo(() => assets.filter((asset) => asset.eligibility === "CANDIDATE").length, [assets]);
+  const notEligible = useMemo(() => assets.filter((asset) => asset.eligibility === "NOT_ELIGIBLE").length, [assets]);
   const recoverable = useMemo(
     () =>
       assets.reduce((total, asset) => {
@@ -60,10 +60,10 @@ export function CullMachine() {
             <b className="num">{hasScanned ? cullable : "–"}</b> eligible
           </span>
           <span>
-            <b className="num">{hasScanned ? watch : "–"}</b> watch
+            <b className="num">{hasScanned ? candidates : "–"}</b> candidates
           </span>
           <span>
-            <b className="num">{hasScanned ? keep : "–"}</b> keep
+            <b className="num">{hasScanned ? notEligible : "–"}</b> not eligible
           </span>
         </div>
       </div>

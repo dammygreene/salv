@@ -4,7 +4,7 @@ import { getSolanaRpcUrl } from "./config";
 
 /**
  * Server-only RPC endpoint. Deliberately reads a non-NEXT_PUBLIC_ env var:
- * SOLANA_RPC_URL (or SOLANA_RPC_SECRET_URL) never gets inlined into the
+ * SOLANA_RPC_URL never gets inlined into the
  * client bundle, so a provider's privileged/paid endpoint or API key can
  * live here safely. Falls back to the same public endpoint the client
  * uses if nothing is configured, so local/dev verification still works.

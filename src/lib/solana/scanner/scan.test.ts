@@ -97,4 +97,32 @@ describe("Solana asset discovery", () => {
     expect(result.assets).toHaveLength(63);
     expect(result.summary.nonEmpty).toBe(63);
   });
+
+  it("processes a 252-account wallet without truncation", async () => {
+    vi.mocked(getTokenAccountsByOwner).mockImplementation(async (_owner, programId) =>
+      Array.from({ length: programId === TOKEN_PROGRAM_ID ? 231 : 21 }, (_, index) => {
+        const isEmpty = index < (programId === TOKEN_PROGRAM_ID ? 6 : 0);
+        const isNft = programId === TOKEN_PROGRAM_ID && !isEmpty && index < 34;
+        return tokenAccount(
+          `wallet-252-${programId}-${index}`,
+          `Mint-252-${programId}-${index}`,
+          isEmpty ? "0" : "1",
+          isNft ? 0 : 6,
+          2039280
+        );
+      })
+    );
+    vi.mocked(getTokenList).mockResolvedValue(new Map());
+
+    const result = await scanWallet(WALLET);
+
+    expect(result).toMatchObject({
+      accountsTotal: 252,
+      accountsProcessed: 252,
+      accountsRemaining: 0,
+      truncated: false,
+      summary: { empty: 6, nonEmpty: 246, fungible: 218, nftShaped: 28 },
+    });
+    expect(result.assets).toHaveLength(252);
+  });
 });

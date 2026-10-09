@@ -1,5 +1,6 @@
 import "server-only";
 import { Db } from "../db/types";
+import { AllocationPolicy, DEFAULT_ALLOCATION_POLICY } from "../../cull/allocationPolicy";
 
 export type EpochStatus = "UPCOMING" | "ACTIVE" | "CLOSED";
 
@@ -11,6 +12,8 @@ export interface EpochRecord {
   rewardPoolPoints: number;
   status: EpochStatus;
   createdAt: string;
+  allocationPolicy: AllocationPolicy;
+  conversionRate: bigint | null;
 }
 
 interface EpochRow {
@@ -21,6 +24,8 @@ interface EpochRow {
   reward_pool_points: string | number;
   status: EpochStatus;
   created_at: string;
+  allocation_policy: AllocationPolicy | null;
+  culler_tokens_per_point: string | number | null;
 }
 
 function mapRow(row: EpochRow): EpochRecord {
@@ -32,6 +37,8 @@ function mapRow(row: EpochRow): EpochRecord {
     rewardPoolPoints: Number(row.reward_pool_points),
     status: row.status,
     createdAt: row.created_at,
+    allocationPolicy: row.allocation_policy ?? DEFAULT_ALLOCATION_POLICY,
+    conversionRate: row.culler_tokens_per_point === null ? null : BigInt(String(row.culler_tokens_per_point)),
   };
 }
 
@@ -56,12 +63,15 @@ export async function getEpochByNumber(db: Db, number: number): Promise<EpochRec
 
 export async function createEpoch(
   db: Db,
-  input: { number: number; startsAt: string; endsAt: string; rewardPoolPoints: number }
+  input: { number: number; startsAt: string; endsAt: string; rewardPoolPoints: number; allocationPolicy?: AllocationPolicy; conversionRate?: bigint | number }
 ): Promise<EpochRecord> {
+  if (input.conversionRate !== undefined && (BigInt(input.conversionRate) <= 0n)) {
+    throw new EpochError("conversionRate must be a positive integer.");
+  }
   const result = await db.query<EpochRow>(
-    `INSERT INTO epochs (number, starts_at, ends_at, reward_pool_points, status)
-     VALUES ($1, $2, $3, $4, 'UPCOMING') RETURNING *`,
-    [input.number, input.startsAt, input.endsAt, input.rewardPoolPoints]
+    `INSERT INTO epochs (number, starts_at, ends_at, reward_pool_points, allocation_policy, culler_tokens_per_point, status)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'UPCOMING') RETURNING *`,
+    [input.number, input.startsAt, input.endsAt, input.rewardPoolPoints, JSON.stringify(input.allocationPolicy ?? DEFAULT_ALLOCATION_POLICY), input.conversionRate === undefined ? null : String(input.conversionRate)]
   );
   return mapRow(result.rows[0]);
 }
@@ -83,12 +93,19 @@ export async function activateEpoch(db: Db, epochId: string): Promise<EpochRecor
   });
 }
 
-/** Total points awarded network-wide within one epoch so far. Used only
- * to drive the EST. CULLER simulation — it is not a real token supply. */
+/** Total points awarded network-wide within one epoch. This is retained for
+ * legacy proportional epochs and reporting; fixed epochs never use it to
+ * calculate an individual allocation. */
 export async function getEpochTotalPointsAwarded(db: Db, epochId: string): Promise<number> {
-  const result = await db.query<{ total: string | null }>("SELECT SUM(points) AS total FROM points_ledger WHERE epoch_id = $1", [
-    epochId,
-  ]);
+  const result = await db.query<{ total: string | null }>(
+    `SELECT SUM(points) AS total
+     FROM (
+       SELECT points FROM points_ledger WHERE epoch_id = $1
+       UNION ALL
+       SELECT points FROM scan_allocations WHERE epoch_id = $1
+     ) combined`,
+    [epochId]
+  );
   return Number(result.rows[0]?.total ?? 0);
 }
 

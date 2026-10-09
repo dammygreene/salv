@@ -15,8 +15,8 @@ import { listRewardLedgerEntries, serializeRewardLedgerToCsv } from "@/lib/serve
  * itself is not configured on the server at all — see
  * src/lib/server/devAuth.ts). This route is never public and is
  * READ-ONLY: it has no ability to create, alter, or invent a reward --
- * it only serializes rows that upsertRewardLedgerEntry() already wrote
- * from the authoritative reward-snapshot/claim system.
+ * it only serializes rows that upsertRewardLedgerEntry() already wrote from
+ * the authoritative record-only allocation flow.
  *
  * Columns, in order: solana_wallet, robinhood_wallet, epoch_id,
  * culler_allocated, scanned_at, status. One row per (Solana wallet, epoch)

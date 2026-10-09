@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Db } from "../db/types";
 import { createTestDb, resetTestDb } from "../db/testDb";
 import {
@@ -23,6 +23,10 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
 
   beforeEach(async () => {
     await resetTestDb(db);
+  });
+
+  afterAll(async () => {
+    await db.close?.();
   });
 
   it("creates a new row on first scan (Solana only)", async () => {
@@ -257,9 +261,9 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       });
       const csv = serializeRewardLedgerToCsv(await listRewardLedgerEntries(db));
       const lines = csv.trim().split("\n");
-      expect(lines[0]).toBe("solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status");
+      expect(lines[0]).toBe("solana_wallet,robinhood_wallet,epoch_id,points,culler_allocated,conversion_rate,status,scanned_at");
       expect(lines[1]).toMatch(
-        new RegExp(`^${SOLANA_A},${ROBINHOOD_1},12,1250\\.000000000,\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z,ALLOCATED$`)
+        new RegExp(`^${SOLANA_A},${ROBINHOOD_1},12,0,1250\\.000000000,,\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z,ALLOCATED$`)
       );
     });
 
@@ -274,7 +278,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
       });
       const csv = serializeRewardLedgerToCsv(await listRewardLedgerEntries(db));
       const lines = csv.trim().split("\n");
-      expect(lines[1]).toBe(`${SOLANA_A},,1,0.000000000,${lines[1].split(",")[4]},NO_SNAPSHOT`);
+      expect(lines[1]).toBe(`${SOLANA_A},,1,0,0.000000000,,${lines[1].split(",")[6]},NO_SNAPSHOT`);
     });
 
     it("never includes any secret-shaped field (no keys, seeds, signatures, RPC urls)", async () => {
@@ -291,7 +295,7 @@ describe("rewardLedgerRepo (Phase 8: Solana-primary combined submission)", () =>
     });
 
     it("renders an empty ledger as just the header", () => {
-      expect(serializeRewardLedgerToCsv([])).toBe("solana_wallet,robinhood_wallet,epoch_id,culler_allocated,scanned_at,status\n");
+      expect(serializeRewardLedgerToCsv([])).toBe("solana_wallet,robinhood_wallet,epoch_id,points,culler_allocated,conversion_rate,status,scanned_at\n");
     });
   });
 });

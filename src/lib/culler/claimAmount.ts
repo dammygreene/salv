@@ -1,6 +1,6 @@
 /**
  * Computes exactly how many $CULLER base units a reward_snapshots row is
- * worth, for a real on-chain claim. Pure and deterministic: takes only
+ * worth for a finalized allocation record. Pure and deterministic: takes only
  * the three numbers already frozen onto the immutable snapshot at the
  * moment the epoch closed (points, totalPoints, rewardPool) — it never
  * re-reads the epoch, the points ledger, or any other wallet's data.
