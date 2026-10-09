@@ -21,14 +21,11 @@ export const metadata: Metadata = {
     title: "CULLER: your wallet has leftovers.",
     description: "Scan your wallet, calculate your CULLER allocation, and share the result.",
     type: "website",
-    images: [
-      {
-        url: "/opengraph-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Culler",
-      },
-    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CULLER: your wallet has leftovers.",
+    description: "Scan your wallet, calculate your CULLER allocation, and share the result.",
   },
 };
 
