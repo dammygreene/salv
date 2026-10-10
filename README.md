@@ -71,3 +71,19 @@ npm run dev
 Validation commands are `npm run lint`, `npm run typecheck`, and `npm run build`.
 
 The prototype does not claim live wallet data or submit transactions. Solana credentials belong in `.env.local` using `.env.example`; indexed assets, transaction simulation, independent verification, and reward attribution remain behind the adapter/API work described in the other specification files.
+
+## Brand film
+
+`video/` contains **CULLER — YOUR WALLET HAS LEFTOVERS**, a 36s / 2160-frame @60fps
+Remotion brand film in 1920×1080 and 1080×1920, built entirely from this
+repository's design tokens, brand kit vectors, self-hosted fonts and product
+copy (see `video/README.md` for the extraction table, the scene/beat map and
+the QA pipeline).
+
+```bash
+cd video && npm install
+npm run studio            # Remotion Studio
+npm run render            # 1920x1080 H.264 MP4
+npm run render:vertical   # 1080x1920 H.264 MP4
+npm run smoke             # structural checks, no browser needed
+```

@@ -1,0 +1,87 @@
+/**
+ * On-screen copy. Every string the film shows, verbatim from the product
+ * (src/app/page.tsx, src/app/scan/page.tsx, src/lib/data.ts) plus the brief's
+ * end-card lines where they match the live site's process triad.
+ * tools/dump-copy-strings.mjs feeds these to the HarfBuzz metrics baker.
+ */
+
+export const COPY = {
+  tagline: 'Your wallet has leftovers.',
+  wordmark: 'CULLER',
+  nav: ['Home', 'Scan', 'Watch', 'Rewards', 'Leaderboard', '$CULLER'],
+  url: 'culler.vercel.app',
+  home: {
+    sub1: 'Scan your wallet, see what can be counted,',
+    sub2: 'and get your authoritative CULLER allocation.',
+    cta: 'Scan my wallet',
+    ghost: 'How it works',
+    notice: 'No seed phrases, no custody. Public wallet data only.',
+  },
+  scan: {
+    title: 'Open the machine bay.',
+    sup1: 'Paste a wallet address and run a scan.',
+    sup2: 'CULLER reads the addresses you provide and calculates your allocation.',
+    chk1: 'Checking both wallets and organizing tokens,',
+    chk2: 'NFTs, and allocation evidence.',
+    metaEmpty: 'No address entered',
+    metaSolana: 'Solana',
+    metaRead: 'Read-only scan',
+    formH2: 'Paste a wallet address to begin.',
+    formP1: 'CULLER never asks for a seed phrase or private key.',
+    formP2: 'Paste any public wallet address below — it is read-only.',
+    labelSol: 'Solana wallet',
+    labelRh: 'Robinhood wallet (optional)',
+    phSol: 'Paste a Solana wallet address',
+    phRh: 'Optional: paste your Robinhood wallet address',
+    btn: 'Scan wallet',
+    note1: 'Solana wallet required for $CULLER rewards.',
+    note2: 'Read-only: balances and token accounts are fetched live from Solana.',
+    checkingTitle: 'Checking assets…',
+    foundMany: 'assets found.',
+    foundSupport: "Here's everything attached to both wallets, sorted with a reason for every call.",
+  },
+  machine: {
+    wallet: 'Wallet',
+    scan: 'Scan',
+    classify: 'Classify',
+    result: 'Result',
+    states: ['Reading wallet', 'Indexing assets', 'Checking recovery paths', 'Classifying'],
+    complete: 'Scan complete',
+    solDetected: 'SOL value detected',
+    eligible: 'eligible',
+    candidates: 'candidates',
+    notEligible: 'not eligible',
+  },
+  results: {
+    summaryEyebrow: 'SCAN SUMMARY',
+    summary1: '24 token accounts scanned · 6 digital assets analyzed',
+    summary2: '2 eligible · 1 unknown · 2 valuable',
+    age: 'Age',
+    value: 'Value',
+  },
+  alloc: {
+    eyebrow: 'SCAN COMPLETE',
+    h2: 'Your CULLER allocation',
+    state: 'YOUR CULLER ALLOCATION',
+    p: 'Based on your scanned wallet and current CULLER allocation rules.',
+    note: "Some assets couldn't be confidently valued. CULLER still gives them a baseline allocation.",
+    illustrative: 'Illustrative example scan — not a real wallet.',
+    evEyebrow: 'HOW YOUR ALLOCATION WAS BUILT',
+    points: 'points',
+    contrib1: 'Empty accounts · 1 × 100 · 100 points',
+    contrib2: 'No-liquidity tokens · 2 × 100 · 200 points',
+  },
+  proof: {
+    h2: 'Your allocation is recorded, not guessed.',
+    v1: 'Your allocation is recorded,',
+    v2: 'not guessed.',
+    row1: 'Public wallet data is read from the configured network',
+    row2: 'The Solana wallet remains the primary identity',
+    row3: 'The allocation is recorded in the reward ledger',
+  },
+  outro: {
+    triad: 'Scan. Calculate. Record.',
+    cta: 'Scan my wallet',
+    url: 'culler.vercel.app',
+  },
+} as const;
