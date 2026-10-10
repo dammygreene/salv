@@ -9,7 +9,7 @@ export const COPY = {
   tagline: 'Your wallet has leftovers.',
   wordmark: 'CULLER',
   nav: ['Home', 'Scan', 'Watch', 'Rewards', 'Leaderboard', '$CULLER'],
-  url: 'culler.vercel.app',
+  url: 'cullerlabs.xyz',
   home: {
     sub1: 'Scan your wallet, see what can be counted,',
     sub2: 'and get your authoritative CULLER allocation.',
@@ -39,6 +39,13 @@ export const COPY = {
     checkingTitle: 'Checking assets…',
     foundMany: 'assets found.',
     foundSupport: "Here's everything attached to both wallets, sorted with a reason for every call.",
+    readingP1: 'Reading balances and token accounts live from Solana.',
+    readingP2: 'This takes a few seconds.',
+    scanningBtn: 'Scanning',
+    completeH2: 'Scan complete.',
+    completeP1: 'Your wallet has been scanned.',
+    completeP2: 'Your CULLER allocation is shown below.',
+    rescan: 'Rescan wallet',
   },
   machine: {
     wallet: 'Wallet',
@@ -46,7 +53,8 @@ export const COPY = {
     classify: 'Classify',
     result: 'Result',
     states: ['Reading wallet', 'Indexing assets', 'Checking recovery paths', 'Classifying'],
-    complete: 'Scan complete',
+    complete: 'Complete',
+    ready: 'Ready to scan',
     solDetected: 'SOL value detected',
     eligible: 'eligible',
     candidates: 'candidates',
@@ -82,6 +90,6 @@ export const COPY = {
   outro: {
     triad: 'Scan. Calculate. Record.',
     cta: 'Scan my wallet',
-    url: 'culler.vercel.app',
+    url: 'cullerlabs.xyz',
   },
 } as const;

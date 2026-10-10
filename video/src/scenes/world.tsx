@@ -16,15 +16,10 @@ import {CullerMark, CullerWordmark, CullerLockup, lockupWidth} from '../componen
 import {MARK_TILES} from '../brand/logoGeometry';
 import {Chrome, NavLinks, HomeHero, ScanHead, Machine, ScanControls, Rows, Alloc, L} from '../components/product';
 import {Anchor, Cursor} from '../components/anchor';
-import {FilmText, MonoLabel, MaskReveal, Panel} from '../components/primitives';
+import {FilmText, MonoLabel, MaskReveal} from '../components/primitives';
 
 type Lay = (typeof L)['h'];
 const lay = (o: Ori): Lay => L[o] as Lay;
-
-const CARD_DST = {
-  h: {x: 560, y: 280, w: 800, h: 740},
-  v: {x: 120, y: 560, w: 840, h: 840},
-} as const;
 
 function CamLayer({o, frame, depth, children}: {o: Ori; frame: number; depth: number; children: React.ReactNode}) {
   const st = STAGE[o];
@@ -167,15 +162,8 @@ function tileSources(o: Ori): Array<{x: number; y: number}> {
 
 function OutroLayer({o, frame}: {o: Ori; frame: number}) {
   if (frame < EV.pullOut) return null;
-  const l = lay(o);
   const f = FINAL[o];
   const scrollAt = track(EV.pullOut, o === 'h' ? SCROLL_H : SCROLL_V);
-  const t = ph(frame, EV.pullOut, 110, 'SWEEP');
-  const src = p2w(o, l.alloc.card.x, l.alloc.card.y, scrollAt);
-  const cardX = src.x + (CARD_DST[o].x - src.x) * t;
-  const cardY = src.y + (CARD_DST[o].y - src.y) * t;
-  const cardW = l.alloc.card.w + (CARD_DST[o].w - l.alloc.card.w) * t;
-  const cardH = l.alloc.card.h + (CARD_DST[o].h - l.alloc.card.h) * t;
   const tt = ph(frame, EV.tilesFly, 132, 'SWEEP');
   const markOpacity = ph(frame, 1848, 36, 'GLIDE');
   const tileFade = 1 - ph(frame, 1858, 26, 'TUCK');
@@ -187,7 +175,6 @@ function OutroLayer({o, frame}: {o: Ori; frame: number}) {
   const tw2 = measureTracked(COPY.tagline, 'sans800', f.tagSize, -0.03);
   return (
     <g>
-      <Panel x={cardX} y={cardY} w={cardW} h={cardH} radius={r('xl')} fill={C.bgRaised} stroke={C.borderAccent} strokeWidth={1.8} opacity={t} />
       {tt > 0 &&
         tileFade > 0.01 &&
         MARK_TILES.map((mt, i) => {
@@ -223,8 +210,8 @@ function OutroLayer({o, frame}: {o: Ori; frame: number}) {
         {COPY.outro.triad}
       </FilmText>
       <g opacity={ph(frame, EV.cta, 22, 'GLIDE')}>
-        <rect x={f.cx - 100} y={f.ctaY - 27} width={200} height={54} rx={r('md')} fill={C.accent} />
-        <FilmText x={f.cx} y={f.ctaY + 7} spec="strong" size={15} anchor="middle" fill={C.textOnAccent}>
+        <rect x={f.cx - 100} y={f.ctaY - 27} width={200} height={54} rx={r('md')} fill={C.secondary} />
+        <FilmText x={f.cx} y={f.ctaY + 7} spec="strong" size={15} anchor="middle" fill={C.textOnSecondary}>
           {COPY.outro.cta}
         </FilmText>
       </g>

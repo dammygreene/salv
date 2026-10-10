@@ -55,10 +55,10 @@ export const EV = {
   wire3: 972,
   figure: 990,
   scanComplete: 1008, // b7 beat1
-  rowsIn: 1020,
-  rowTick1: 1044,
-  rowTick2: 1080,
-  rowTick3: 1116,
+  rowsIn: 1032,
+  rowTick1: 1040,
+  rowTick2: 1064,
+  rowTick3: 1088,
   focusPush: 1152,
   selectDraw: 1188, // b8 beat1
   glideDown: 1224,
@@ -142,12 +142,13 @@ export const CAM_H = [
   {f: 420, x: 960, y: 500, s: 1.22, e: 'SWEEP'},
   {f: 468, x: 560, y: 643, s: 1.55, e: 'SWEEP'}, // push WITH the press
   {f: 540, x: 960, y: 560, s: 1.12, e: 'SWEEP'},
-  {f: 640, x: 1180, y: 634, s: 1.38, e: 'SWEEP'}, // the form
-  {f: 740, x: 704, y: 524, s: 1.34, e: 'SWEEP'}, // the machine
-  {f: 800, x: 500, y: 524, s: 1.5, e: 'SWEEP'},
-  {f: 900, x: 660, y: 524, s: 1.5, e: 'SWEEP'}, // ride the wires
-  {f: 972, x: 950, y: 524, s: 1.52, e: 'SOFT'},
-  {f: 1008, x: 960, y: 540, s: 1.08, e: 'SWEEP'},
+  {f: 640, x: 1114, y: 634, s: 1.38, e: 'SOFT'}, // the form column
+  {f: 740, x: 640, y: 620, s: 1.34, e: 'SWEEP'}, // the console
+  {f: 800, x: 606, y: 560, s: 1.5, e: 'SWEEP'}, // wallet + scan nodes
+  {f: 900, x: 606, y: 660, s: 1.5, e: 'SWEEP'}, // ride the wires down
+  {f: 972, x: 606, y: 740, s: 1.52, e: 'SWEEP'},
+  {f: 1008, x: 820, y: 620, s: 1.24, e: 'SWEEP'}, // pull begins WITH the complete beat
+  {f: 1044, x: 960, y: 540, s: 1.08, e: 'SWEEP'},
   {f: 1100, x: 960, y: 594, s: 1.3, e: 'SOFT'},
   {f: 1188, x: 960, y: 606, s: 1.55, e: 'SWEEP'}, // focused row
   {f: 1240, x: 960, y: 606, s: 1.55, e: 'SWEEP'},
@@ -167,11 +168,11 @@ export const CAM_V = [
   {f: 420, x: 540, y: 880, s: 1.18, e: 'SWEEP'},
   {f: 468, x: 300, y: 795, s: 1.44, e: 'SWEEP'},
   {f: 540, x: 540, y: 980, s: 1.1, e: 'SWEEP'},
-  {f: 640, x: 540, y: 1170, s: 1.32, e: 'SWEEP'},
-  {f: 740, x: 540, y: 740, s: 1.26, e: 'SWEEP'},
-  {f: 800, x: 430, y: 642, s: 1.4, e: 'SWEEP'},
-  {f: 900, x: 430, y: 780, s: 1.4, e: 'SWEEP'},
-  {f: 972, x: 430, y: 918, s: 1.42, e: 'SOFT'},
+  {f: 640, x: 540, y: 1180, s: 1.32, e: 'SOFT'},
+  {f: 740, x: 540, y: 800, s: 1.26, e: 'SWEEP'},
+  {f: 800, x: 540, y: 700, s: 1.4, e: 'SWEEP'},
+  {f: 900, x: 540, y: 860, s: 1.4, e: 'SWEEP'},
+  {f: 972, x: 540, y: 980, s: 1.42, e: 'SOFT'},
   {f: 1008, x: 540, y: 960, s: 1.06, e: 'SWEEP'},
   {f: 1100, x: 540, y: 770, s: 1.24, e: 'SOFT'},
   {f: 1188, x: 540, y: 634, s: 1.44, e: 'SWEEP'},
@@ -187,8 +188,8 @@ export const CAM_V = [
 /** Page scroll inside the browser frame (page-space px). */
 export const SCROLL_H = [
   {f: 0, v: 0, e: 'LINEAR'},
-  {f: 960, v: 0, e: 'SWEEP'},
-  {f: 1080, v: 900, e: 'SWEEP'},
+  {f: 1032, v: 0, e: 'SWEEP'},
+  {f: 1120, v: 900, e: 'SWEEP'},
   {f: 1152, v: 900, e: 'SWEEP'},
   {f: 1224, v: 836, e: 'SWEEP'},
   {f: 1296, v: 836, e: 'SWEEP'},
@@ -200,13 +201,13 @@ export const SCROLL_H = [
 
 export const SCROLL_V = [
   {f: 0, v: 0, e: 'LINEAR'},
-  {f: 960, v: 0, e: 'SWEEP'},
-  {f: 1080, v: 1050, e: 'SWEEP'},
-  {f: 1152, v: 1050, e: 'SWEEP'},
-  {f: 1224, v: 1180, e: 'SWEEP'},
-  {f: 1296, v: 1180, e: 'SWEEP'},
-  {f: 1400, v: 1872, e: 'SOFT'},
-  {f: 1728, v: 1872, e: 'SWEEP'},
+  {f: 1032, v: 0, e: 'SWEEP'},
+  {f: 1120, v: 1170, e: 'SWEEP'},
+  {f: 1152, v: 1170, e: 'SWEEP'},
+  {f: 1224, v: 1300, e: 'SWEEP'},
+  {f: 1296, v: 1300, e: 'SWEEP'},
+  {f: 1400, v: 2012, e: 'SOFT'},
+  {f: 1728, v: 2012, e: 'SWEEP'},
   {f: 1800, v: 0, e: 'SWEEP'},
   {f: 2160, v: 0, e: 'LINEAR'},
 ] as const;

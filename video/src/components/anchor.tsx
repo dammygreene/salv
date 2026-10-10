@@ -11,13 +11,14 @@
  */
 import {C} from '../brand/tokens';
 import {COPY} from '../brand/copy';
-import {EV, SCROLL_H, SCROLL_V} from '../brand/timeline';
+import {EV, FPS, SCROLL_H, SCROLL_V} from '../brand/timeline';
+import {spring} from 'remotion';
 import {COVER, FINAL, STAGE, p2w, type Ori} from '../brand/stage';
 import {measureTracked} from '../brand/textMetrics';
 import {lockupWidth} from './brand';
 import {L, proofRow3End} from './product';
 import {FOCUS_ROW} from '../scenes/data';
-import {ph, track} from '../lib/motion';
+import {ph, track, SPRING} from '../lib/motion';
 
 const sq = (size: number) => size * 0.3;
 
@@ -41,7 +42,7 @@ function ctaCenter(o: Ori) {
 
 function machineHeads(o: Ori) {
   const m = (L[o] as (typeof L)['h']).machine;
-  return m.nodes.map((n) => p2w(o, n.x + 18, n.y + 22, 0));
+  return m.nodes.map((n) => p2w(o, m.col.x + 21, n.y + 25, 0));
 }
 
 function rowRect(o: Ori, frame: number) {
@@ -177,8 +178,8 @@ export function anchorState(o: Ori, frame: number): AnchorState {
     return {mode: 'frame', x: rr.x, y: rr.y, size: 0, op: 1 - fade, draw: 1};
   }
   if (frame < EV.pullOut) {
-    const dr = ph(frame, EV.recordLand - 18, 14, 'GLIDE');
-    return {mode: 'dot', x: rec.x, y: rec.y - 16 * (1 - dr), size: 11, op: dr};
+    const s = spring({frame: Math.max(0, frame - (EV.recordLand - 18)), fps: FPS, config: SPRING.pop});
+    return {mode: 'dot', x: rec.x, y: rec.y - 16 * (1 - s), size: 11, op: Math.min(1, s * 2)};
   }
   if (frame < EV.periodLand2) {
     const t = ph(frame, EV.pullOut + 12, EV.periodLand2 - EV.pullOut - 12, 'SWEEP');

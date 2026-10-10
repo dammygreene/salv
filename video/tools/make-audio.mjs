@@ -146,6 +146,65 @@ for (const c of CUES) {
   else if (c.kind === 'bell') bell(c.f);
 }
 
+/* ── groove bed: kick, rolling bass, off-beat hats, stabs, arp lead ───
+   An original melodic-electronic bed (NCS-shaped energy, nothing copied):
+   drums enter at bar 4 with the scan, the drop lands at bar 8 with the
+   results, everything strips back at bar 12 for the outro so the logo
+   bell and the pad resolve alone. Sidechain dip keeps the pad breathing. */
+function kick(atF, amp) {
+  const t0 = Math.round(f2t(atF) * SR);
+  const n = Math.round(0.16 * SR);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const fr = 44 + 118 * Math.exp(-26 * t);
+    const env = Math.min(1, t / 0.004) * Math.exp(-8.5 * t);
+    const v = amp * env * Math.sin(2 * Math.PI * fr * t);
+    mix(Lch, t0 + i, v);
+    mix(Rch, t0 + i, v);
+  }
+}
+function bassNote(freq, atF, dur, amp) {
+  const t0 = Math.round(f2t(atF) * SR);
+  const n = Math.round(dur * SR);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const sc = 0.45 + 0.55 * Math.min(1, t / 0.15); // duck under the kick
+    const env = Math.min(1, t / 0.008) * Math.exp(-5 * t) * sc;
+    const v = amp * env * (Math.sin(2 * Math.PI * freq * t) + 0.22 * Math.sin(4 * Math.PI * freq * t));
+    mix(Lch, t0 + i, v);
+    mix(Rch, t0 + i, v * 0.94);
+  }
+}
+function lead(freq, atF, amp, pan) {
+  const t0 = Math.round(f2t(atF) * SR);
+  const n = Math.round(0.55 * SR);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    const env = Math.min(1, t / 0.004) * Math.exp(-5.5 * t);
+    const v = amp * env * (Math.sin(2 * Math.PI * freq * t) + 0.38 * Math.sin(4 * Math.PI * freq * t) + 0.12 * Math.sin(6 * Math.PI * freq * t));
+    mix(Lch, t0 + i, v * (1 - Math.max(0, pan)));
+    mix(Rch, t0 + i, v * (1 + Math.min(0, pan)));
+  }
+}
+const MAJ3 = 1.2599, MIN3 = 1.1892, FIFTH = 1.4983;
+const QUAL = [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0]; // 0 minor, 1 major
+for (let b = 0; b < 15; b++) {
+  const root = PROG[b];
+  const third = root * (QUAL[b] ? MAJ3 : MIN3);
+  const barF = b * BAR;
+  if (b >= 4 && b < 12) for (let q = 0; q < 4; q++) kick(barF + q * BEAT, b >= 8 ? 0.16 : 0.12);
+  if (b >= 4 && b < 12) for (let q = 0; q < 8; q++) bassNote(root / 2, barF + q * (BEAT / 2), (BEAT / 2 / FPS) * 0.92, q % 2 ? 0.05 : 0.075);
+  if (b >= 6 && b < 12) for (let q = 0; q < 4; q++) noise(barF + q * BEAT + BEAT / 2, 0.035, 0.02, {sweep: [7000, 7000], q: 0.5, pan: 0.3});
+  if (b >= 6 && b < 12) {
+    lead(third * 2, barF + 1.5 * BEAT, 0.026, -0.2);
+    lead(root * FIFTH * 2, barF + 3.5 * BEAT, 0.024, 0.2);
+  }
+  if (b >= 8 && b < 12) {
+    const seq = [root, third, root * FIFTH, root * 2, root * FIFTH, third, root * 2, root * FIFTH];
+    for (let q = 0; q < 8; q++) lead(seq[q] * 2, barF + q * (BEAT / 2), 0.03, q % 2 ? 0.25 : -0.25);
+  }
+}
+
 /* ── master: soft clip, normalise, natural tail ─────────────────────── */
 let peak = 0;
 for (let i = 0; i < N; i++) peak = Math.max(peak, Math.abs(Lch[i]), Math.abs(Rch[i]));
