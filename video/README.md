@@ -130,11 +130,12 @@ same components be rasterised, frame-checked and encoded without a browser.
   these frames with ffmpeg 7 (`imageio-ffmpeg`).
 
 Both orientations were reviewed frame-by-frame through contact sheets during
-production; `out/qa/` holds the evidence sheets, and `out/` holds the two
-full-rate preview encodes — muxed with the AAC sound layer, verified at
-`Duration: 00:00:35.00`, 30 fps, h264 + aac stereo — plus `out/stills/`
-(curated frames and a poster per orientation, the last frame holding static
-by design so it works as standalone promo art).
+production; `out/qa/` holds the evidence sheets, `previews/` holds committed
+copies of the two full-rate preview encodes — muxed with the AAC sound layer,
+verified at `Duration: 00:00:35.00`, 30 fps, h264 + aac stereo — and
+`out/stills/` holds curated frames plus a poster per orientation (the last
+frame holds static by design so it works as standalone promo art). Local
+renders stay untracked in `out/`.
 
 ---
 
