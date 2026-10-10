@@ -1,0 +1,35 @@
+{
+  "name": "culler-brand-film",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CULLER motion graphics film — YOUR WALLET HAS LEFTOVERS. A Remotion project that extends the existing CULLER product design system (src/styles/tokens.css) into animation.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render CullerBrandFilm out/culler-brand-film-1920x1080.mp4",
+    "render:vertical": "remotion render CullerBrandFilmVertical out/culler-brand-film-1080x1920.mp4",
+    "render:preview": "remotion render CullerBrandFilm out/culler-brand-film-preview.mp4 --scale 0.25 --concurrency 2",
+    "render:all": "npm run render:preview && npm run render && npm run render:vertical",
+    "stills": "remotion still CullerBrandFilm out/stills/ --frames 0,30,60,90,120,180,240,300,360,420,480,540,600,660,720,780,840,900,960,1000,1049",
+    "typecheck": "tsc --noEmit",
+    "smoke": "esbuild tools/smoke.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke.cjs --jsx=automatic --log-level=warning && node node_modules/.cache/smoke.cjs",
+    "audio": "node tools/make-audio.mjs",
+    "compositions": "remotion compositions"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/fonts": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "@remotion/media-utils": "4.0.534",
+    "@remotion/transitions": "4.0.534",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.534",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "esbuild": "^0.28.2",
+    "typescript": "5.9.3"
+  }
+}
