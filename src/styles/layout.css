@@ -253,6 +253,11 @@
   .nav-links {
     display: none;
   }
+  .nav-official-x {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
   .nav-burger {
     display: flex;
     margin-left: auto;
