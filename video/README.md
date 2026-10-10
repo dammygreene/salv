@@ -29,7 +29,8 @@ npm run typecheck       # tsc --noEmit over the whole film
 npm run smoke           # Node-side structural checks (no browser needed)
 npm run audio           # re-synthesise the original sound layer
 npm run metrics         # re-bake HarfBuzz text metrics from the brand fonts
-npm run stills          # representative frames → out/stills/
+npm run stills          # 20 curated frames + poster per orientation → out/stills/
+                        # (browser-free: uses the QA rasteriser)
 ```
 
 QA / preview pipeline that works **without a browser** (see “Two renderers”):
@@ -129,8 +130,11 @@ same components be rasterised, frame-checked and encoded without a browser.
   these frames with ffmpeg 7 (`imageio-ffmpeg`).
 
 Both orientations were reviewed frame-by-frame through contact sheets during
-production; `out/qa/` holds the evidence sheets and the two full-rate preview
-encodes.
+production; `out/qa/` holds the evidence sheets, and `out/` holds the two
+full-rate preview encodes — muxed with the AAC sound layer, verified at
+`Duration: 00:00:35.00`, 30 fps, h264 + aac stereo — plus `out/stills/`
+(curated frames and a poster per orientation, the last frame holding static
+by design so it works as standalone promo art).
 
 ---
 

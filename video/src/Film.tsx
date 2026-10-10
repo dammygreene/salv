@@ -20,7 +20,7 @@ import {Scene7H, Scene7V} from './scenes/final';
  * with no runtime at all.
  */
 
-export const FILM_DEFAULTS = {audio: true, soundDesign: true};
+export const FILM_DEFAULTS = {audio: true};
 export type FilmProps = typeof FILM_DEFAULTS;
 
 /** Waits for the four brand faces before Remotion captures frame 0. */

@@ -111,9 +111,21 @@ async function video(o, out, spec, fps) {
   console.log('video ->', out, `${list.length} frames @ ${fps}fps = ${(list.length / fps).toFixed(1)}s`);
 }
 
+const STILLS = [40, 95, 150, 200, 250, 300, 340, 400, 470, 520, 600, 650, 690, 760, 806, 830, 880, 930, 975, 1040];
+
+async function stills(o, outdir) {
+  await frames(o, STILLS, outdir);
+  const mod = load();
+  const svg = mod.renderFrameSvg(o, 1040, 30);
+  const poster = path.join(outdir, `poster-${o === 'h' ? '1920x1080' : '1080x1920'}.png`);
+  await sharp(Buffer.from(svg)).png().toFile(poster);
+  console.log('poster ->', poster);
+}
+
 const [cmd, o, arg3, arg4, arg5] = process.argv.slice(2);
 if (cmd === 'bundle') bundle();
 else if (cmd === 'frames') await frames(o, arg3.split(',').map(Number), arg4);
 else if (cmd === 'sheet') await sheet(o, arg3, arg4, Number(arg5 || 4));
 else if (cmd === 'video') await video(o, arg3, arg4, Number(arg5 || 10));
+else if (cmd === 'stills') await stills(o, arg3);
 else console.log('unknown command', cmd);

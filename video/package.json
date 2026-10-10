@@ -9,7 +9,7 @@
     "render:vertical": "remotion render CullerBrandFilmVertical out/culler-brand-film-1080x1920.mp4",
     "render:preview": "remotion render CullerBrandFilm out/culler-brand-film-preview.mp4 --scale 0.25 --concurrency 2",
     "render:all": "npm run render:preview && npm run render && npm run render:vertical",
-    "stills": "remotion still CullerBrandFilm out/stills/ --frames 0,30,60,90,120,180,240,300,360,420,480,540,600,660,720,780,840,900,960,1000,1049",
+    "stills": "node tools/qa.mjs bundle && node tools/qa.mjs stills h out/stills && node tools/qa.mjs stills v out/stills",
     "typecheck": "tsc --noEmit",
     "smoke": "esbuild tools/smoke.ts --bundle --platform=node --format=cjs --outfile=node_modules/.cache/smoke.cjs --jsx=automatic --log-level=warning && node node_modules/.cache/smoke.cjs",
     "audio": "node tools/make-audio.mjs",

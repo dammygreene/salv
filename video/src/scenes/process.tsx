@@ -93,7 +93,7 @@ function CullVisual({frame, o}: {frame: number; o: LayoutKey}) {
             />
           );
         })}
-        <VHairline x={center[0] - 392} y1={center[1] - 150} y2={center[1] + 330} progress={divider} color={C.secondary} weight={STROKE.thin} opacity={0.8} />
+        <VHairline x={center[0] - 281} y1={center[1] - 150} y2={center[1] + 330} progress={divider} color={C.secondary} weight={STROKE.thin} opacity={0.8} />
       </g>
       <MonoLabel x={notePos[0]} y={notePos[1]} size={17} fill={C.textMuted} opacity={noteIn} tracking={0.12}>
         {COPY.cullNote}
