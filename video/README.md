@@ -1,7 +1,12 @@
-# CULLER — Brand Film: *YOUR WALLET HAS LEFTOVERS*
+# CULLER — Brand Film: *HIDDEN INVENTORY*
 
-A 35-second motion graphics film for CULLER, built as a real Remotion project
-(React + TypeScript), in two compositions:
+A 36-second premium brand film for CULLER, built as a real Remotion project
+(React + TypeScript), in two separately composed orientations:
+
+> Your wallet has leftovers. Forgotten assets float half-hidden in a dark
+> digital space; the CULLER signal brings them into view — mystery,
+> discovery, clarity, brand moment. The product appears once, framed, as
+> evidence — never as a tutorial. See `DIRECTION.md` for the full direction.
 
 | Composition | Size | fps | Frames | Output |
 |---|---|---|---|---|

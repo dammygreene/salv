@@ -7,6 +7,9 @@
 
 export const COPY = {
   tagline: 'Your wallet has leftovers.',
+  open: {
+    line: 'YOUR WALLET HAS LEFTOVERS',
+  },
   wordmark: 'CULLER',
   nav: ['Home', 'Scan', 'Watch', 'Rewards', 'Leaderboard', '$CULLER'],
   url: 'cullerlabs.xyz',
@@ -91,5 +94,8 @@ export const COPY = {
     triad: 'Scan. Calculate. Record.',
     cta: 'Scan my wallet',
     url: 'cullerlabs.xyz',
+  },
+  close: {
+    tagline: "Find what's sitting in your wallet",
   },
 } as const;

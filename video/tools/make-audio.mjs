@@ -116,20 +116,20 @@ function bell(atF) {
   }
 }
 
-/* ── the 15-bar arc ─────────────────────────────────────────────────── */
+/* ── the 15-bar arc — v4 "Hidden Inventory" ─────────────────────────────
+   sparse atmosphere → subtle pulse → rhythm & texture → clean resolution.
+   Harmony: A minor (mystery) → F (the signal warms) → C/G (clarity) →
+   A (home, stripped) → A add9 swell (the close). */
 const A2 = 110, F2 = 87.31, C3 = 130.81, G2 = 98;
-const PROG = [A2, A2, F2, F2, C3, C3, G2, G2, A2, A2, F2, F2, C3, G2, A2];
+const PROG = [A2, A2, A2, A2, F2, F2, F2, C3, C3, G2, G2, G2, A2, A2, A2];
 for (let b = 0; b < 15; b++) {
-  const amp = b < 2 ? 0.05 : b < 9 ? 0.062 : b < 12 ? 0.072 : 0.08;
-  pad(b, PROG[b], b === 14 ? 0.095 : amp);
-  if (b >= 2) {
-    sub(PROG[b] / 2, b * BAR, 0.14);
-    sub(PROG[b] / 2, b * BAR + 2 * BEAT, 0.11);
+  const amp = b < 2 ? 0.035 : b < 5 ? 0.05 : b < 8 ? 0.06 : b < 12 ? 0.068 : b === 12 ? 0.042 : 0.09;
+  pad(b, PROG[b], b >= 13 ? 0.1 : amp);
+  if (b >= 2 && b < 5) {
+    sub(PROG[b] / 2, b * BAR, 0.1);
+    sub(PROG[b] / 2, b * BAR + 2 * BEAT, 0.07);
   }
-  if (b >= 4 && b < 13) {
-    noise(b * BAR + BEAT, 0.05, 0.028, {pan: 0.35});
-    noise(b * BAR + 3 * BEAT, 0.05, 0.032, {pan: 0.35});
-  }
+  if (b >= 13) sub(PROG[b] / 2, b * BAR, 0.12);
 }
 /* pentatonic details at handoffs */
 const PENTA = [659.25, 783.99, 587.33, 880];
@@ -144,6 +144,8 @@ for (const c of CUES) {
   else if (c.kind === 'confirm') { tone(523.25, c.f, 0.5, 0.085, {decay: 5}); tone(783.99, c.f + 5, 0.6, 0.075, {decay: 4.5}); noise(c.f, 0.02, 0.03); }
   else if (c.kind === 'riser') riser(c.f, 0.9, 0.075);
   else if (c.kind === 'bell') bell(c.f);
+  else if (c.kind === 'boom') { tone(48, c.f, 1.1, 0.24, {decay: 3.2}); noise(c.f, 0.5, 0.05, {sweep: [900, 120]}); }
+  else if (c.kind === 'shimmer') { noise(c.f, 0.4, 0.035, {sweep: [5200, 9000], pan: -0.15}); tone(1567.98, c.f, 0.5, 0.02, {decay: 6, pan: 0.2}); }
 }
 
 /* ── groove bed: kick, rolling bass, off-beat hats, stabs, arp lead ───
@@ -187,22 +189,28 @@ function lead(freq, atF, amp, pan) {
   }
 }
 const MAJ3 = 1.2599, MIN3 = 1.1892, FIFTH = 1.4983;
-const QUAL = [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0]; // 0 minor, 1 major
+const QUAL = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0]; // 0 minor, 1 major
 for (let b = 0; b < 15; b++) {
   const root = PROG[b];
   const third = root * (QUAL[b] ? MAJ3 : MIN3);
   const barF = b * BAR;
-  if (b >= 4 && b < 12) for (let q = 0; q < 4; q++) kick(barF + q * BEAT, b >= 8 ? 0.16 : 0.12);
-  if (b >= 4 && b < 12) for (let q = 0; q < 8; q++) bassNote(root / 2, barF + q * (BEAT / 2), (BEAT / 2 / FPS) * 0.92, q % 2 ? 0.05 : 0.075);
-  if (b >= 6 && b < 12) for (let q = 0; q < 4; q++) noise(barF + q * BEAT + BEAT / 2, 0.035, 0.02, {sweep: [7000, 7000], q: 0.5, pan: 0.3});
-  if (b >= 6 && b < 12) {
-    lead(third * 2, barF + 1.5 * BEAT, 0.026, -0.2);
-    lead(root * FIFTH * 2, barF + 3.5 * BEAT, 0.024, 0.2);
+  // pulse emerges with the hidden objects (bars 5–7)
+  if (b >= 5 && b < 8) {
+    for (let q = 0; q < 4; q++) kick(barF + q * BEAT, 0.11);
+    for (let q = 0; q < 8; q++) bassNote(root / 2, barF + q * (BEAT / 2), (BEAT / 2 / FPS) * 0.9, q % 2 ? 0.035 : 0.05);
+    for (let q = 0; q < 4; q++) noise(barF + q * BEAT + BEAT / 2, 0.03, 0.014, {sweep: [7000, 7000], q: 0.5, pan: 0.3});
   }
+  // rhythm + texture under the signal and the glimpse (bars 8–11)
   if (b >= 8 && b < 12) {
+    for (let q = 0; q < 4; q++) kick(barF + q * BEAT, 0.14);
+    for (let q = 0; q < 8; q++) bassNote(root / 2, barF + q * (BEAT / 2), (BEAT / 2 / FPS) * 0.92, q % 2 ? 0.05 : 0.07);
+    for (let q = 0; q < 4; q++) noise(barF + q * BEAT + BEAT / 2, 0.035, 0.02, {sweep: [7000, 7000], q: 0.5, pan: 0.3});
     const seq = [root, third, root * FIFTH, root * 2, root * FIFTH, third, root * 2, root * FIFTH];
-    for (let q = 0; q < 8; q++) lead(seq[q] * 2, barF + q * (BEAT / 2), 0.03, q % 2 ? 0.25 : -0.25);
+    for (let q = 0; q < 8; q++) lead(seq[q] * 2, barF + q * (BEAT / 2), 0.026, q % 2 ? 0.25 : -0.25);
+    lead(third * 2, barF + 1.5 * BEAT, 0.02, -0.2);
+    lead(root * FIFTH * 2, barF + 3.5 * BEAT, 0.018, 0.2);
   }
+  // bar 12: everything drops out — pad, bell, breath. bars 13–14: resolve.
 }
 
 /* ── master: soft clip, normalise, natural tail ─────────────────────── */

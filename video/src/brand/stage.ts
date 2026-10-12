@@ -42,5 +42,17 @@ export const FINAL = {
   v: {cx: 540, lockupY: 700, markH: 112, tagY: 986, tagSize: 44, triadY: 1102, ctaY: 1210, urlY: 1300},
 } as const;
 
+/** The one framed glimpse of the real interface (world space). */
+export const GLIMPSE: Record<Ori, BrowserRect> = {
+  h: {x: 460, y: 250, w: 1000, h: 620},
+  v: {x: 150, y: 620, w: 780, h: 760},
+};
+
+/** Close composition anchors (world space): mark, tagline, url. */
+export const CLOSE = {
+  h: {cx: 960, markY: 400, markH: 120, tagY: 640, tagSize: 44, urlY: 760},
+  v: {cx: 540, markY: 660, markH: 104, tagY: 950, tagSize: 38, urlY: 1080},
+} as const;
+
 /** World-space rect of the browser frame, used for the assemble animation. */
 export const bfRect = (o: Ori) => STAGE[o].bf;
