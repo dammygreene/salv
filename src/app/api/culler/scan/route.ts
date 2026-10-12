@@ -141,6 +141,13 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+    console.error("[culler/scan] Reward database initialization failed", {
+      name: error instanceof Error ? error.name : "UnknownError",
+      message: error instanceof Error ? error.message : String(error),
+      code: typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code ?? "")
+        : undefined,
+    });
     return NextResponse.json({ error: "The reward database is temporarily unavailable. Please try again shortly." }, { status: 503 });
   }
 
