@@ -14,3 +14,9 @@ image-search/
 # deployment manifest (deployments/devnet-culler-manifest.json) IS meant
 # to be committed -- only *-keypair.json files are secrets.
 deployments/*-keypair.json
+
+# Brand film render output + QA raster output (regenerable, large).
+video/out/
+video/public/fonts/*.ttf
+video/tools/_copy-strings.json
+video/public/audio/*.wav
