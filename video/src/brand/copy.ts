@@ -98,4 +98,11 @@ export const COPY = {
   close: {
     tagline: "Find what's sitting in your wallet",
   },
+  /** Static social graphic (post 02). The period is the orange LEFTOVER
+   *  square, drawn — not typed — exactly as in the film. */
+  social: {
+    line1: 'See what',
+    line2: "you've been",
+    line3: 'leaving behind',
+  },
 } as const;

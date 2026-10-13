@@ -14,6 +14,7 @@
  *   node tools/qa.mjs frames <h|v> <f0,f1,…> <outdir>
  *   node tools/qa.mjs sheet  <h|v> <out.png> <from:to:step> <cols>
  *   node tools/qa.mjs video  <h|v> <out.mp4|webp> <from:to:step> <fps>
+ *   node tools/qa.mjs social <out.png>
  */
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
@@ -126,6 +127,12 @@ const [cmd, o, arg3, arg4, arg5] = process.argv.slice(2);
 if (cmd === 'bundle') bundle();
 else if (cmd === 'frames') await frames(o, arg3.split(',').map(Number), arg4);
 else if (cmd === 'sheet') await sheet(o, arg3, arg4, Number(arg5 || 4));
+else if (cmd === 'social') {
+  const mod = load();
+  mkdirSync(path.dirname(o), {recursive: true});
+  await sharp(Buffer.from(mod.renderSocialSvg())).png().toFile(o);
+  console.log('social ->', o);
+}
 else if (cmd === 'video') await video(o, arg3, arg4, Number(arg5 || 10));
 else if (cmd === 'stills') await stills(o, arg3);
 else console.log('unknown command', cmd);

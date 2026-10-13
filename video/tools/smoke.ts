@@ -5,7 +5,7 @@
  */
 import {DURATION, FPS, BEAT, BAR, SCENES, SCENE_ORDER, CUES, CAM_H, CAM_V} from '../src/brand/timeline';
 import {camAt} from '../src/lib/motion';
-import {renderFrameSvg} from '../src/qa/frame';
+import {renderFrameSvg, renderSocialSvg} from '../src/qa/frame';
 import {COPY} from '../src/brand/copy';
 
 let pass = 0;
@@ -56,6 +56,12 @@ for (const o of ['h', 'v'] as const) {
   const mid = renderFrameSvg(o, 1400);
   ok(`${o} glimpse frame shows the real interface`, mid.includes(COPY.url) && mid.includes(COPY.home.cta));
 }
+
+console.log('social graphic (post 02)');
+const soc = renderSocialSvg();
+ok('social: renders 1600x900, no NaN', soc.includes('width="1600"') && soc.includes('height="900"') && !soc.includes('NaN'));
+ok('social: lockup + site pill present', soc.includes('wm-') && soc.includes(COPY.url));
+ok('social: headline is the copy lines', soc.includes(COPY.social.line1) && soc.includes(COPY.social.line3));
 
 console.log(fail === 0 ? `\nALL CHECKS PASSED (${pass})` : `\n${fail} CHECKS FAILED`);
 process.exit(fail === 0 ? 0 : 1);
