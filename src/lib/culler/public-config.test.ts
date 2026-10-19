@@ -5,6 +5,7 @@ const VALID_MINT = "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T";
 
 const PUBLIC_VARS = [
   "NEXT_PUBLIC_CULLER_MINT_ADDRESS",
+  "CULLER_MINT_ADDRESS",
   "NEXT_PUBLIC_CULLER_TOKEN_SYMBOL",
   "NEXT_PUBLIC_CULLER_TOKEN_NAME",
   "NEXT_PUBLIC_CULLER_NETWORK",
@@ -31,6 +32,13 @@ describe("getPublicCullerConfig", () => {
     expect(config.mintStatus).toBe("live");
     expect(config.mintAddress).toBe(VALID_MINT);
     expect(getCullerExplorerUrl(config)).toBe(`https://solscan.io/token/${VALID_MINT}`);
+  });
+
+  it("falls back to server-side mint env when public mint env is unset", () => {
+    process.env.CULLER_MINT_ADDRESS = VALID_MINT;
+    const config = getPublicCullerConfig();
+    expect(config.mintStatus).toBe("live");
+    expect(config.mintAddress).toBe(VALID_MINT);
   });
 
   it("fails safely for an invalid public mint", () => {
