@@ -14,6 +14,7 @@ export interface PublicCullerConfig {
 }
 
 const NETWORKS: PublicCullerNetwork[] = ["devnet", "testnet", "mainnet-beta"];
+const MINT_ENV_ORDER = ["NEXT_PUBLIC_CULLER_MINT_ADDRESS", "CULLER_MINT_ADDRESS"] as const;
 
 function readNetwork(value: string | undefined): PublicCullerNetwork {
   const normalized = value?.trim();
@@ -21,7 +22,16 @@ function readNetwork(value: string | undefined): PublicCullerNetwork {
 }
 
 export function getPublicCullerConfig(): PublicCullerConfig {
-  const rawMintAddress = process.env.NEXT_PUBLIC_CULLER_MINT_ADDRESS?.trim() ?? "";
+  let rawMintAddress = "";
+  let mintEnvSource: (typeof MINT_ENV_ORDER)[number] = MINT_ENV_ORDER[0];
+  for (const name of MINT_ENV_ORDER) {
+    const value = process.env[name]?.trim() ?? "";
+    if (value) {
+      rawMintAddress = value;
+      mintEnvSource = name;
+      break;
+    }
+  }
   const network = readNetwork(process.env.NEXT_PUBLIC_CULLER_NETWORK);
   const tokenName = process.env.NEXT_PUBLIC_CULLER_TOKEN_NAME?.trim() || "CULLER";
   const tokenSymbol = process.env.NEXT_PUBLIC_CULLER_TOKEN_SYMBOL?.trim() || "CULLER";
@@ -42,7 +52,7 @@ export function getPublicCullerConfig(): PublicCullerConfig {
       tokenSymbol,
       mintAddress: null,
       mintStatus: "invalid",
-      configurationError: "NEXT_PUBLIC_CULLER_MINT_ADDRESS is not a valid Solana address.",
+      configurationError: `${mintEnvSource} is not a valid Solana address.`,
     };
   }
 

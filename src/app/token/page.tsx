@@ -1,7 +1,10 @@
 import { CullerMintDisplay } from "@/components/culler-mint-display";
 import { PageHeader } from "@/components/page-header";
+import { getPublicCullerConfig } from "@/lib/culler/public-config";
 
 export default function TokenPage() {
+  const publicCullerConfig = getPublicCullerConfig();
+
   return (
     <main className="token-page">
       <PageHeader
@@ -55,7 +58,7 @@ export default function TokenPage() {
         </article>
       </div>
 
-      <CullerMintDisplay />
+      <CullerMintDisplay config={publicCullerConfig} />
     </main>
   );
 }

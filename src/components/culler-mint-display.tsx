@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCullerExplorerUrl, getPublicCullerConfig, shortenCullerMint } from "@/lib/culler/public-config";
+import { getCullerExplorerUrl, shortenCullerMint, type PublicCullerConfig } from "@/lib/culler/public-config";
 
-export function CullerMintDisplay() {
-  const config = getPublicCullerConfig();
+interface CullerMintDisplayProps {
+  config: PublicCullerConfig;
+}
+
+export function CullerMintDisplay({ config }: CullerMintDisplayProps) {
   const explorerUrl = getCullerExplorerUrl(config);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
