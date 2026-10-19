@@ -5,6 +5,7 @@ const VALID_MINT = "4Nd1mBQtrMJVYVfKf2PJy9NZUZdTAsp7D4xWLs4gDB4T";
 
 const PUBLIC_VARS = [
   "NEXT_PUBLIC_CULLER_MINT_ADDRESS",
+  "NEXT_PUBLIC_CULLER_MINT",
   "NEXT_PUBLIC_CULLER_TOKEN_SYMBOL",
   "NEXT_PUBLIC_CULLER_TOKEN_NAME",
   "NEXT_PUBLIC_CULLER_NETWORK",
@@ -26,6 +27,15 @@ describe("getPublicCullerConfig", () => {
 
   it("accepts a valid public Solana mint", () => {
     process.env.NEXT_PUBLIC_CULLER_MINT_ADDRESS = VALID_MINT;
+    process.env.NEXT_PUBLIC_CULLER_NETWORK = "mainnet-beta";
+    const config = getPublicCullerConfig();
+    expect(config.mintStatus).toBe("live");
+    expect(config.mintAddress).toBe(VALID_MINT);
+    expect(getCullerExplorerUrl(config)).toBe(`https://solscan.io/token/${VALID_MINT}`);
+  });
+
+  it("accepts the configured fallback mint env when the primary is unset", () => {
+    process.env.NEXT_PUBLIC_CULLER_MINT = VALID_MINT;
     process.env.NEXT_PUBLIC_CULLER_NETWORK = "mainnet-beta";
     const config = getPublicCullerConfig();
     expect(config.mintStatus).toBe("live");

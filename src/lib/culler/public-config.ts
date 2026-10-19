@@ -21,7 +21,10 @@ function readNetwork(value: string | undefined): PublicCullerNetwork {
 }
 
 export function getPublicCullerConfig(): PublicCullerConfig {
-  const rawMintAddress = process.env.NEXT_PUBLIC_CULLER_MINT_ADDRESS?.trim() ?? "";
+  const rawMintAddress =
+    process.env.NEXT_PUBLIC_CULLER_MINT_ADDRESS?.trim() ||
+    process.env.NEXT_PUBLIC_CULLER_MINT?.trim() ||
+    "";
   const network = readNetwork(process.env.NEXT_PUBLIC_CULLER_NETWORK);
   const tokenName = process.env.NEXT_PUBLIC_CULLER_TOKEN_NAME?.trim() || "CULLER";
   const tokenSymbol = process.env.NEXT_PUBLIC_CULLER_TOKEN_SYMBOL?.trim() || "CULLER";
